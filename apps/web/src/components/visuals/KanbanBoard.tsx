@@ -102,7 +102,9 @@ export default function KanbanBoard({ nodes, edges }: KanbanBoardProps) {
                       <div className="flex items-start justify-between gap-2">
                         <span
                           className={`text-[13px] font-medium leading-snug ${
-                            isDone ? 'text-[var(--text-main)] opacity-40 line-through' : 'text-[var(--text-main)]'
+                            isDone
+                              ? 'text-[var(--text-main)] opacity-40 line-through'
+                              : 'text-[var(--text-main)]'
                           }`}
                         >
                           {node.label}

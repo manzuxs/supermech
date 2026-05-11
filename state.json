@@ -1,124 +1,236 @@
 {
   "meta": {
     "projectName": "Superpowers+",
-    "sessionId": "plan-session-001",
-    "activeSkill": null,
+    "sessionId": "brainstorming",
+    "activeSkill": "brainstorming",
     "agentStatus": "idle"
   },
   "canvas": {
-    "skillType": "writing-plans",
+    "skillType": "brainstorming",
     "nodes": [
       {
-        "id": "task-1",
-        "label": "Session 文件管理模块",
+        "id": "root",
+        "label": "会话管理方案设计",
         "status": "done",
         "progress": 1,
         "parentId": null,
-        "children": [],
+        "children": ["q-scope", "q-persist", "q-switch", "approach-auth"],
         "metadata": {
-          "dependencies": [],
-          "description": "实现 scan/read/write/delete state-*.json 文件的工具函数"
+          "description": "探讨 Superpowers+ 的会话管理方案，涉及会话的作用域、持久化方式、切换交互和权限模型。目标是设计一套可扩展、易用且安全的会话管理架构。",
+          "tags": ["architecture", "session", "design"]
         }
       },
       {
-        "id": "task-2",
-        "label": "Vite 插件：动态 statePath",
-        "status": "done",
+        "id": "q-scope",
+        "label": "按计划划分作用域",
+        "status": "accepted",
         "progress": 1,
-        "parentId": null,
-        "children": [],
+        "parentId": "root",
+        "children": ["scope-plan-file", "scope-pro"],
         "metadata": {
-          "dependencies": ["task-1"],
-          "description": "插件支持运行时切换 statePath，不重启 dev server"
+          "description": "每个计划(plan)拥有独立的会话空间。切换计划时自动切换会话上下文，避免跨计划的数据污染。",
+          "tags": ["scope", "decision"]
         }
       },
       {
-        "id": "task-3",
-        "label": "Header 会话下拉选择器",
-        "status": "done",
+        "id": "scope-plan-file",
+        "label": "会话 = 计划目录下的 state 文件",
+        "status": "accepted",
         "progress": 1,
-        "parentId": null,
+        "parentId": "q-scope",
         "children": [],
         "metadata": {
-          "dependencies": ["task-1", "task-2"],
-          "description": "Header 右侧 dropdown，列出所有 state-*.json，点击切换"
+          "description": "每个会话保存为 docs/superpowers-plus/{plan}/state-{skill}.json。文件系统即会话存储，无需数据库。",
+          "tags": ["implementation"]
         }
       },
       {
-        "id": "task-4",
-        "label": "新建会话（UI → Agent 协同）",
-        "status": "done",
-        "progress": 1,
-        "parentId": null,
+        "id": "scope-pro",
+        "label": "讨论：全局会话共享",
+        "status": "active",
+        "progress": 0.5,
+        "parentId": "q-scope",
         "children": [],
         "metadata": {
-          "dependencies": ["task-3"],
-          "description": "新建会话按钮 → Agent 初始化会话内容"
+          "description": "用户提出需求：某些设置（如主题偏好、AI 模型选择）应在所有计划间共享。这需要引入全局作用域 vs 计划作用域的分层机制。正在讨论两种方案的取舍。",
+          "tags": ["open-question", "scope"]
         }
       },
       {
-        "id": "task-5",
-        "label": "重命名/删除会话",
-        "status": "done",
+        "id": "q-persist",
+        "label": "独立文件存储",
+        "status": "accepted",
         "progress": 1,
-        "parentId": null,
-        "children": [],
+        "parentId": "root",
+        "children": ["persist-naming", "persist-lock"],
         "metadata": {
-          "dependencies": ["task-3"],
-          "description": "下拉菜单附带操作，重命名仅 UI 层不改变 Agent sessionId"
+          "description": "会话数据持久化为独立 JSON 文件。每次变更触发前端 HMR 热更新。",
+          "tags": ["architecture"]
         }
       },
       {
-        "id": "task-6",
-        "label": "端口复用检测 + 项目隔离",
-        "status": "done",
+        "id": "persist-naming",
+        "label": "按角色加载",
+        "status": "accepted",
         "progress": 1,
-        "parentId": null,
+        "parentId": "q-persist",
         "children": [],
         "metadata": {
-          "dependencies": ["task-2"],
-          "description": "启动时检测端口是否已启用；Agent 上下文绑定项目根目录"
+          "description": "每个技能有自己的 state-{skill}.json，按需加载。例如 brainstorming 的树形节点与 writing-plans 的看板数据独立存储。",
+          "tags": ["implementation"]
+        }
+      },
+      {
+        "id": "persist-lock",
+        "label": "并发写入保护",
+        "status": "rejected",
+        "progress": 0,
+        "parentId": "q-persist",
+        "children": [],
+        "metadata": {
+          "description": "考虑过文件锁(fcntl)防止并发写入，但当前只有单 Agent 操作，加锁徒增复杂度。已驳回。",
+          "tags": ["rejected", "concurrency"]
+        }
+      },
+      {
+        "id": "q-switch",
+        "label": "切换交互流程",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "root",
+        "children": ["switch-dropdown", "switch-new", "switch-rename-del"],
+        "metadata": {
+          "description": "用户如何在计划间切换、新建和管理的交互设计。",
+          "tags": ["ux", "interaction"]
+        }
+      },
+      {
+        "id": "switch-dropdown",
+        "label": "Header 下拉选择器",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": [],
+        "metadata": {
+          "description": "Header 右侧 dropdown，列出所有现有计划，点击即切换。当前计划名前显示激活指示点。",
+          "tags": ["ui", "component"]
+        }
+      },
+      {
+        "id": "switch-new",
+        "label": "新建计划对话框",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": ["new-agent-flow"],
+        "metadata": {
+          "description": "点击「新建计划」弹出命名对话框，提交后 Agent 自动初始化会话内容。",
+          "tags": ["ui", "flow"]
+        }
+      },
+      {
+        "id": "new-agent-flow",
+        "label": "Agent 自动初始化会话",
+        "status": "pending",
+        "progress": 0,
+        "parentId": "switch-new",
+        "children": [],
+        "metadata": {
+          "description": "新建计划后 Agent 需要做什么：读取项目上下文、生成初始 root 节点、准备默认技能文件。在 waiting list 上。",
+          "tags": ["todo", "agent"]
+        }
+      },
+      {
+        "id": "switch-rename-del",
+        "label": "重命名与删除会话",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": ["rename-caveat"],
+        "metadata": {
+          "description": "下拉菜单附带重命名和删除操作。重命名仅更新 UI 显示名，不影响 Agent 的 sessionId。删除需二次确认。",
+          "tags": ["ux", "crud"]
+        }
+      },
+      {
+        "id": "rename-caveat",
+        "label": "重命名仅 UI 层",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "switch-rename-del",
+        "children": [],
+        "metadata": {
+          "description": "用户重命名会话时只改 UI 标签，Agent 内部 sessionId 保持不变。避免 Agent 上下文丢失。",
+          "tags": ["constraint", "design-decision"]
+        }
+      },
+      {
+        "id": "approach-auth",
+        "label": "认证与权限模型",
+        "status": "pending",
+        "progress": 0.1,
+        "parentId": "root",
+        "children": ["auth-noop", "auth-token"],
+        "metadata": {
+          "description": "目前会话没有认证机制。随着多用户协作需求出现，需要引入基础权限模型。正在收集需求阶段。",
+          "tags": ["new-topic", "security"]
+        }
+      },
+      {
+        "id": "auth-noop",
+        "label": "方案 A：暂不接入认证",
+        "status": "pending",
+        "progress": 0,
+        "parentId": "approach-auth",
+        "children": [],
+        "metadata": {
+          "description": "保持现状，Session 文件为本地文件系统所有。适用于单用户场景。优点：零额外复杂度。缺点：无法多人协作。",
+          "tags": ["option", "minimal"]
+        }
+      },
+      {
+        "id": "auth-token",
+        "label": "方案 B：API Key 认证",
+        "status": "pending",
+        "progress": 0,
+        "parentId": "approach-auth",
+        "children": [],
+        "metadata": {
+          "description": "引入简单的 API Key 认证机制。用户生成 key 后配置到环境变量。优点：轻量级协作支持。缺点：需要管理密钥。",
+          "tags": ["option", "security"]
         }
       }
     ],
-    "edges": [
-      {
-        "from": "task-1",
-        "to": "task-2",
-        "label": "blocks"
-      },
-      {
-        "from": "task-1",
-        "to": "task-3",
-        "label": "blocks"
-      },
-      {
-        "from": "task-2",
-        "to": "task-3",
-        "label": "blocks"
-      },
-      {
-        "from": "task-3",
-        "to": "task-4",
-        "label": "blocks"
-      },
-      {
-        "from": "task-3",
-        "to": "task-5",
-        "label": "blocks"
-      },
-      {
-        "from": "task-2",
-        "to": "task-6",
-        "label": "blocks"
-      }
-    ]
+    "edges": []
   },
-  "feedback": [],
+  "feedback": [
+    {
+      "id": "fb-unprocessed",
+      "nodeId": "scope-pro",
+      "text": "这个全局共享的场景很常见，能否参考 VS Code 的 Setting 分层（User vs Workspace）？",
+      "quickAction": null,
+      "createdAt": "2026-05-11T06:16:42.835Z"
+    },
+    {
+      "id": "fb-processed",
+      "nodeId": "persist-lock",
+      "text": "同意驳回，单 Agent 确实不需要锁",
+      "quickAction": null,
+      "createdAt": "2026-05-11T06:10:00.000Z",
+      "processedAt": "2026-05-11T06:11:00.000Z"
+    },
+    {
+      "id": "fb-pending",
+      "nodeId": "new-agent-flow",
+      "text": "这个 waiting list 上的任务能排个优先级吗？",
+      "quickAction": null,
+      "createdAt": "2026-05-11T06:20:00.000Z"
+    }
+  ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
     "rightSidebarOpen": true,
-    "selectedNodeId": "task-3"
+    "selectedNodeId": "scope-pro"
   }
 }

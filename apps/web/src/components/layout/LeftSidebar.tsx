@@ -37,9 +37,7 @@ export default function LeftSidebar() {
           >
             <Icon size={16} />
             <span>{t(labelKey)}</span>
-            {hasFile && !isActive && (
-              <span className="ml-auto text-[10px] opacity-60">●</span>
-            )}
+            {hasFile && !isActive && <span className="ml-auto text-[10px] opacity-60">●</span>}
           </button>
         );
       })}

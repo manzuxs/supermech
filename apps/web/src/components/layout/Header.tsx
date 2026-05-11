@@ -1,10 +1,17 @@
+import { Globe, Layers, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Globe, Plus, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useWorkbench } from '../../context/WorkbenchContext.tsx';
-import i18n from '../../lib/i18n.ts';
-import ThemeToggle from './ThemeToggle.tsx';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -12,16 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import i18n from '../../lib/i18n.ts';
+import ThemeToggle from './ThemeToggle.tsx';
 
 export default function Header() {
   const { t } = useTranslation();

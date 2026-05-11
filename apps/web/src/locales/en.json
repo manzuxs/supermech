@@ -14,14 +14,7 @@
     "writingPlans": "Writing Plans",
     "executingPlans": "Executing Plans",
     "properties": "Properties",
-    "quickActions": "Quick Actions",
     "feedback": "Feedback"
-  },
-  "actions": {
-    "approve": "Approve",
-    "reject": "Reject",
-    "revise": "Revise",
-    "expand": "Expand"
   },
   "canvas": {
     "empty": "Select a skill from the left sidebar to begin",

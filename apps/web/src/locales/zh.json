@@ -14,14 +14,7 @@
     "writingPlans": "制定计划",
     "executingPlans": "执行计划",
     "properties": "属性详情",
-    "quickActions": "快速操作",
     "feedback": "反馈建议"
-  },
-  "actions": {
-    "approve": "通过",
-    "reject": "驳回",
-    "revise": "修正",
-    "expand": "展开"
   },
   "canvas": {
     "empty": "请从左侧选择一个技能开始",

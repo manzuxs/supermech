@@ -19,9 +19,7 @@
           "dependencies": [],
           "description": "实现 scan/read/write/delete 工具函数",
           "estimatedMinutes": 10,
-          "files": [
-            "packages/watcher/src/session-manager.ts"
-          ]
+          "files": ["packages/watcher/src/session-manager.ts"]
         }
       },
       {
@@ -32,14 +30,10 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": [
-            "task-1"
-          ],
+          "dependencies": ["task-1"],
           "description": "插件支持运行时切换 statePath",
           "estimatedMinutes": 15,
-          "files": [
-            "packages/watcher/src/vite-plugin.ts"
-          ]
+          "files": ["packages/watcher/src/vite-plugin.ts"]
         }
       },
       {
@@ -50,10 +44,7 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": [
-            "task-1",
-            "task-2"
-          ],
+          "dependencies": ["task-1", "task-2"],
           "description": "Header 右侧 plan dropdown",
           "estimatedMinutes": 20
         }
@@ -66,9 +57,7 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": [
-            "task-3"
-          ],
+          "dependencies": ["task-3"],
           "description": "新建计划按钮，自动初始化 skill 文件",
           "estimatedMinutes": 15
         }
@@ -81,9 +70,7 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": [
-            "task-2"
-          ],
+          "dependencies": ["task-2"],
           "description": "LeftSidebar 点击切换当前 plan 下的 skill 文件",
           "estimatedMinutes": 10
         }

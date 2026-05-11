@@ -10,15 +10,7 @@
     "nodes": [],
     "edges": []
   },
-  "feedback": [
-    {
-      "id": "feb96d13-4971-4c16-a302-720b6917bdd7",
-      "nodeId": "__global__",
-      "text": "",
-      "quickAction": "expand",
-      "createdAt": "2026-05-11T06:38:36.153Z"
-    }
-  ],
+  "feedback": [],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,

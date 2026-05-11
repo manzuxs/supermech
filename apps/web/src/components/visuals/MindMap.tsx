@@ -11,16 +11,29 @@ interface LayoutNode {
   id: string;
   label: string;
   status: NodeStatus;
+  description: string;
   x: number;
   y: number;
 }
 
 const STATUS_COLORS: Record<NodeStatus, { bg: string; border: string; text: string }> = {
   pending: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
-  active: { bg: 'color-mix(in srgb, var(--accent) 10%, var(--bg-canvas))', border: 'var(--accent)', text: 'var(--accent)' },
-  accepted: { bg: 'color-mix(in srgb, #22c55e 10%, var(--bg-canvas))', border: '#22c55e', text: '#22c55e' },
+  active: {
+    bg: 'color-mix(in srgb, var(--accent) 10%, var(--bg-canvas))',
+    border: 'var(--accent)',
+    text: 'var(--accent)',
+  },
+  accepted: {
+    bg: 'color-mix(in srgb, #22c55e 10%, var(--bg-canvas))',
+    border: '#22c55e',
+    text: '#22c55e',
+  },
   rejected: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
-  done: { bg: 'color-mix(in srgb, var(--primary) 10%, var(--bg-canvas))', border: 'var(--primary)', text: 'var(--primary)' },
+  done: {
+    bg: 'color-mix(in srgb, var(--primary) 10%, var(--bg-canvas))',
+    border: 'var(--primary)',
+    text: 'var(--primary)',
+  },
 };
 
 function buildLayout(nodes: CanvasNode[]): {
@@ -48,7 +61,17 @@ function buildLayout(nodes: CanvasNode[]): {
   function layout(id: string, x: number, y: number): void {
     const n = map.get(id);
     if (!n) return;
-    layoutNodes.push({ id, label: n.label, status: n.status, x, y });
+    layoutNodes.push({
+      id,
+      label: n.label,
+      status: n.status,
+      description:
+        typeof n.metadata === 'object' && n.metadata !== null
+          ? String((n.metadata as Record<string, unknown>).description ?? '')
+          : '',
+      x,
+      y,
+    });
 
     if (n.children.length > 0) {
       const widths = n.children.map((c) => subtreeWidth(c));
@@ -138,6 +161,10 @@ export default function MindMap({ nodes }: MindMapProps) {
           const isSelected = n.id === selectedId;
           const isRejected = n.status === 'rejected';
           const isActive = n.status === 'active';
+          const fbCount = state.feedback.filter(
+            (f) => f.nodeId === n.id && !('processedAt' in f),
+          ).length;
+          const tooltip = n.description || n.label;
 
           return (
             <g
@@ -150,6 +177,7 @@ export default function MindMap({ nodes }: MindMapProps) {
               tabIndex={0}
               className="cursor-pointer outline-none"
             >
+              <title>{tooltip}</title>
               {/* Selection ring */}
               {isSelected && (
                 <rect
@@ -177,6 +205,15 @@ export default function MindMap({ nodes }: MindMapProps) {
                 strokeWidth={isActive ? 2 : 1}
                 className={isActive ? 'processing-node' : undefined}
               />
+              {/* Unprocessed feedback dot */}
+              {fbCount > 0 && (
+                <circle
+                  cx={n.x + NODE_W / 2 - 6}
+                  cy={n.y - NODE_H / 2 + 6}
+                  r={4}
+                  fill="#f97316"
+                />
+              )}
               {/* Label */}
               <text
                 x={n.x}
@@ -188,7 +225,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                 className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
                 style={{ userSelect: 'none' }}
               >
-                {n.label.length > 18 ? `${n.label.slice(0, 16)}…` : n.label}
+                {n.label.length > 22 ? `${n.label.slice(0, 20)}…` : n.label}
               </text>
             </g>
           );

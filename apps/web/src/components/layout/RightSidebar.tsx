@@ -1,18 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
-
-const QUICK_ACTION_STATUS: Record<string, NodeStatus> = {
-  approve: 'accepted',
-  reject: 'rejected',
-  revise: 'active',
-  expand: 'active',
-};
 
 export default function RightSidebar() {
   const { t } = useTranslation();
-  const { state, addFeedback, updateNode } = useWorkbench();
+  const { state, addFeedback } = useWorkbench();
   const [text, setText] = useState('');
 
   const selectedNode = state.ui.selectedNodeId
@@ -29,14 +21,6 @@ export default function RightSidebar() {
   function handleKeyDown(e: React.KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       handleSubmit();
-    }
-  }
-
-  async function handleQuickAction(action: string) {
-    const nodeId = state.ui.selectedNodeId ?? '__global__';
-    await addFeedback(nodeId, '', action);
-    if (selectedNode && QUICK_ACTION_STATUS[action]) {
-      await updateNode(selectedNode.id, { status: QUICK_ACTION_STATUS[action] });
     }
   }
 
@@ -59,33 +43,32 @@ export default function RightSidebar() {
               <strong className="opacity-60">Status:</strong> {selectedNode.status}
             </div>
             <div>
-              <strong className="opacity-60">Progress:</strong> {Math.round(selectedNode.progress * 100)}%
+              <strong className="opacity-60">Progress:</strong>{' '}
+              {Math.round(selectedNode.progress * 100)}%
             </div>
+            {(selectedNode.metadata?.description as string) && (
+              <div>
+                <strong className="opacity-60">Description:</strong>
+                <p className="mt-0.5 text-xs leading-relaxed opacity-80">
+                  {selectedNode.metadata.description as string}
+                </p>
+              </div>
+            )}
+            {Array.isArray(selectedNode.metadata?.tags) &&
+              (selectedNode.metadata.tags as string[]).length > 0 && (
+                <div>
+                  <strong className="opacity-60">Tags:</strong>{' '}
+                  <span className="text-xs opacity-80">
+                    {(selectedNode.metadata.tags as string[]).join(', ')}
+                  </span>
+                </div>
+              )}
           </div>
         ) : (
           <div className="text-[13px] text-[var(--text-main)] opacity-50">
             {t('canvas.noSelection')}
           </div>
         )}
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)] opacity-50">
-          {t('sidebar.quickActions')}
-        </h3>
-        <div className="flex flex-col gap-1">
-          {['approve', 'reject', 'revise', 'expand'].map((action) => (
-            <button
-              key={action}
-              type="button"
-              onClick={() => handleQuickAction(action)}
-              className="rounded-md border border-[var(--border)] bg-transparent px-2.5 py-1.5 text-left text-xs capitalize text-[var(--text-main)] transition-colors hover:bg-[var(--border)]"
-            >
-              {t(`actions.${action}`)}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Feedback Input */}
