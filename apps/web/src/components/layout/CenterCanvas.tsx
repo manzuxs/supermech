@@ -19,7 +19,7 @@ export default function CenterCanvas() {
   const kanbanTypes: SkillType[] = ['writing-plans', 'executing-plans'];
 
   return (
-    <main className="relative overflow-hidden bg-[var(--bg-canvas)]">
+    <main className="relative h-full w-full overflow-hidden bg-[var(--bg-canvas)]">
       {state.canvas.nodes.length === 0 ? (
         <div className="absolute inset-0 flex items-center justify-center text-[13px] text-[var(--text-main)] opacity-50">
           {t('canvas.empty')}

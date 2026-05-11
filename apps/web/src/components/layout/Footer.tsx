@@ -12,7 +12,7 @@ export default function Footer() {
   const progress = totalNodes > 0 ? Math.round((doneNodes / totalNodes) * 100) : 0;
 
   return (
-    <footer className="col-span-3 flex h-8 items-center justify-between border-t border-[var(--border)] bg-[var(--bg-main)] px-4 text-[11px] text-[var(--text-main)] opacity-60">
+    <footer className="col-span-full flex h-8 items-center justify-between border-t border-[var(--border)] bg-[var(--bg-main)] px-4 text-[11px] text-[var(--text-main)] opacity-60">
       <span>
         {t('footer.status')}: {t(`footer.${state.meta.agentStatus}`)}
       </span>

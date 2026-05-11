@@ -46,7 +46,7 @@ export default function Header() {
   }
 
   return (
-    <header className="col-span-3 flex h-16 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-main)] px-4">
+    <header className="col-span-full flex h-16 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-main)] px-4">
       <div className="flex items-center gap-3">
         <span className="text-[15px] font-semibold text-[var(--text-main)]">{t('app.title')}</span>
         <span className="max-w-[200px] truncate text-xs text-[var(--text-main)] opacity-60">

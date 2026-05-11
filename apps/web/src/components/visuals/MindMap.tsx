@@ -115,9 +115,8 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
   const x1 = from.x;
   const y1 = from.y + NODE_H / 2;
   const x2 = to.x;
-  // Stop exactly at the card edge
-  const y2 = to.y - NODE_H / 2;
-  // Use two control points to ensure the line enters the target node vertically
+  // Inset by 2px so arrow tip sits slightly inside the card edge
+  const y2 = to.y - NODE_H / 2 + 2;
   const cy1 = y1 + (y2 - y1) * 0.5;
   const cy2 = y1 + (y2 - y1) * 0.5;
   return `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`;
@@ -159,10 +158,10 @@ export default function MindMap({ nodes }: MindMapProps) {
           <marker
             id="arrowhead"
             viewBox="0 0 10 10"
-            refX="10"
+            refX="8"
             refY="5"
-            markerWidth="6"
-            markerHeight="6"
+            markerWidth="5"
+            markerHeight="5"
             orient="auto"
           >
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
