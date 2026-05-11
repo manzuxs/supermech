@@ -8,6 +8,11 @@ import { superpowersWatcherPlugin } from 'watcher';
 const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(dirname, './src'),
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

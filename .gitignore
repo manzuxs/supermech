@@ -6,3 +6,5 @@ superpowers/
 # Build artifacts
 .turbo/
 node_modules/
+dist/
+**/dist/

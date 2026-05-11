@@ -19,7 +19,9 @@
           "dependencies": [],
           "description": "实现 scan/read/write/delete 工具函数",
           "estimatedMinutes": 10,
-          "files": ["packages/watcher/src/session-manager.ts"]
+          "files": [
+            "packages/watcher/src/session-manager.ts"
+          ]
         }
       },
       {
@@ -30,10 +32,14 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": ["task-1"],
+          "dependencies": [
+            "task-1"
+          ],
           "description": "插件支持运行时切换 statePath",
           "estimatedMinutes": 15,
-          "files": ["packages/watcher/src/vite-plugin.ts"]
+          "files": [
+            "packages/watcher/src/vite-plugin.ts"
+          ]
         }
       },
       {
@@ -44,7 +50,10 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": ["task-1", "task-2"],
+          "dependencies": [
+            "task-1",
+            "task-2"
+          ],
           "description": "Header 右侧 plan dropdown",
           "estimatedMinutes": 20
         }
@@ -57,7 +66,9 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": ["task-3"],
+          "dependencies": [
+            "task-3"
+          ],
           "description": "新建计划按钮，自动初始化 skill 文件",
           "estimatedMinutes": 15
         }
@@ -70,20 +81,74 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "dependencies": ["task-2"],
+          "dependencies": [
+            "task-2"
+          ],
           "description": "LeftSidebar 点击切换当前 plan 下的 skill 文件",
           "estimatedMinutes": 10
         }
       }
     ],
     "edges": [
-      { "from": "task-1", "to": "task-2", "label": "blocks" },
-      { "from": "task-1", "to": "task-3", "label": "blocks" },
-      { "from": "task-2", "to": "task-3", "label": "blocks" },
-      { "from": "task-3", "to": "task-5", "label": "blocks" }
+      {
+        "from": "task-1",
+        "to": "task-2",
+        "label": "blocks"
+      },
+      {
+        "from": "task-1",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-5",
+        "label": "blocks"
+      }
     ]
   },
-  "feedback": [],
+  "feedback": [
+    {
+      "id": "ea1e28d2-0cd5-4b32-9de1-c26df9015a9e",
+      "nodeId": "__global__",
+      "text": "",
+      "quickAction": "approve",
+      "createdAt": "2026-05-11T06:59:19.674Z"
+    },
+    {
+      "id": "b7e754bc-bc3f-4770-94da-21c4afb8e986",
+      "nodeId": "__global__",
+      "text": "",
+      "quickAction": "reject",
+      "createdAt": "2026-05-11T06:59:20.101Z"
+    },
+    {
+      "id": "facea490-24a1-4b1b-b9cb-bc9656a38662",
+      "nodeId": "__global__",
+      "text": "",
+      "quickAction": "revise",
+      "createdAt": "2026-05-11T06:59:20.523Z"
+    },
+    {
+      "id": "12eaf7cd-09d1-4247-b734-95b748cd9bef",
+      "nodeId": "__global__",
+      "text": "",
+      "quickAction": "expand",
+      "createdAt": "2026-05-11T06:59:20.869Z"
+    },
+    {
+      "id": "a3626c1a-a1b5-4a75-840b-5151ff3ea8d3",
+      "nodeId": "__global__",
+      "text": "",
+      "quickAction": "revise",
+      "createdAt": "2026-05-11T06:59:21.286Z"
+    }
+  ],
   "ui": {
     "theme": "dark",
     "leftSidebarOpen": true,

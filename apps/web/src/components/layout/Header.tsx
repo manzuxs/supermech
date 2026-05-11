@@ -1,13 +1,34 @@
-import { Globe, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Globe, Plus, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import i18n from '../../lib/i18n.ts';
 import ThemeToggle from './ThemeToggle.tsx';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function Header() {
   const { t } = useTranslation();
   const { state, plans, currentPlan, currentSkill, switchPlan, createPlan } = useWorkbench();
   const { meta } = state;
+  const [newPlanName, setNewPlanName] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const statusColors: Record<string, string> = {
     idle: '#737373',
@@ -16,10 +37,11 @@ export default function Header() {
     error: '#ef4444',
   };
 
-  async function handleNewPlan() {
-    const name = window.prompt('New plan name:');
-    if (name?.trim()) {
-      await createPlan(name.trim());
+  async function handleCreatePlan() {
+    if (newPlanName.trim()) {
+      await createPlan(newPlanName.trim());
+      setNewPlanName('');
+      setIsDialogOpen(false);
     }
   }
 
@@ -38,24 +60,65 @@ export default function Header() {
 
       <div className="flex items-center gap-3">
         {/* Plan selector */}
-        <div className="flex items-center gap-1">
-          <select
-            value={currentPlan}
-            onChange={(e) => switchPlan(e.target.value)}
-            className="max-w-[180px] rounded-md border border-[var(--border)] bg-[var(--bg-main)] px-2 py-1 text-xs text-[var(--text-main)]"
-          >
-            <option value="default">default</option>
-            {plans
-              .filter((p) => p !== 'default')
-              .map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-          </select>
-          <ActionButton onClick={handleNewPlan} title={t('common.new_plan')}>
-            <Plus size={14} />
-          </ActionButton>
+        <div className="flex items-center gap-2">
+          <Select value={currentPlan} onValueChange={switchPlan}>
+            <SelectTrigger className="h-8 border-none bg-transparent px-2 text-xs font-medium hover:bg-accent/50 focus:ring-0">
+              <div className="flex items-center gap-2">
+                <Layers size={14} className="text-muted-foreground" />
+                <SelectValue placeholder="Select plan" />
+              </div>
+            </SelectTrigger>
+            <SelectContent align="end" className="min-w-[180px]">
+              <SelectItem value="default">default</SelectItem>
+              {plans
+                .filter((p) => p !== 'default')
+                .map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                title={t('common.new_plan')}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent p-0 text-[var(--text-main)] opacity-60 hover:bg-accent/50 hover:opacity-100"
+              >
+                <Plus size={16} />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{t('common.new_plan')}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={newPlanName}
+                    onChange={(e) => setNewPlanName(e.target.value)}
+                    className="col-span-3"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreatePlan();
+                    }}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreatePlan}>Create</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="flex items-center gap-1.5">
