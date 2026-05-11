@@ -11,14 +11,7 @@
       "planHeader": {
         "goal": "实现用户认证系统：OAuth2 第三方登录 + JWT 会话管理",
         "architecture": "后端：Express.js + Passport.js OAuth2 策略集成，JWT 无状态 token 认证中间件。前端：React AuthContext 封装 React Router v6，路由守卫自动拦截未认证请求，Access Token 过期自动刷新。",
-        "techStack": [
-          "Express.js",
-          "Passport.js",
-          "React",
-          "JWT",
-          "PostgreSQL",
-          "bcrypt"
-        ],
+        "techStack": ["Express.js", "Passport.js", "React", "JWT", "PostgreSQL", "bcrypt"],
         "phases": [
           {
             "name": "基础设施",
@@ -580,6 +573,6 @@
     "theme": "dark",
     "leftSidebarOpen": true,
     "rightSidebarOpen": true,
-    "selectedNodeId": "task-9"
+    "selectedNodeId": "task-1"
   }
 }

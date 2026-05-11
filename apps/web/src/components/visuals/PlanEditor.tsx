@@ -1,15 +1,13 @@
+import { Beaker, Check, ChevronDown, ChevronRight, Code, Hourglass, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Target,
-  Code,
-  Beaker,
-  ChevronDown,
-  ChevronRight,
-  Hourglass,
-  Check,
-} from 'lucide-react';
-import type { CanvasNode, ImplementationStep, PlanHeader, WorkbenchState } from 'schemas';
+import type {
+  CanvasNode,
+  ImplementationStep,
+  NodeStatus,
+  PlanHeader,
+  WorkbenchState,
+} from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 type TabKey = 'goal' | 'code' | 'test';
@@ -43,12 +41,34 @@ function getTaskMeta(node: CanvasNode): Record<string, unknown> {
 
 export default function PlanEditor() {
   const { t } = useTranslation();
-  const { state, selectNode, addFeedback } = useWorkbench();
+  const { state, selectNode, addFeedback, updateNode } = useWorkbench();
   const { nodes, edges } = state.canvas;
   const planHeader = getPlanHeader(state);
   const selectedId = state.ui.selectedNodeId;
   const selectedNode = selectedId ? (nodes.find((n) => n.id === selectedId) ?? null) : null;
   const [activeTab, setActiveTab] = useState<TabKey>('goal');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  // helper: cycle status for writing-plans review
+  const REVIEW_CYCLE: NodeStatus[] = ['pending', 'accepted', 'rejected'];
+  function cycleStatus(node: CanvasNode) {
+    const idx = REVIEW_CYCLE.indexOf(node.status);
+    const next = idx >= 0 ? REVIEW_CYCLE[(idx + 1) % REVIEW_CYCLE.length] : 'pending';
+    updateNode(node.id, { status: next });
+  }
+
+  function startEdit(node: CanvasNode) {
+    setEditingId(node.id);
+    setEditValue(node.label);
+  }
+
+  function commitEdit(id: string) {
+    if (editValue.trim()) {
+      updateNode(id, { label: editValue.trim() });
+    }
+    setEditingId(null);
+  }
 
   // empty state
   if (nodes.length === 0) {
@@ -150,6 +170,12 @@ export default function PlanEditor() {
                 selectedId={selectedId}
                 depMap={depMap}
                 onSelect={(id) => selectNode(id)}
+                onStatusCycle={cycleStatus}
+                onStartEdit={startEdit}
+                editingId={editingId}
+                editValue={editValue}
+                onEditChange={setEditValue}
+                onCommitEdit={commitEdit}
               />
             );
           })}
@@ -163,6 +189,12 @@ export default function PlanEditor() {
               selectedId={selectedId}
               depMap={depMap}
               onSelect={(id) => selectNode(id)}
+              onStatusCycle={cycleStatus}
+              onStartEdit={startEdit}
+              editingId={editingId}
+              editValue={editValue}
+              onEditChange={setEditValue}
+              onCommitEdit={commitEdit}
             />
           )}
         </div>
@@ -250,6 +282,12 @@ function PhaseGroup({
   selectedId,
   depMap,
   onSelect,
+  onStatusCycle,
+  onStartEdit,
+  editingId,
+  editValue,
+  onEditChange,
+  onCommitEdit,
 }: {
   name: string;
   description?: string;
@@ -258,6 +296,12 @@ function PhaseGroup({
   selectedId: string | null;
   depMap: Map<string, string[]>;
   onSelect: (id: string) => void;
+  onStatusCycle: (node: CanvasNode) => void;
+  onStartEdit: (node: CanvasNode) => void;
+  editingId: string | null;
+  editValue: string;
+  onEditChange: (value: string) => void;
+  onCommitEdit: (id: string) => void;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -286,32 +330,73 @@ function PhaseGroup({
         <div className="ml-4 space-y-1">
           {items.map((node) => {
             const isSelected = node.id === selectedId;
+            const isEditing = node.id === editingId;
             const deps = depMap.get(node.id);
             const isDone = node.status === 'done' || node.status === 'accepted';
+
+            const rowClass = `flex w-full items-center gap-2 rounded-md px-4 py-2 text-left text-xs transition-colors ${
+              isSelected
+                ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
+                : 'text-[var(--text-main)] opacity-70 hover:bg-[var(--border)]/20 hover:opacity-100'
+            }`;
+
             return (
-              <button
-                key={node.id}
-                type="button"
-                onClick={() => onSelect(node.id)}
-                className={`flex w-full items-center gap-2 rounded-md px-4 py-2 text-left text-xs transition-colors ${
-                  isSelected
-                    ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
-                    : 'text-[var(--text-main)] opacity-70 hover:bg-[var(--border)]/20 hover:opacity-100'
-                }`}
-              >
+              <div key={node.id} className={rowClass}>
+                {/* Clickable status dot */}
                 <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[node.status] ?? 'bg-muted-foreground/40'}`}
+                  role="button"
+                  tabIndex={0}
+                  title="Click to cycle status: pending → accepted → rejected"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusCycle(node);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.stopPropagation();
+                      onStatusCycle(node);
+                    }
+                  }}
+                  className={`h-2.5 w-2.5 shrink-0 cursor-pointer rounded-full hover:ring-2 hover:ring-[var(--primary)]/50 ${STATUS_DOT[node.status] ?? 'bg-muted-foreground/40'}`}
                 />
-                <span className={`flex-1 truncate ${isDone ? 'opacity-40 line-through' : ''}`}>
-                  {node.label}
-                </span>
+
+                {/* Editable label */}
+                {isEditing ? (
+                  <input
+                    ref={(el) => {
+                      if (el && !el.matches(':focus')) el.focus();
+                    }}
+                    value={editValue}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={() => onCommitEdit(node.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onCommitEdit(node.id);
+                      if (e.key === 'Escape') onCommitEdit(node.id);
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 rounded border border-[var(--primary)] bg-[var(--bg-main)] px-1.5 py-0.5 text-xs text-[var(--text-main)] outline-none"
+                  />
+                ) : (
+                  <span
+                    className={`flex-1 truncate ${isDone ? 'opacity-40 line-through' : ''}`}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(node.id);
+                      onStartEdit(node);
+                    }}
+                  >
+                    {node.label}
+                  </span>
+                )}
+
                 {deps && deps.length > 0 && (
                   <span className="flex items-center gap-1 shrink-0 text-[9px] text-[var(--text-main)] opacity-30">
                     <Hourglass size={10} />
                     {deps.length}
                   </span>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -324,6 +409,7 @@ function PhaseGroup({
 
 function GoalTab({ node }: { node: CanvasNode }) {
   const { t } = useTranslation();
+  const { updateNode } = useWorkbench();
   const meta = getTaskMeta(node);
   const goal = meta.goal as string | undefined;
   const oldDescription = meta.description as string | undefined;
@@ -336,10 +422,75 @@ function GoalTab({ node }: { node: CanvasNode }) {
 
   const displayGoal = goal || oldDescription || 'No description provided.';
 
+  function handleStatusChange(status: NodeStatus) {
+    updateNode(node.id, { status });
+  }
+
+  function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const pct = Math.round((x / rect.width) * 100) / 100;
+    updateNode(node.id, { progress: Math.min(1, Math.max(0, pct)) });
+  }
+
   return (
     <div className="space-y-4">
       {/* Goal text */}
       <p className="text-sm leading-relaxed text-[var(--text-main)]">{displayGoal}</p>
+
+      {/* Status + Progress controls */}
+      <div className="space-y-2 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-main)] opacity-40">
+            {t('editor.status')}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {(['pending', 'accepted', 'rejected'] as NodeStatus[]).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleStatusChange(s)}
+                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-all ${
+                  node.status === s
+                    ? s === 'accepted'
+                      ? 'border-green-500/40 bg-green-500/15 text-green-500'
+                      : s === 'rejected'
+                        ? 'border-red-500/40 bg-red-500/15 text-red-500'
+                        : 'border-[var(--border)] bg-[var(--border)]/20 text-[var(--text-main)]'
+                    : 'border-transparent text-[var(--text-main)] opacity-30 hover:opacity-60'
+                }`}
+              >
+                {s === 'pending' ? 'Pending' : s === 'accepted' ? 'Approved' : 'Rejected'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-main)] opacity-40">
+            {t('editor.progress')}
+          </span>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleProgressClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                const pct = e.key === ' ' ? 1 : node.progress >= 1 ? 0 : node.progress + 0.25;
+                updateNode(node.id, { progress: Math.min(1, pct) });
+              }
+            }}
+            className="h-2 flex-1 cursor-pointer overflow-hidden rounded-full bg-[var(--border)] hover:ring-1 hover:ring-[var(--primary)]/30"
+          >
+            <div
+              className="h-full rounded-full bg-[var(--primary)] transition-all duration-300"
+              style={{ width: `${Math.round(node.progress * 100)}%` }}
+            />
+          </div>
+          <span className="text-[11px] font-medium text-[var(--text-main)] opacity-60">
+            {Math.round(node.progress * 100)}%
+          </span>
+        </div>
+      </div>
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2">

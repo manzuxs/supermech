@@ -2,6 +2,7 @@ import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from '
 import { join, resolve } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
 import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
+import { validateState } from './validate.ts';
 
 export interface WatcherPluginOptions {
   statePath?: string;
@@ -248,6 +249,21 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
           } else {
             sendJSON(res, 404, { ok: false, error: 'not found' });
             return;
+          }
+
+          const { valid, errors: validationErrors } = validateState(s);
+          if (!valid) {
+            console.error('[superpowers] state validation failed:', validationErrors.join('; '));
+            s.meta.agentStatus = 'error' as const;
+            s.feedback.push({
+              id: crypto.randomUUID(),
+              nodeId: '__global__',
+              text: `State validation error: ${validationErrors.join('; ')}`,
+              section: null,
+              stepIndex: null,
+              quickAction: null,
+              createdAt: new Date().toISOString(),
+            });
           }
 
           const raw = JSON.stringify(s, null, 2);

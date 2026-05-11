@@ -41,6 +41,8 @@
     "codeSteps": "Code Steps",
     "tests": "Tests",
     "files": "Files",
+    "status": "Status",
+    "progress": "Progress",
     "emptyTasks": "No tasks yet — the agent will populate the plan during planning.",
     "selectTask": "Select a task to view details",
     "noSteps": "No implementation steps defined",
