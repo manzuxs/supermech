@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
@@ -115,7 +116,6 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
   const x1 = from.x;
   const y1 = from.y + NODE_H / 2;
   const x2 = to.x;
-  // Inset by 2px so arrow tip sits slightly inside the card edge
   const y2 = to.y - NODE_H / 2 + 2;
   const cy1 = y1 + (y2 - y1) * 0.5;
   const cy2 = y1 + (y2 - y1) * 0.5;
@@ -129,31 +129,116 @@ interface MindMapProps {
 export default function MindMap({ nodes }: MindMapProps) {
   const { state, updateUI } = useWorkbench();
   const { nodes: layoutNodes, edges } = buildLayout(nodes);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Reset transform when nodes change first time
+  useEffect(() => {
+    if (layoutNodes.length > 0 && transform.x === 0 && transform.y === 0) {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const minX = Math.min(...layoutNodes.map(n => n.x)) - NODE_W/2;
+        const maxX = Math.max(...layoutNodes.map(n => n.x)) + NODE_W/2;
+        const mapW = maxX - minX;
+        setTransform({
+          x: (rect.width - mapW) / 2 - minX,
+          y: PAD,
+          k: 1
+        });
+      }
+    }
+  }, [layoutNodes.length]);
+
+  // Handle Wheel (Pan & Zoom)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheelRaw = (e: WheelEvent) => {
+      e.preventDefault();
+      
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom
+        const delta = -e.deltaY;
+        const factor = Math.pow(1.1, delta / 100);
+        
+        setTransform(prev => {
+          const newK = Math.min(Math.max(prev.k * factor, 0.1), 5);
+          const rect = el.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          
+          const dx = (mouseX - prev.x) / prev.k;
+          const dy = (mouseY - prev.y) / prev.k;
+          
+          return {
+            x: mouseX - dx * newK,
+            y: mouseY - dy * newK,
+            k: newK
+          };
+        });
+      } else {
+        // Pan
+        setTransform(prev => ({
+          ...prev,
+          x: prev.x - e.deltaX,
+          y: prev.y - e.deltaY
+        }));
+      }
+    };
+
+    el.addEventListener('wheel', handleWheelRaw, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheelRaw);
+  }, []);
 
   if (layoutNodes.length === 0) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: 'var(--color-text-secondary)',
-          fontSize: 13,
-        }}
-      >
+      <div className="flex h-full items-center justify-center text-[13px] text-[var(--muted-foreground)] opacity-50">
         No ideas yet — the agent will populate the map during brainstorming.
       </div>
     );
   }
 
-  const svgW = Math.max(...layoutNodes.map((n) => n.x)) + NODE_W / 2 + PAD;
-  const svgH = Math.max(...layoutNodes.map((n) => n.y)) + NODE_H / 2 + PAD;
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Left click only
+    if ((e.target as HTMLElement).closest('g[role="button"]')) return;
+    
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setTransform(prev => ({
+      ...prev,
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   const selectedId = state.ui.selectedNodeId;
 
   return (
-    <div style={{ width: '100%', height: '100%', overflow: 'auto' }} className="canvas-dot-grid">
-      <svg width={svgW} height={svgH} style={{ display: 'block' }} role="img" aria-label="Mind map">
+    <div 
+      ref={containerRef}
+      className={`canvas-dot-grid relative h-full w-full overflow-hidden select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{
+        backgroundPosition: `${transform.x}px ${transform.y}px`,
+        backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`
+      }}
+    >
+      <svg width="100%" height="100%" style={{ display: 'block' }} role="img" aria-label="Mind map">
         <defs>
           <marker
             id="arrowhead"
@@ -168,151 +253,156 @@ export default function MindMap({ nodes }: MindMapProps) {
           </marker>
         </defs>
 
-        {/* Edges */}
-        {edges.map((e) => {
-          const from = layoutNodes.find((n) => n.id === e.from);
-          const to = layoutNodes.find((n) => n.id === e.to);
-          if (!from || !to) return null;
-          return (
-            <path
-              key={`${e.from}-${e.to}`}
-              d={edgePath(from, to)}
-              fill="none"
-              stroke="#94a3b8"
-              strokeWidth={1.5}
-              markerEnd="url(#arrowhead)"
-              className="opacity-70"
-            />
-          );
-        })}
-
-        {/* Nodes */}
-        {layoutNodes.map((n) => {
-          const colors = STATUS_COLORS[n.status];
-          const isSelected = n.id === selectedId;
-          const isRejected = n.status === 'rejected';
-          const isActive = n.status === 'active';
-          const fbCount = state.feedback.filter(
-            (f) => f.nodeId === n.id && !('processedAt' in f),
-          ).length;
-          const tooltip = n.description || n.label;
-
-          return (
-            <g
-              key={n.id}
-              onClick={() => updateUI({ selectedNodeId: n.id })}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') updateUI({ selectedNodeId: n.id });
-              }}
-              role="button"
-              tabIndex={0}
-              className="group cursor-pointer outline-none transition-transform duration-200 active:scale-95"
-            >
-              <title>{tooltip}</title>
-              
-              {/* Card Shadow/Glow (Selection) */}
-              {isSelected && (
-                <rect
-                  x={n.x - NODE_W / 2 - 4}
-                  y={n.y - NODE_H / 2 - 4}
-                  width={NODE_W + 8}
-                  height={NODE_H + 8}
-                  rx={14}
-                  ry={14}
-                  fill="color-mix(in srgb, var(--primary) 12%, transparent)"
-                />
-              )}
-
-              {/* Node body */}
-              <rect
-                x={n.x - NODE_W / 2}
-                y={n.y - NODE_H / 2}
-                width={NODE_W}
-                height={NODE_H}
-                rx={12}
-                ry={12}
-                fill={colors.bg}
-                stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border}
-                strokeWidth={isSelected || isActive ? 2 : 1}
-                className={isActive ? 'processing-node' : 'transition-colors duration-200 group-hover:stroke-primary/40'}
-                filter="drop-shadow(0 1px 2px rgb(0 0 0 / 0.03))"
+        <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
+          {/* Edges */}
+          {edges.map((e) => {
+            const from = layoutNodes.find((n) => n.id === e.from);
+            const to = layoutNodes.find((n) => n.id === e.to);
+            if (!from || !to) return null;
+            return (
+              <path
+                key={`${e.from}-${e.to}`}
+                d={edgePath(from, to)}
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth={1.5}
+                markerEnd="url(#arrowhead)"
+                className="opacity-70"
               />
+            );
+          })}
 
-              {/* Content via foreignObject for robust truncation */}
-              <foreignObject
-                x={n.x - NODE_W / 2 + 12}
-                y={n.y - NODE_H / 2 + 12}
-                width={NODE_W - 24}
-                height={NODE_H - 24}
-                style={{ pointerEvents: 'none' }}
+          {/* Nodes */}
+          {layoutNodes.map((n) => {
+            const colors = STATUS_COLORS[n.status];
+            const isSelected = n.id === selectedId;
+            const isRejected = n.status === 'rejected';
+            const isActive = n.status === 'active';
+            const fbCount = state.feedback.filter(
+              (f) => f.nodeId === n.id && !('processedAt' in f),
+            ).length;
+            const tooltip = n.description || n.label;
+
+            return (
+              <g
+                key={n.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateUI({ selectedNodeId: n.id });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') updateUI({ selectedNodeId: n.id });
+                }}
+                role="button"
+                tabIndex={0}
+                className="group cursor-pointer outline-none transition-transform duration-200 active:scale-95"
               >
-                <div 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center',
-                    gap: '2px'
-                  }}
+                <title>{tooltip}</title>
+                
+                {/* Card Shadow/Glow (Selection) */}
+                {isSelected && (
+                  <rect
+                    x={n.x - NODE_W / 2 - 4}
+                    y={n.y - NODE_H / 2 - 4}
+                    width={NODE_W + 8}
+                    height={NODE_H + 8}
+                    rx={14}
+                    ry={14}
+                    fill="color-mix(in srgb, var(--primary) 12%, transparent)"
+                  />
+                )}
+
+                {/* Node body */}
+                <rect
+                  x={n.x - NODE_W / 2}
+                  y={n.y - NODE_H / 2}
+                  width={NODE_W}
+                  height={NODE_H}
+                  rx={12}
+                  ry={12}
+                  fill={colors.bg}
+                  stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border}
+                  strokeWidth={isSelected || isActive ? 2 : 1}
+                  className={isActive ? 'processing-node' : 'transition-colors duration-200 group-hover:stroke-primary/40'}
+                  filter="drop-shadow(0 1px 2px rgb(0 0 0 / 0.03))"
+                />
+
+                {/* Content via foreignObject */}
+                <foreignObject
+                  x={n.x - NODE_W / 2 + 12}
+                  y={n.y - NODE_H / 2 + 12}
+                  width={NODE_W - 24}
+                  height={NODE_H - 24}
+                  style={{ pointerEvents: 'none' }}
                 >
                   <div 
                     style={{ 
-                      color: colors.text, 
-                      fontSize: '13px', 
-                      fontWeight: 600, 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis',
-                      lineHeight: '1.2'
+                      width: '100%', 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'center',
+                      gap: '2px'
                     }}
-                    className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
                   >
-                    {n.label}
-                  </div>
-                  {n.description && (
                     <div 
                       style={{ 
-                        color: colors.subtext, 
-                        fontSize: '11px', 
+                        color: colors.text, 
+                        fontSize: '13px', 
+                        fontWeight: 600, 
                         whiteSpace: 'nowrap', 
                         overflow: 'hidden', 
                         textOverflow: 'ellipsis',
-                        opacity: 0.7,
                         lineHeight: '1.2'
                       }}
+                      className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
                     >
-                      {n.description}
+                      {n.label}
                     </div>
-                  )}
-                </div>
-              </foreignObject>
+                    {n.description && (
+                      <div 
+                        style={{ 
+                          color: colors.subtext, 
+                          fontSize: '11px', 
+                          whiteSpace: 'nowrap', 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis',
+                          opacity: 0.7,
+                          lineHeight: '1.2'
+                        }}
+                      >
+                        {n.description}
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
 
-              {/* Unprocessed feedback dot */}
-              {fbCount > 0 && (
-                <circle
-                  cx={n.x + NODE_W / 2 - 8}
-                  cy={n.y - NODE_H / 2 + 8}
-                  r={5}
-                  fill="#f97316"
-                  stroke="white"
-                  strokeWidth={2}
+                {/* Unprocessed feedback dot */}
+                {fbCount > 0 && (
+                  <circle
+                    cx={n.x + NODE_W / 2 - 8}
+                    cy={n.y - NODE_H / 2 + 8}
+                    r={5}
+                    fill="#f97316"
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                )}
+
+                {/* Status Indicator Bar (Left) */}
+                <rect
+                  x={n.x - NODE_W / 2}
+                  y={n.y - NODE_H / 2 + 16}
+                  width={3}
+                  height={NODE_H - 32}
+                  rx={1.5}
+                  fill={isSelected ? 'var(--primary)' : colors.border}
+                  className={isRejected ? 'opacity-20' : 'opacity-100'}
                 />
-              )}
-
-              {/* Status Indicator Bar (Left) */}
-              <rect
-                x={n.x - NODE_W / 2}
-                y={n.y - NODE_H / 2 + 16}
-                width={3}
-                height={NODE_H - 32}
-                rx={1.5}
-                fill={isSelected ? 'var(--primary)' : colors.border}
-                className={isRejected ? 'opacity-20' : 'opacity-100'}
-              />
-            </g>
-          );
-        })}
+              </g>
+            );
+          })}
+        </g>
       </svg>
     </div>
   );
