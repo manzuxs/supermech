@@ -16,11 +16,11 @@ interface LayoutNode {
 }
 
 const STATUS_COLORS: Record<NodeStatus, { bg: string; border: string; text: string }> = {
-  pending: { bg: '#262626', border: '#404040', text: '#a3a3a3' },
-  active: { bg: '#451a03', border: '#f59e0b', text: '#fbbf24' },
-  accepted: { bg: '#052e16', border: '#22c55e', text: '#86efac' },
-  rejected: { bg: '#1a1a1a', border: '#525252', text: '#737373' },
-  done: { bg: '#172554', border: '#3b82f6', text: '#93c5fd' },
+  pending: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
+  active: { bg: 'color-mix(in srgb, var(--accent) 10%, var(--bg-canvas))', border: 'var(--accent)', text: 'var(--accent)' },
+  accepted: { bg: 'color-mix(in srgb, #22c55e 10%, var(--bg-canvas))', border: '#22c55e', text: '#22c55e' },
+  rejected: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
+  done: { bg: 'color-mix(in srgb, var(--primary) 10%, var(--bg-canvas))', border: 'var(--primary)', text: 'var(--primary)' },
 };
 
 function buildLayout(nodes: CanvasNode[]): {
@@ -148,19 +148,19 @@ export default function MindMap({ nodes }: MindMapProps) {
               }}
               role="button"
               tabIndex={0}
-              style={{ cursor: 'pointer' }}
+              className="cursor-pointer outline-none"
             >
               {/* Selection ring */}
               {isSelected && (
                 <rect
-                  x={n.x - NODE_W / 2 - 3}
-                  y={n.y - NODE_H / 2 - 3}
-                  width={NODE_W + 6}
-                  height={NODE_H + 6}
+                  x={n.x - NODE_W / 2 - 2}
+                  y={n.y - NODE_H / 2 - 2}
+                  width={NODE_W + 4}
+                  height={NODE_H + 4}
                   rx={10}
                   ry={10}
                   fill="none"
-                  stroke="var(--color-brand)"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                 />
               )}
@@ -173,9 +173,9 @@ export default function MindMap({ nodes }: MindMapProps) {
                 rx={8}
                 ry={8}
                 fill={colors.bg}
-                stroke={isActive ? '#f59e0b' : colors.border}
+                stroke={isActive ? 'var(--accent)' : colors.border}
                 strokeWidth={isActive ? 2 : 1}
-                className={isActive ? 'mindmap-node--active' : undefined}
+                className={isActive ? 'processing-node' : undefined}
               />
               {/* Label */}
               <text
@@ -185,7 +185,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                 dominantBaseline="central"
                 fill={colors.text}
                 fontSize={13}
-                textDecoration={isRejected ? 'line-through' : 'none'}
+                className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
                 style={{ userSelect: 'none' }}
               >
                 {n.label.length > 18 ? `${n.label.slice(0, 16)}…` : n.label}

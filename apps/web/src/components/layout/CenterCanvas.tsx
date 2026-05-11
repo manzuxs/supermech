@@ -10,16 +10,7 @@ export default function CenterCanvas() {
 
   if (!state.meta.activeSkill) {
     return (
-      <main
-        style={{
-          gridArea: 'canvas',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--color-text-secondary)',
-          fontSize: 14,
-        }}
-      >
+      <main className="flex items-center justify-center text-sm text-[var(--text-main)] opacity-50">
         {t('canvas.empty')}
       </main>
     );
@@ -28,26 +19,9 @@ export default function CenterCanvas() {
   const kanbanTypes: SkillType[] = ['writing-plans', 'executing-plans'];
 
   return (
-    <main
-      style={{
-        gridArea: 'canvas',
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'var(--color-bg)',
-      }}
-    >
+    <main className="relative overflow-hidden bg-[var(--bg-canvas)]">
       {state.canvas.nodes.length === 0 ? (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-text-secondary)',
-            fontSize: 13,
-          }}
-        >
+        <div className="absolute inset-0 flex items-center justify-center text-[13px] text-[var(--text-main)] opacity-50">
           {t('canvas.empty')}
         </div>
       ) : kanbanTypes.includes(state.canvas.skillType) ? (

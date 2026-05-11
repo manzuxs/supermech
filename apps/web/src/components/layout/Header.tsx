@@ -24,61 +24,25 @@ export default function Header() {
   }
 
   return (
-    <header
-      style={{
-        gridArea: 'header',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        height: 48,
-        borderBottom: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>{t('app.title')}</span>
-        <span
-          style={{
-            fontSize: 12,
-            color: 'var(--color-text-secondary)',
-            maxWidth: 200,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
+    <header className="col-span-3 flex h-16 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-main)] px-4">
+      <div className="flex items-center gap-3">
+        <span className="text-[15px] font-semibold text-[var(--text-main)]">{t('app.title')}</span>
+        <span className="max-w-[200px] truncate text-xs text-[var(--text-main)] opacity-60">
           {meta.projectName}
         </span>
         {/* Skill indicator */}
-        <span
-          style={{
-            fontSize: 11,
-            padding: '2px 8px',
-            borderRadius: 4,
-            background: 'var(--color-border)',
-            color: 'var(--color-text-secondary)',
-          }}
-        >
+        <span className="rounded bg-[var(--border)] px-2 py-0.5 text-[11px] text-[var(--text-main)] opacity-60">
           {currentSkill}
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         {/* Plan selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div className="flex items-center gap-1">
           <select
             value={currentPlan}
             onChange={(e) => switchPlan(e.target.value)}
-            style={{
-              fontSize: 12,
-              padding: '3px 8px',
-              borderRadius: 6,
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-bg)',
-              color: 'var(--color-text)',
-              maxWidth: 180,
-            }}
+            className="max-w-[180px] rounded-md border border-[var(--border)] bg-[var(--bg-main)] px-2 py-1 text-xs text-[var(--text-main)]"
           >
             <option value="default">default</option>
             {plans
@@ -89,21 +53,17 @@ export default function Header() {
                 </option>
               ))}
           </select>
-          <ActionButton onClick={handleNewPlan} title="New plan">
+          <ActionButton onClick={handleNewPlan} title={t('common.new_plan')}>
             <Plus size={14} />
           </ActionButton>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-1.5">
           <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: statusColors[meta.agentStatus] ?? '#737373',
-            }}
+            className="h-2 w-2 rounded-full"
+            style={{ background: statusColors[meta.agentStatus] ?? '#737373' }}
           />
-          <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs text-[var(--text-main)] opacity-60">
             {t(`footer.${meta.agentStatus}`)}
           </span>
         </div>
@@ -136,19 +96,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       title={title}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 24,
-        height: 24,
-        border: '1px solid var(--color-border)',
-        borderRadius: 6,
-        background: 'transparent',
-        color: 'var(--color-text-secondary)',
-        cursor: 'pointer',
-        padding: 0,
-      }}
+      className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--border)] bg-transparent p-0 text-[var(--text-main)] opacity-60 hover:opacity-100"
     >
       {children}
     </button>

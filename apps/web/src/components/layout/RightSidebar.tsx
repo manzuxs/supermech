@@ -19,11 +19,17 @@ export default function RightSidebar() {
     ? (state.canvas.nodes.find((n) => n.id === state.ui.selectedNodeId) ?? null)
     : null;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!text.trim()) return;
     await addFeedback(state.ui.selectedNodeId ?? '__global__', text.trim());
     setText('');
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      handleSubmit();
+    }
   }
 
   async function handleQuickAction(action: string) {
@@ -35,61 +41,29 @@ export default function RightSidebar() {
   }
 
   return (
-    <aside
-      style={{
-        gridArea: 'right',
-        borderLeft: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        padding: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        overflowY: 'auto',
-      }}
-    >
+    <aside className="flex w-80 flex-col gap-4 overflow-y-auto border-l border-[var(--border)] bg-[var(--bg-main)] p-3">
       {/* Selected Node Info */}
       <div>
-        <h3
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--color-text-secondary)',
-            margin: '0 0 8px',
-          }}
-        >
-          Properties
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)] opacity-50">
+          {t('sidebar.properties')}
         </h3>
         {selectedNode ? (
-          <div
-            style={{
-              fontSize: 13,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}
-          >
+          <div className="flex flex-col gap-1 text-[13px] text-[var(--text-main)]">
             <div>
-              <strong>ID:</strong> {selectedNode.id}
+              <strong className="opacity-60">ID:</strong> {selectedNode.id}
             </div>
             <div>
-              <strong>Label:</strong> {selectedNode.label}
+              <strong className="opacity-60">Label:</strong> {selectedNode.label}
             </div>
             <div>
-              <strong>Status:</strong> {selectedNode.status}
+              <strong className="opacity-60">Status:</strong> {selectedNode.status}
             </div>
             <div>
-              <strong>Progress:</strong> {Math.round(selectedNode.progress * 100)}%
+              <strong className="opacity-60">Progress:</strong> {Math.round(selectedNode.progress * 100)}%
             </div>
           </div>
         ) : (
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--color-text-secondary)',
-            }}
-          >
+          <div className="text-[13px] text-[var(--text-main)] opacity-50">
             {t('canvas.noSelection')}
           </div>
         )}
@@ -97,85 +71,39 @@ export default function RightSidebar() {
 
       {/* Quick Actions */}
       <div>
-        <h3
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--color-text-secondary)',
-            margin: '0 0 8px',
-          }}
-        >
-          Quick Actions
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)] opacity-50">
+          {t('sidebar.quickActions')}
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="flex flex-col gap-1">
           {['approve', 'reject', 'revise', 'expand'].map((action) => (
             <button
               key={action}
               type="button"
               onClick={() => handleQuickAction(action)}
-              style={{
-                padding: '6px 10px',
-                border: '1px solid var(--color-border)',
-                borderRadius: 6,
-                background: 'transparent',
-                color: 'var(--color-text)',
-                cursor: 'pointer',
-                fontSize: 12,
-                textAlign: 'left',
-                textTransform: 'capitalize',
-              }}
+              className="rounded-md border border-[var(--border)] bg-transparent px-2.5 py-1.5 text-left text-xs capitalize text-[var(--text-main)] transition-colors hover:bg-[var(--border)]"
             >
-              {action}
+              {t(`actions.${action}`)}
             </button>
           ))}
         </div>
       </div>
 
       {/* Feedback Input */}
-      <form onSubmit={handleSubmit} style={{ marginTop: 'auto' }}>
-        <h3
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--color-text-secondary)',
-            margin: '0 0 8px',
-          }}
-        >
-          Feedback
+      <form onSubmit={handleSubmit} className="mt-auto">
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)] opacity-50">
+          {t('sidebar.feedback')}
         </h3>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={t('feedback.placeholder')}
           rows={3}
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            border: '1px solid var(--color-border)',
-            borderRadius: 6,
-            background: 'var(--color-bg)',
-            color: 'var(--color-text)',
-            fontSize: 12,
-            resize: 'none',
-            boxSizing: 'border-box',
-          }}
+          className="w-full resize-none rounded-md border border-[var(--border)] bg-[var(--bg-main)] px-2 py-1.5 text-xs text-[var(--text-main)] outline-none focus:ring-1 focus:ring-[var(--primary)]"
         />
         <button
           type="submit"
-          style={{
-            marginTop: 6,
-            padding: '6px 12px',
-            border: 'none',
-            borderRadius: 6,
-            background: 'var(--color-brand)',
-            color: '#fff',
-            cursor: 'pointer',
-            fontSize: 12,
-          }}
+          className="mt-1.5 w-full rounded-md bg-[var(--primary)] py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
         >
           {t('feedback.submit')}
         </button>

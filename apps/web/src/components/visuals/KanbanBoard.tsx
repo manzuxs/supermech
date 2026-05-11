@@ -58,15 +58,7 @@ export default function KanbanBoard({ nodes, edges }: KanbanBoardProps) {
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: 12,
-        height: '100%',
-        padding: 12,
-      }}
-    >
+    <div className="grid h-full grid-cols-3 gap-3 p-3">
       {COLUMNS.map(({ key, label }) => {
         const items = grouped[key];
         const count = items.length;
@@ -74,202 +66,95 @@ export default function KanbanBoard({ nodes, edges }: KanbanBoardProps) {
         return (
           <div
             key={key}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              background: 'var(--color-surface)',
-              borderRadius: 8,
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden',
-            }}
+            className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-main)]"
           >
             {/* Column header */}
-            <div
-              style={{
-                padding: '10px 12px',
-                borderBottom: '1px solid var(--color-border)',
-                fontWeight: 600,
-                fontSize: 13,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span>{label}</span>
-              <span
-                style={{
-                  background: 'var(--color-border)',
-                  borderRadius: 10,
-                  padding: '1px 8px',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-3 py-2.5">
+              <span className="text-[13px] font-semibold text-[var(--text-main)]">{label}</span>
+              <span className="rounded-full bg-[var(--border)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-main)] opacity-60">
                 {count}
               </span>
             </div>
 
             {/* Cards */}
-            <div
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: 8,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-              }}
-            >
-              {items.map((node: CanvasNode) => {
-                const isSelected = node.id === selectedId;
-                const deps = depMap.get(node.id);
-                const borderColor = STATUS_BORDERS[node.status] ?? '#404040';
+            <div className="flex-1 overflow-y-auto p-2">
+              <div className="flex flex-col gap-2">
+                {items.map((node: CanvasNode) => {
+                  const isSelected = node.id === selectedId;
+                  const deps = depMap.get(node.id);
+                  const isDone = node.status === 'done' || node.status === 'accepted';
+                  const isProcessing = node.status === 'active';
 
-                return (
-                  <div
-                    key={node.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => updateUI({ selectedNodeId: node.id })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') updateUI({ selectedNodeId: node.id });
-                    }}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 6,
-                      border: `1px solid ${isSelected ? 'var(--color-brand)' : borderColor}`,
-                      borderLeft: `3px solid ${isSelected ? 'var(--color-brand)' : borderColor}`,
-                      background: isSelected
-                        ? 'color-mix(in srgb, var(--color-brand) 8%, var(--color-surface))'
-                        : 'var(--color-bg)',
-                      cursor: 'pointer',
-                      transition: 'border-color 0.15s',
-                    }}
-                  >
-                    {/* Title + status indicator */}
+                  return (
                     <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        gap: 8,
+                      key={node.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => updateUI({ selectedNodeId: node.id })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') updateUI({ selectedNodeId: node.id });
                       }}
+                      className={`group relative flex flex-col gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-canvas)] p-3 transition-all ${
+                        isSelected ? 'ring-2 ring-[var(--primary)]' : ''
+                      } ${isProcessing ? 'processing-node' : ''}`}
                     >
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 500,
-                          lineHeight: 1.3,
-                          textDecoration:
-                            node.status === 'done' || node.status === 'accepted'
-                              ? 'line-through'
-                              : 'none',
-                          color:
-                            node.status === 'done' || node.status === 'accepted'
-                              ? 'var(--color-text-secondary)'
-                              : 'var(--color-text)',
-                        }}
-                      >
-                        {node.label}
-                      </span>
-                      {node.status === 'done' || node.status === 'accepted' ? (
-                        <span style={{ fontSize: 14, flexShrink: 0, color: '#22c55e' }}>✓</span>
-                      ) : (
+                      {/* Title + status indicator */}
+                      <div className="flex items-start justify-between gap-2">
                         <span
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: borderColor,
-                            flexShrink: 0,
-                            marginTop: 4,
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Dependencies */}
-                    {deps && deps.length > 0 && (
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: 4,
-                          marginTop: 6,
-                        }}
-                      >
-                        {deps.map((dep) => (
+                          className={`text-[13px] font-medium leading-snug ${
+                            isDone ? 'text-[var(--text-main)] opacity-40 line-through' : 'text-[var(--text-main)]'
+                          }`}
+                        >
+                          {node.label}
+                        </span>
+                        {isDone ? (
+                          <span className="shrink-0 text-sm text-green-500">✓</span>
+                        ) : (
                           <span
-                            key={dep}
-                            style={{
-                              fontSize: 10,
-                              padding: '1px 6px',
-                              borderRadius: 4,
-                              background:
-                                'color-mix(in srgb, var(--color-accent) 15%, transparent)',
-                              color: 'var(--color-accent)',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ⏳ {dep.length > 20 ? `${dep.slice(0, 18)}…` : dep}
-                          </span>
-                        ))}
+                            className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                            style={{ background: STATUS_BORDERS[node.status] ?? 'var(--border)' }}
+                          />
+                        )}
                       </div>
-                    )}
 
-                    {/* Progress bar */}
-                    <div
-                      style={{
-                        marginTop: 8,
-                        height: 4,
-                        borderRadius: 2,
-                        background: 'var(--color-border)',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${Math.round(node.progress * 100)}%`,
-                          height: '100%',
-                          borderRadius: 2,
-                          background:
-                            node.status === 'done' || node.status === 'accepted'
-                              ? '#22c55e'
-                              : 'var(--color-brand)',
-                          transition: 'width 0.3s',
-                        }}
-                      />
-                    </div>
+                      {/* Dependencies */}
+                      {deps && deps.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {deps.map((dep) => (
+                            <span
+                              key={dep}
+                              className="whitespace-nowrap rounded bg-[var(--accent)] bg-opacity-10 px-1.5 py-0.5 text-[10px] text-[var(--accent)]"
+                            >
+                              ⏳ {dep.length > 20 ? `${dep.slice(0, 18)}…` : dep}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
-                    {/* Progress label */}
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: 'var(--color-text-secondary)',
-                        marginTop: 3,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {Math.round(node.progress * 100)}%
+                      {/* Progress bar */}
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--border)]">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            isDone ? 'bg-green-500' : 'bg-[var(--primary)]'
+                          }`}
+                          style={{ width: `${Math.round(node.progress * 100)}%` }}
+                        />
+                      </div>
+
+                      {/* Progress label */}
+                      <div className="text-right text-[10px] text-[var(--text-main)] opacity-40">
+                        {Math.round(node.progress * 100)}%
+                      </div>
                     </div>
+                  );
+                })}
+
+                {items.length === 0 && (
+                  <div className="py-6 text-center text-xs italic text-[var(--text-main)] opacity-40">
+                    Empty
                   </div>
-                );
-              })}
-
-              {items.length === 0 && (
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--color-text-secondary)',
-                    textAlign: 'center',
-                    padding: 24,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Empty
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         );

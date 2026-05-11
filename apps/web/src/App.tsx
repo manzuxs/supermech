@@ -6,20 +6,7 @@ import RightSidebar from './components/layout/RightSidebar.tsx';
 
 export default function App() {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'var(--sidebar-width) 1fr var(--sidebar-width)',
-        gridTemplateRows: 'auto 1fr auto',
-        gridTemplateAreas: `
-          "header header header"
-          "left   canvas right"
-          "footer footer footer"
-        `,
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="grid h-screen w-screen grid-cols-[auto_1fr_auto] grid-rows-[64px_1fr_32px] overflow-hidden bg-[var(--bg-main)]">
       <Header />
       <LeftSidebar />
       <CenterCanvas />

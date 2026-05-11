@@ -15,28 +15,8 @@ export default function LeftSidebar() {
   const { activeSkill } = state.meta;
 
   return (
-    <nav
-      style={{
-        gridArea: 'left',
-        borderRight: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        padding: 12,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
-      <h3
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          color: 'var(--color-text-secondary)',
-          margin: '0 0 4px',
-        }}
-      >
+    <nav className="flex w-64 flex-col gap-2 overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-main)] p-3">
+      <h3 className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)] opacity-50">
         {t('sidebar.skills')}
       </h3>
 
@@ -48,27 +28,17 @@ export default function LeftSidebar() {
             key={key}
             type="button"
             onClick={() => switchSkill(key)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              width: '100%',
-              padding: '8px 10px',
-              border: 'none',
-              borderRadius: 6,
-              background: isActive ? 'var(--color-brand)' : 'transparent',
-              color: isActive ? '#fff' : 'var(--color-text-secondary)',
-              cursor: 'pointer',
-              fontSize: 13,
-              textAlign: 'left',
-              opacity: hasFile || isActive ? 1 : 0.5,
-              transition: 'background 0.15s',
-            }}
+            className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors ${
+              isActive
+                ? 'bg-[var(--primary)] text-white'
+                : 'text-[var(--text-main)] opacity-70 hover:bg-[var(--border)] hover:opacity-100'
+            }`}
+            style={{ opacity: hasFile || isActive ? 1 : 0.5 }}
           >
             <Icon size={16} />
             <span>{t(labelKey)}</span>
             {hasFile && !isActive && (
-              <span style={{ marginLeft: 'auto', fontSize: 10, opacity: 0.6 }}>●</span>
+              <span className="ml-auto text-[10px] opacity-60">●</span>
             )}
           </button>
         );

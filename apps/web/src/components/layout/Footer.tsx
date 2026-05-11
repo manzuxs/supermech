@@ -12,31 +12,12 @@ export default function Footer() {
   const progress = totalNodes > 0 ? Math.round((doneNodes / totalNodes) * 100) : 0;
 
   return (
-    <footer
-      style={{
-        gridArea: 'footer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        height: 28,
-        borderTop: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        fontSize: 11,
-        color: 'var(--color-text-secondary)',
-      }}
-    >
+    <footer className="col-span-3 flex h-8 items-center justify-between border-t border-[var(--border)] bg-[var(--bg-main)] px-4 text-[11px] text-[var(--text-main)] opacity-60">
       <span>
         {t('footer.status')}: {t(`footer.${state.meta.agentStatus}`)}
       </span>
 
-      <span
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
+      <span className="flex items-center gap-3">
         {totalNodes > 0 && (
           <span>
             {doneNodes}/{totalNodes} · {progress}%

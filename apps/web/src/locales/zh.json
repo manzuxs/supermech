@@ -3,30 +3,44 @@
     "title": "Superpowers+",
     "subtitle": "视觉工作台"
   },
+  "common": {
+    "new_plan": "新建计划",
+    "save": "保存",
+    "cancel": "取消"
+  },
   "sidebar": {
-    "skills": "技能",
+    "skills": "技能库",
     "brainstorming": "头脑风暴",
-    "writingPlans": "编写计划",
-    "executingPlans": "执行计划"
+    "writingPlans": "制定计划",
+    "executingPlans": "执行计划",
+    "properties": "属性详情",
+    "quickActions": "快速操作",
+    "feedback": "反馈建议"
+  },
+  "actions": {
+    "approve": "通过",
+    "reject": "驳回",
+    "revise": "修正",
+    "expand": "展开"
   },
   "canvas": {
-    "empty": "从左侧边栏选择一个技能开始",
+    "empty": "请从左侧选择一个技能开始",
     "noSelection": "未选中节点"
   },
   "feedback": {
-    "placeholder": "添加反馈...",
+    "placeholder": "输入反馈建议... (Cmd+Enter 发送)",
     "submit": "发送"
   },
   "footer": {
     "status": "状态",
     "idle": "空闲",
     "thinking": "思考中",
-    "writing": "写作中",
+    "writing": "编写中",
     "error": "错误"
   },
   "theme": {
     "light": "浅色",
     "dark": "深色",
-    "system": "系统"
+    "system": "跟随系统"
   }
 }

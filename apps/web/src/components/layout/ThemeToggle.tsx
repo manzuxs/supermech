@@ -28,20 +28,9 @@ export default function ThemeToggle() {
       type="button"
       onClick={cycle}
       title={t(`theme.${theme}`)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 8px',
-        border: '1px solid var(--color-border)',
-        borderRadius: 6,
-        background: 'transparent',
-        color: 'var(--color-text)',
-        cursor: 'pointer',
-        fontSize: 12,
-      }}
+      className="flex items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-xs text-[var(--text-main)] transition-colors hover:bg-[var(--border)]"
     >
-      <Icon size={14} />
+      <Icon size={14} className="opacity-70" />
       <span>{t(`theme.${theme}`)}</span>
     </button>
   );

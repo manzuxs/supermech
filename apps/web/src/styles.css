@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #fafafa;
-  --color-surface: #ffffff;
-  --color-border: #e5e5e5;
-  --color-text: #171717;
-  --color-text-secondary: #737373;
-  --color-brand: #6366f1;
-  --color-accent: #8b5cf6;
+  --primary: #2563eb;
+  --bg-main: #ffffff;
+  --bg-canvas: #f8fafc;
+  --text-main: #1e293b;
+  --border: #e2e8f0;
+  --accent: #f59e0b;
   --sidebar-width: 260px;
 }
 
+[data-theme='dark'],
 .dark {
-  --color-bg: #0a0a0a;
-  --color-surface: #1a1a1a;
-  --color-border: #262626;
-  --color-text: #fafafa;
-  --color-text-secondary: #a3a3a3;
-  --color-brand: #818cf8;
-  --color-accent: #a78bfa;
+  --primary: #3b82f6;
+  --bg-main: #0f172a;
+  --bg-canvas: #020617;
+  --text-main: #f1f5f9;
+  --border: #1e293b;
+  --accent: #fbbf24;
 }
 
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
 }
 
 @keyframes mindmap-breathe {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
+    box-shadow: 0 0 0 0px color-mix(in srgb, var(--primary) 40%, transparent);
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent);
   }
 }
 
-.mindmap-node--active {
+.processing-node {
   animation: mindmap-breathe 2s ease-in-out infinite;
 }
