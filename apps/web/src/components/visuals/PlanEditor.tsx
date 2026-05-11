@@ -14,17 +14,17 @@ type TabKey = 'goal' | 'code' | 'test';
 
 const STATUS_DOT: Record<string, string> = {
   pending: 'bg-muted-foreground/40',
-  active: 'bg-amber-400',
+  active: 'bg-[var(--accent)]',
   done: 'bg-[var(--primary)]',
-  accepted: 'bg-[var(--primary)]',
-  rejected: 'bg-destructive',
+  accepted: 'bg-[var(--success)]',
+  rejected: 'bg-[var(--muted-foreground)]',
 };
 
 const FILE_TYPE_STYLES: Record<string, string> = {
   create: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
   modify: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  test: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  delete: 'bg-destructive/10 text-destructive border-destructive/20',
+  test: 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20',
+  delete: 'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
 };
 
 function getPlanHeader(state: WorkbenchState): PlanHeader | null {
@@ -117,7 +117,7 @@ export default function PlanEditor() {
   return (
     <div className="flex h-full">
       {/* ── LEFT: Phase tree ── */}
-      <div className="flex w-80 shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-main)]">
+      <div className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-main)]">
         {/* Plan overview */}
         {planHeader && (
           <div className="border-b border-[var(--border)] p-4">
@@ -453,9 +453,9 @@ function GoalTab({ node }: { node: CanvasNode }) {
                 className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-all ${
                   node.status === s
                     ? s === 'accepted'
-                      ? 'border-green-500/40 bg-green-500/15 text-green-500'
+                      ? 'border-[var(--success)]/40 bg-[var(--success)]/15 text-[var(--success)]'
                       : s === 'rejected'
-                        ? 'border-red-500/40 bg-red-500/15 text-red-500'
+                        ? 'border-[var(--muted-foreground)]/40 bg-[var(--muted-foreground)]/15 text-[var(--muted-foreground)]'
                         : 'border-[var(--border)] bg-[var(--border)]/20 text-[var(--text-main)]'
                     : 'border-transparent text-[var(--text-main)] opacity-30 hover:opacity-60'
                 }`}
@@ -500,7 +500,7 @@ function GoalTab({ node }: { node: CanvasNode }) {
               riskLevel === 'high'
                 ? 'border-destructive/30 bg-destructive/10 text-destructive'
                 : riskLevel === 'medium'
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                  ? 'border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)]'
                   : 'border-[var(--primary)]/30 bg-[var(--primary)]/10 text-[var(--primary)]'
             }`}
           >

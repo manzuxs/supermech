@@ -18,6 +18,7 @@
   },
   "canvas": {
     "empty": "请从左侧选择一个技能开始",
+    "brainstormEmpty": "暂无想法 — 智能体将在头脑风暴阶段填充内容。",
     "noSelection": "未选中节点"
   },
   "feedback": {

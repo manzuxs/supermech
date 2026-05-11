@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Circle, 
   PlayCircle, 
@@ -46,10 +47,10 @@ const STATUS_CONFIG: Record<
     icon: PlayCircle
   },
   accepted: {
-    bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
-    border: 'var(--primary)',
-    text: 'var(--primary)',
-    subtext: 'var(--primary)',
+    bg: 'color-mix(in srgb, var(--success) 8%, var(--bg-canvas))',
+    border: 'var(--success)',
+    text: 'var(--success)',
+    subtext: 'var(--success)',
     icon: CheckCircle2
   },
   rejected: {
@@ -180,6 +181,7 @@ interface MindMapProps {
 }
 
 export default function MindMap({ nodes }: MindMapProps) {
+  const { t } = useTranslation();
   const { state, updateUI } = useWorkbench();
   const { nodes: layoutNodes, edges } = buildLayout(nodes);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -250,7 +252,7 @@ export default function MindMap({ nodes }: MindMapProps) {
   if (layoutNodes.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-[13px] text-[var(--muted-foreground)] opacity-50">
-        No ideas yet — the agent will populate the map during brainstorming.
+        {t('canvas.brainstormEmpty')}
       </div>
     );
   }

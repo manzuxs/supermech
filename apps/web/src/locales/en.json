@@ -18,6 +18,7 @@
   },
   "canvas": {
     "empty": "Select a skill from the left sidebar to begin",
+    "brainstormEmpty": "No ideas yet — the agent will populate the map during brainstorming.",
     "noSelection": "No node selected"
   },
   "feedback": {

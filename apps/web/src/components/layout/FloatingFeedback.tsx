@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, Send, Minus, X } from 'lucide-react';
+import { MessageSquare, Send, Minus, X, Target } from 'lucide-react';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 export default function FloatingFeedback() {
@@ -54,7 +54,7 @@ export default function FloatingFeedback() {
         {selectedNode && (
           <div className="flex items-center justify-between self-center rounded-full border border-[var(--border)] bg-[var(--bg-main)]/80 px-3 py-1.5 shadow-lg backdrop-blur-xl">
             <div className="flex items-center gap-2 text-[12px] font-medium text-[var(--text-main)]">
-              <span className="opacity-60">🎯</span>
+              <Target className="h-3.5 w-3.5 opacity-60" />
               <span>{t('feedback.target', { name: selectedNode.label })}</span>
             </div>
             <button
