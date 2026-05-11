@@ -35,5 +35,22 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "editor": {
+    "goal": "Goal",
+    "codeSteps": "Code Steps",
+    "tests": "Tests",
+    "files": "Files",
+    "emptyTasks": "No tasks yet — the agent will populate the plan during planning.",
+    "selectTask": "Select a task to view details",
+    "noSteps": "No implementation steps defined",
+    "noTests": "No verification steps defined",
+    "feedbackTitle": "Feedback on this section",
+    "feedbackPlaceholder": "Suggest a change or ask a question...",
+    "send": "Send",
+    "sent": "Sent",
+    "expected": "Expected:",
+    "legacyNote": "legacy note available",
+    "risk": "risk"
   }
 }

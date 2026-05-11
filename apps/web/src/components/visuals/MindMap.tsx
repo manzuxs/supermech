@@ -17,36 +17,39 @@ interface LayoutNode {
   y: number;
 }
 
-const STATUS_COLORS: Record<NodeStatus, { bg: string; border: string; text: string; subtext: string }> = {
-  pending: { 
-    bg: 'var(--bg-canvas)', 
-    border: 'var(--border)', 
+const STATUS_COLORS: Record<
+  NodeStatus,
+  { bg: string; border: string; text: string; subtext: string }
+> = {
+  pending: {
+    bg: 'var(--bg-canvas)',
+    border: 'var(--border)',
     text: 'var(--text-main)',
-    subtext: 'var(--muted-foreground)'
+    subtext: 'var(--muted-foreground)',
   },
   active: {
     bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
     border: 'var(--accent)',
     text: 'var(--text-main)',
-    subtext: 'var(--muted-foreground)'
+    subtext: 'var(--muted-foreground)',
   },
   accepted: {
-    bg: 'color-mix(in srgb, #22c55e 8%, var(--bg-canvas))',
-    border: '#22c55e',
-    text: '#166534',
-    subtext: '#16a34a'
+    bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
+    border: 'var(--primary)',
+    text: 'var(--primary)',
+    subtext: 'var(--primary)',
   },
-  rejected: { 
-    bg: 'var(--bg-canvas)', 
-    border: 'var(--border)', 
+  rejected: {
+    bg: 'var(--bg-canvas)',
+    border: 'var(--border)',
     text: 'var(--muted-foreground)',
-    subtext: 'var(--muted-foreground)'
+    subtext: 'var(--muted-foreground)',
   },
   done: {
     bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
-    subtext: 'var(--primary)'
+    subtext: 'var(--primary)',
   },
 };
 
@@ -140,13 +143,13 @@ export default function MindMap({ nodes }: MindMapProps) {
     if (layoutNodes.length > 0 && transform.x === 0 && transform.y === 0) {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        const minX = Math.min(...layoutNodes.map(n => n.x)) - NODE_W/2;
-        const maxX = Math.max(...layoutNodes.map(n => n.x)) + NODE_W/2;
+        const minX = Math.min(...layoutNodes.map((n) => n.x)) - NODE_W / 2;
+        const maxX = Math.max(...layoutNodes.map((n) => n.x)) + NODE_W / 2;
         const mapW = maxX - minX;
         setTransform({
           x: (rect.width - mapW) / 2 - minX,
           y: PAD,
-          k: 1
+          k: 1,
         });
       }
     }
@@ -159,33 +162,33 @@ export default function MindMap({ nodes }: MindMapProps) {
 
     const handleWheelRaw = (e: WheelEvent) => {
       e.preventDefault();
-      
+
       if (e.ctrlKey || e.metaKey) {
         // Zoom
         const delta = -e.deltaY;
-        const factor = Math.pow(1.1, delta / 100);
-        
-        setTransform(prev => {
+        const factor = 1.1 ** (delta / 100);
+
+        setTransform((prev) => {
           const newK = Math.min(Math.max(prev.k * factor, 0.1), 5);
           const rect = el.getBoundingClientRect();
           const mouseX = e.clientX - rect.left;
           const mouseY = e.clientY - rect.top;
-          
+
           const dx = (mouseX - prev.x) / prev.k;
           const dy = (mouseY - prev.y) / prev.k;
-          
+
           return {
             x: mouseX - dx * newK,
             y: mouseY - dy * newK,
-            k: newK
+            k: newK,
           };
         });
       } else {
         // Pan
-        setTransform(prev => ({
+        setTransform((prev) => ({
           ...prev,
           x: prev.x - e.deltaX,
-          y: prev.y - e.deltaY
+          y: prev.y - e.deltaY,
         }));
       }
     };
@@ -205,17 +208,17 @@ export default function MindMap({ nodes }: MindMapProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Left click only
     if ((e.target as HTMLElement).closest('g[role="button"]')) return;
-    
+
     setIsDragging(true);
     setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
-    setTransform(prev => ({
+    setTransform((prev) => ({
       ...prev,
       x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
+      y: e.clientY - dragStart.y,
     }));
   };
 
@@ -226,7 +229,7 @@ export default function MindMap({ nodes }: MindMapProps) {
   const selectedId = state.ui.selectedNodeId;
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`canvas-dot-grid relative h-full w-full overflow-hidden select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       onMouseDown={handleMouseDown}
@@ -235,7 +238,7 @@ export default function MindMap({ nodes }: MindMapProps) {
       onMouseLeave={handleMouseUp}
       style={{
         backgroundPosition: `${transform.x}px ${transform.y}px`,
-        backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`
+        backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
       }}
     >
       <svg width="100%" height="100%" style={{ display: 'block' }} role="img" aria-label="Mind map">
@@ -298,7 +301,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                 className="group cursor-pointer outline-none transition-transform duration-200 active:scale-95"
               >
                 <title>{tooltip}</title>
-                
+
                 {/* Card Shadow/Glow (Selection) */}
                 {isSelected && (
                   <rect
@@ -321,13 +324,18 @@ export default function MindMap({ nodes }: MindMapProps) {
                   rx={12}
                   ry={12}
                   fill={colors.bg}
-                  stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border}
+                  stroke={
+                    isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border
+                  }
                   strokeWidth={isSelected || isActive ? 2 : 1}
-                  className={isActive ? 'processing-node' : 'transition-colors duration-200 group-hover:stroke-primary/40'}
+                  className={
+                    isActive
+                      ? 'processing-node'
+                      : 'transition-colors duration-200 group-hover:stroke-primary/40'
+                  }
                   filter="drop-shadow(0 1px 2px rgb(0 0 0 / 0.03))"
                 />
 
-                {/* Content via foreignObject */}
                 <foreignObject
                   x={n.x - NODE_W / 2 + 12}
                   y={n.y - NODE_H / 2 + 12}
@@ -335,40 +343,31 @@ export default function MindMap({ nodes }: MindMapProps) {
                   height={NODE_H - 24}
                   style={{ pointerEvents: 'none' }}
                 >
-                  <div 
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      justifyContent: 'center',
-                      gap: '2px'
-                    }}
-                  >
-                    <div 
-                      style={{ 
-                        color: colors.text, 
-                        fontSize: '13px', 
-                        fontWeight: 600, 
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
+                  <div className="flex w-full h-full flex-col justify-center gap-1">
+                    <div
+                      style={{
+                        color: colors.text,
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        lineHeight: '1.2'
+                        lineHeight: '1.2',
                       }}
                       className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
                     >
                       {n.label}
                     </div>
                     {n.description && (
-                      <div 
-                        style={{ 
-                          color: colors.subtext, 
-                          fontSize: '11px', 
-                          whiteSpace: 'nowrap', 
-                          overflow: 'hidden', 
+                      <div
+                        style={{
+                          color: colors.subtext,
+                          fontSize: '11px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           opacity: 0.7,
-                          lineHeight: '1.2'
+                          lineHeight: '1.2',
                         }}
                       >
                         {n.description}
@@ -383,7 +382,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                     cx={n.x + NODE_W / 2 - 8}
                     cy={n.y - NODE_H / 2 + 8}
                     r={5}
-                    fill="#f97316"
+                    fill="var(--accent)"
                     stroke="white"
                     strokeWidth={2}
                   />

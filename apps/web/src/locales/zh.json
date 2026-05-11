@@ -35,5 +35,22 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统"
+  },
+  "editor": {
+    "goal": "目标",
+    "codeSteps": "代码步骤",
+    "tests": "测试",
+    "files": "文件",
+    "emptyTasks": "暂无任务 — 智能体将在计划阶段填充内容。",
+    "selectTask": "选择一个任务查看详情",
+    "noSteps": "未定义实现步骤",
+    "noTests": "未定义验证步骤",
+    "feedbackTitle": "针对此部分的反馈",
+    "feedbackPlaceholder": "提出修改建议或问题...",
+    "send": "发送",
+    "sent": "已发送",
+    "expected": "预期结果:",
+    "legacyNote": "包含旧版说明",
+    "risk": "风险"
   }
 }

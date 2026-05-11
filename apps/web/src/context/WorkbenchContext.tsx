@@ -2,6 +2,14 @@ import rawState from 'virtual:superpowers/state';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import type { NodeStatus, UIPreferences, WorkbenchState } from 'schemas';
 
+interface FeedbackParams {
+  nodeId: string;
+  text: string;
+  section?: 'goal' | 'code' | 'test' | 'general';
+  stepIndex?: number;
+  quickAction?: string;
+}
+
 interface WorkbenchContextValue {
   state: WorkbenchState;
   plans: string[];
@@ -10,7 +18,7 @@ interface WorkbenchContextValue {
   currentSkill: string;
   selectNode: (nodeId: string | null) => Promise<void>;
   updateUI: (patch: Partial<UIPreferences>) => Promise<void>;
-  addFeedback: (nodeId: string, text: string, quickAction?: string) => Promise<void>;
+  addFeedback: (params: FeedbackParams) => Promise<void>;
   updateNode: (
     id: string,
     patch: { status?: NodeStatus; label?: string; progress?: number },
@@ -109,8 +117,8 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     currentSkill,
     selectNode: (nodeId) => callAPI('/__state/select', 'POST', { nodeId }),
     updateUI: (patch) => callAPI('/__state/ui', 'PATCH', patch),
-    addFeedback: (nodeId, text, quickAction) =>
-      callAPI('/__state/feedback', 'POST', { nodeId, text, quickAction: quickAction ?? null }),
+    addFeedback: (params) =>
+      callAPI('/__state/feedback', 'POST', { ...params, quickAction: params.quickAction ?? null }),
     updateNode: (id, patch) => callAPI('/__state/node', 'PATCH', { id, ...patch }),
     switchPlan,
     switchSkill,

@@ -30,12 +30,15 @@ export interface WorkbenchCanvas {
   skillType: SkillType;
   nodes: CanvasNode[];
   edges: CanvasEdge[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface FeedbackEntry {
   id: string;
   nodeId: string;
   text: string;
+  section?: 'goal' | 'code' | 'test' | 'general';
+  stepIndex?: number;
   quickAction: string | null;
   createdAt: string;
 }

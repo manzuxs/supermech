@@ -14,7 +14,11 @@ export default function RightSidebar() {
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     if (!text.trim()) return;
-    await addFeedback(state.ui.selectedNodeId ?? '__global__', text.trim());
+    await addFeedback({
+      nodeId: state.ui.selectedNodeId ?? '__global__',
+      text: text.trim(),
+      section: 'general',
+    });
     setText('');
   }
 
@@ -43,7 +47,7 @@ export default function RightSidebar() {
             </div>
 
             {/* Status & Progress Integrated Section */}
-            <div className="space-y-3 rounded-xl bg-[var(--border)]/10 p-3.5">
+            <div className="space-y-3 rounded-xl bg-[var(--border)]/10 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider opacity-40">
                   Progress
@@ -53,14 +57,18 @@ export default function RightSidebar() {
                 </span>
               </div>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-[var(--border)]/30">
-                <div 
-                  className="h-full bg-[var(--primary)] shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)] transition-all duration-700 ease-out" 
+                <div
+                  className="h-full bg-[var(--primary)] shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)] transition-all duration-700 ease-out"
                   style={{ width: `${selectedNode.progress * 100}%` }}
                 />
               </div>
               <div className="flex items-center gap-2 pt-1">
-                 <div className={`h-1.5 w-1.5 rounded-full ${selectedNode.status === 'done' ? 'bg-green-500' : 'bg-[var(--accent)]'}`} />
-                 <span className="text-[11px] font-medium opacity-60 capitalize">{selectedNode.status}</span>
+                <div
+                  className={`h-2 w-2 rounded-full ${selectedNode.status === 'done' ? 'bg-[var(--primary)]' : 'bg-[var(--accent)]'}`}
+                />
+                <span className="text-[11px] font-medium opacity-60 capitalize">
+                  {selectedNode.status}
+                </span>
               </div>
             </div>
 
@@ -75,15 +83,15 @@ export default function RightSidebar() {
                 </p>
               </div>
             )}
-            
+
             {/* Tags as Chips */}
             {Array.isArray(selectedNode.metadata?.tags) &&
               (selectedNode.metadata.tags as string[]).length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {(selectedNode.metadata.tags as string[]).map(tag => (
-                    <span 
-                      key={tag} 
-                      className="rounded-full border border-[var(--border)] bg-[var(--border)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--text-main)] opacity-70"
+                <div className="flex flex-wrap gap-2">
+                  {(selectedNode.metadata.tags as string[]).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-[var(--border)] bg-[var(--border)]/10 px-2 py-1 text-[10px] font-medium text-[var(--text-main)] opacity-70"
                     >
                       {tag}
                     </span>
@@ -93,8 +101,8 @@ export default function RightSidebar() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center opacity-30">
-             <div className="mb-2 h-10 w-10 rounded-full border-2 border-dashed border-current opacity-20" />
-             <p className="text-xs italic">{t('canvas.noSelection')}</p>
+            <div className="mb-2 h-10 w-10 rounded-full border-2 border-dashed border-current opacity-20" />
+            <p className="text-xs italic">{t('canvas.noSelection')}</p>
           </div>
         )}
       </div>
@@ -113,10 +121,12 @@ export default function RightSidebar() {
             onKeyDown={handleKeyDown}
             placeholder={t('feedback.placeholder')}
             rows={4}
-            className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-main)]/40 px-3.5 py-3 text-[13px] text-[var(--text-main)] outline-none transition-all placeholder:opacity-30 focus:border-[var(--primary)] focus:bg-[var(--bg-main)] focus:ring-4 focus:ring-[var(--primary)]/5"
+            className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-main)]/40 px-4 py-3 text-[13px] text-[var(--text-main)] outline-none transition-all placeholder:opacity-30 focus:border-[var(--primary)] focus:bg-[var(--bg-main)] focus:ring-4 focus:ring-[var(--primary)]/5"
           />
           <div className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 opacity-0 transition-opacity group-focus-within:opacity-100">
-             <kbd className="rounded bg-[var(--border)] px-1.5 py-0.5 text-[9px] font-sans text-muted-foreground">⌘↵</kbd>
+            <kbd className="rounded bg-[var(--border)] px-1.5 py-0.5 text-[9px] font-sans text-muted-foreground">
+              ⌘↵
+            </kbd>
           </div>
         </div>
         <button
