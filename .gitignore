@@ -2,3 +2,7 @@ dosc/
 open-slide/
 superpowers/
 .DS_Store
+
+# Build artifacts
+.turbo/
+node_modules/
