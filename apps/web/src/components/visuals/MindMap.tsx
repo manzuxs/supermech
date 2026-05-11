@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
+import { 
+  Circle, 
+  PlayCircle, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle,
+  Hash
+} from 'lucide-react';
 import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 const NODE_W = 200;
-const NODE_H = 68;
-const H_GAP = 24;
-const V_GAP = 140;
+const NODE_H = 100; // Increased to accommodate 3 rows
+const H_GAP = 32;
+const V_GAP = 160;
 const PAD = 40;
 
 interface LayoutNode {
@@ -19,39 +27,44 @@ interface LayoutNode {
   y: number;
 }
 
-const STATUS_COLORS: Record<
+const STATUS_CONFIG: Record<
   NodeStatus,
-  { bg: string; border: string; text: string; subtext: string }
+  { bg: string; border: string; text: string; subtext: string; icon: any }
 > = {
   pending: {
     bg: 'var(--bg-canvas)',
     border: 'var(--border)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
+    icon: Circle
   },
   active: {
     bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
     border: 'var(--accent)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
+    icon: PlayCircle
   },
   accepted: {
     bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
     subtext: 'var(--primary)',
+    icon: CheckCircle2
   },
   rejected: {
     bg: 'var(--bg-canvas)',
     border: 'var(--border)',
     text: 'var(--muted-foreground)',
     subtext: 'var(--muted-foreground)',
+    icon: XCircle
   },
   done: {
     bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
     subtext: 'var(--primary)',
+    icon: CheckCircle2
   },
 };
 
@@ -130,6 +143,36 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
   const cy1 = y1 + (y2 - y1) * 0.5;
   const cy2 = y1 + (y2 - y1) * 0.5;
   return `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`;
+}
+
+// Progress Ring Component for SVG
+function ProgressRing({ x, y, radius, progress, color }: { x: number, y: number, radius: number, progress: number, color: string }) {
+  const stroke = 3;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - progress * circumference;
+
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <circle
+        stroke="var(--border)"
+        fill="transparent"
+        strokeWidth={stroke}
+        r={normalizedRadius}
+        className="opacity-20"
+      />
+      <circle
+        stroke={color}
+        fill="transparent"
+        strokeWidth={stroke}
+        strokeDasharray={`${circumference} ${circumference}`}
+        style={{ strokeDashoffset }}
+        strokeLinecap="round"
+        r={normalizedRadius}
+        className="transition-all duration-500 -rotate-90 origin-center"
+      />
+    </g>
+  );
 }
 
 interface MindMapProps {
@@ -284,7 +327,7 @@ export default function MindMap({ nodes }: MindMapProps) {
 
           {/* Nodes */}
           {layoutNodes.map((n) => {
-            const colors = STATUS_COLORS[n.status];
+            const config = STATUS_CONFIG[n.status];
             const isSelected = n.id === selectedId;
             const isRejected = n.status === 'rejected';
             const isActive = n.status === 'active';
@@ -292,6 +335,7 @@ export default function MindMap({ nodes }: MindMapProps) {
               (f) => f.nodeId === n.id && !('processedAt' in f),
             ).length;
             const tooltip = n.description || n.label;
+            const StatusIcon = config.icon;
 
             return (
               <g
@@ -316,8 +360,8 @@ export default function MindMap({ nodes }: MindMapProps) {
                     y={n.y - NODE_H / 2 - 4}
                     width={NODE_W + 8}
                     height={NODE_H + 8}
-                    rx={14}
-                    ry={14}
+                    rx={16}
+                    ry={16}
                     fill="color-mix(in srgb, var(--primary) 12%, transparent)"
                   />
                 )}
@@ -330,9 +374,9 @@ export default function MindMap({ nodes }: MindMapProps) {
                   height={NODE_H}
                   rx={12}
                   ry={12}
-                  fill={colors.bg}
+                  fill={config.bg}
                   stroke={
-                    isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border
+                    isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border
                   }
                   strokeWidth={isSelected || isActive ? 2 : 1}
                   className={
@@ -340,7 +384,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                       ? 'processing-node'
                       : 'transition-colors duration-200 group-hover:stroke-primary/40'
                   }
-                  filter="drop-shadow(0 1px 2px rgb(0 0 0 / 0.03))"
+                  filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.04))"
                 />
 
                 <foreignObject
@@ -350,75 +394,63 @@ export default function MindMap({ nodes }: MindMapProps) {
                   height={NODE_H}
                   style={{ pointerEvents: 'none' }}
                 >
-                  <div className="flex h-full w-full flex-col justify-between p-3 relative">
-                    {/* Top Row: Status dot, Label and Tags */}
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <div
-                            className="h-1.5 w-1.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: colors.border }}
-                          />
-                          <div
-                            style={{
-                              color: colors.text,
-                              fontSize: '13px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              lineHeight: '1.2',
-                            }}
-                            className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
-                          >
-                            {n.label}
-                          </div>
-                        </div>
-                        {/* Tags (up to 2) */}
-                        {n.tags.length > 0 && (
-                          <div className="flex shrink-0 gap-1">
-                            {n.tags.slice(0, 2).map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-full border border-[var(--border)] bg-[var(--border)]/5 px-1.5 py-0.5 text-[8px] font-medium text-[var(--text-main)] opacity-50"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                  <div className="flex h-full w-full flex-col p-3 relative">
+                    {/* 1. Header: Status Icon + Title */}
+                    <div className="flex items-start gap-2 min-w-0 mb-2">
+                      <StatusIcon 
+                        size={14} 
+                        strokeWidth={2.5}
+                        className="mt-0.5 shrink-0" 
+                        style={{ color: isSelected ? 'var(--primary)' : config.border }}
+                      />
+                      <div
+                        style={{
+                          color: config.text,
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          lineHeight: '1.2',
+                        }}
+                        className={`min-w-0 truncate ${isRejected ? 'opacity-40 line-through' : 'opacity-100'}`}
+                      >
+                        {n.label}
                       </div>
-
-                      {n.description && (
-                        <div
-                          style={{
-                            color: colors.subtext,
-                            fontSize: '11px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            opacity: 0.7,
-                            lineHeight: '1.2',
-                            paddingLeft: '11px', // Align with label text
-                          }}
-                        >
-                          {n.description}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Bottom: Progress Bar */}
-                    <div className="h-[3px] w-full overflow-hidden rounded-full bg-[var(--border)]">
-                      <div
-                        className="h-full transition-all duration-500"
-                        style={{
-                          width: `${n.progress * 100}%`,
-                          backgroundColor: n.status === 'done' ? 'var(--primary)' : 'var(--accent)',
-                        }}
-                      />
+                    {/* 2. Middle: Description (2 lines max) */}
+                    <div
+                      className="mb-auto px-5 text-[11px] leading-relaxed line-clamp-2"
+                      style={{ color: config.text, opacity: 0.6 }}
+                    >
+                      {n.description || 'No description'}
+                    </div>
+
+                    {/* 3. Bottom: Tags */}
+                    <div className="flex flex-wrap gap-1 px-5">
+                      {n.tags.length > 0 ? (
+                        n.tags.slice(0, 2).map((tag) => (
+                          <div
+                            key={tag}
+                            className="flex items-center gap-0.5 rounded-full bg-[var(--border)]/10 px-1.5 py-0.5 text-[8px] font-bold text-[var(--text-main)] opacity-50"
+                          >
+                            <Hash size={8} />
+                            <span>{tag}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="h-3" /> // Maintain layout
+                      )}
                     </div>
                   </div>
                 </foreignObject>
+
+                {/* Progress Ring (Bottom Right) */}
+                <ProgressRing 
+                  x={n.x + NODE_W / 2 - 16} 
+                  y={n.y + NODE_H / 2 - 16} 
+                  radius={12} 
+                  progress={n.progress} 
+                  color={n.status === 'done' || n.status === 'accepted' ? 'var(--primary)' : 'var(--accent)'} 
+                />
 
                 {/* Unprocessed feedback dot */}
                 {fbCount > 0 && (
