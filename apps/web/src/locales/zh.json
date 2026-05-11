@@ -22,7 +22,11 @@
   },
   "feedback": {
     "placeholder": "输入反馈建议... (Cmd+Enter 发送)",
-    "submit": "发送"
+    "submit": "发送",
+    "target": "针对: {{name}}",
+    "minimize": "最小化",
+    "maximize": "展开",
+    "clear": "清除选中"
   },
   "footer": {
     "status": "状态",

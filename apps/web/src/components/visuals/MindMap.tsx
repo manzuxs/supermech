@@ -13,6 +13,8 @@ interface LayoutNode {
   label: string;
   status: NodeStatus;
   description: string;
+  progress: number;
+  tags: string[];
   x: number;
   y: number;
 }
@@ -86,6 +88,11 @@ function buildLayout(nodes: CanvasNode[]): {
         typeof n.metadata === 'object' && n.metadata !== null
           ? String((n.metadata as Record<string, unknown>).description ?? '')
           : '',
+      progress: n.progress ?? 0,
+      tags:
+        typeof n.metadata === 'object' && n.metadata !== null && Array.isArray(n.metadata.tags)
+          ? (n.metadata.tags as string[])
+          : [],
       x,
       y,
     });
@@ -337,67 +344,93 @@ export default function MindMap({ nodes }: MindMapProps) {
                 />
 
                 <foreignObject
-                  x={n.x - NODE_W / 2 + 12}
-                  y={n.y - NODE_H / 2 + 12}
-                  width={NODE_W - 24}
-                  height={NODE_H - 24}
+                  x={n.x - NODE_W / 2}
+                  y={n.y - NODE_H / 2}
+                  width={NODE_W}
+                  height={NODE_H}
                   style={{ pointerEvents: 'none' }}
                 >
-                  <div className="flex w-full h-full flex-col justify-center gap-1">
-                    <div
-                      style={{
-                        color: colors.text,
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        lineHeight: '1.2',
-                      }}
-                      className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
-                    >
-                      {n.label}
-                    </div>
-                    {n.description && (
-                      <div
-                        style={{
-                          color: colors.subtext,
-                          fontSize: '11px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          opacity: 0.7,
-                          lineHeight: '1.2',
-                        }}
-                      >
-                        {n.description}
+                  <div className="flex h-full w-full flex-col justify-between p-3 relative">
+                    {/* Top Row: Status dot, Label and Tags */}
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div
+                            className="h-1.5 w-1.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: colors.border }}
+                          />
+                          <div
+                            style={{
+                              color: colors.text,
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              lineHeight: '1.2',
+                            }}
+                            className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
+                          >
+                            {n.label}
+                          </div>
+                        </div>
+                        {/* Tags (up to 2) */}
+                        {n.tags.length > 0 && (
+                          <div className="flex shrink-0 gap-1">
+                            {n.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full border border-[var(--border)] bg-[var(--border)]/5 px-1.5 py-0.5 text-[8px] font-medium text-[var(--text-main)] opacity-50"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {n.description && (
+                        <div
+                          style={{
+                            color: colors.subtext,
+                            fontSize: '11px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            opacity: 0.7,
+                            lineHeight: '1.2',
+                            paddingLeft: '11px', // Align with label text
+                          }}
+                        >
+                          {n.description}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom: Progress Bar */}
+                    <div className="h-[3px] w-full overflow-hidden rounded-full bg-[var(--border)]">
+                      <div
+                        className="h-full transition-all duration-500"
+                        style={{
+                          width: `${n.progress * 100}%`,
+                          backgroundColor: n.status === 'done' ? 'var(--primary)' : 'var(--accent)',
+                        }}
+                      />
+                    </div>
                   </div>
                 </foreignObject>
 
                 {/* Unprocessed feedback dot */}
                 {fbCount > 0 && (
                   <circle
-                    cx={n.x + NODE_W / 2 - 8}
-                    cy={n.y - NODE_H / 2 + 8}
+                    cx={n.x + NODE_W / 2 - 4}
+                    cy={n.y - NODE_H / 2 + 4}
                     r={5}
                     fill="var(--accent)"
                     stroke="white"
                     strokeWidth={2}
                   />
                 )}
-
-                {/* Status Indicator Bar (Left) */}
-                <rect
-                  x={n.x - NODE_W / 2}
-                  y={n.y - NODE_H / 2 + 16}
-                  width={3}
-                  height={NODE_H - 32}
-                  rx={1.5}
-                  fill={isSelected ? 'var(--primary)' : colors.border}
-                  className={isRejected ? 'opacity-20' : 'opacity-100'}
-                />
               </g>
             );
           })}

@@ -22,7 +22,11 @@
   },
   "feedback": {
     "placeholder": "Add feedback... (Cmd+Enter to send)",
-    "submit": "Send"
+    "submit": "Send",
+    "target": "Targeting: {{name}}",
+    "minimize": "Minimize",
+    "maximize": "Expand",
+    "clear": "Clear selection"
   },
   "footer": {
     "status": "Status",

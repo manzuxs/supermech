@@ -1,8 +1,8 @@
 import CenterCanvas from './components/layout/CenterCanvas.tsx';
+import FloatingFeedback from './components/layout/FloatingFeedback.tsx';
 import Footer from './components/layout/Footer.tsx';
 import Header from './components/layout/Header.tsx';
 import LeftSidebar from './components/layout/LeftSidebar.tsx';
-import RightSidebar from './components/layout/RightSidebar.tsx';
 
 export default function App() {
   return (
@@ -11,7 +11,7 @@ export default function App() {
       <LeftSidebar />
       <div className="relative h-full flex-1 overflow-hidden">
         <CenterCanvas />
-        <RightSidebar />
+        <FloatingFeedback />
       </div>
       <Footer />
     </div>
