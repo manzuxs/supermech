@@ -103,8 +103,23 @@ body {
   }
 }
 
+.canvas-dot-grid {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@keyframes flow {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 .processing-node {
-  animation: mindmap-breathe 2s ease-in-out infinite;
+  stroke-dasharray: 5, 5;
+  animation: flow 1s linear infinite;
 }
 
 @theme inline {

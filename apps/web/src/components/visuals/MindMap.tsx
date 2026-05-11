@@ -1,10 +1,10 @@
 import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
-const NODE_W = 160;
-const NODE_H = 44;
+const NODE_W = 200;
+const NODE_H = 68;
 const H_GAP = 24;
-const V_GAP = 80;
+const V_GAP = 140;
 const PAD = 40;
 
 interface LayoutNode {
@@ -16,23 +16,36 @@ interface LayoutNode {
   y: number;
 }
 
-const STATUS_COLORS: Record<NodeStatus, { bg: string; border: string; text: string }> = {
-  pending: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
+const STATUS_COLORS: Record<NodeStatus, { bg: string; border: string; text: string; subtext: string }> = {
+  pending: { 
+    bg: 'var(--bg-canvas)', 
+    border: 'var(--border)', 
+    text: 'var(--text-main)',
+    subtext: 'var(--muted-foreground)'
+  },
   active: {
-    bg: 'color-mix(in srgb, var(--accent) 10%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
     border: 'var(--accent)',
-    text: 'var(--accent)',
+    text: 'var(--text-main)',
+    subtext: 'var(--muted-foreground)'
   },
   accepted: {
-    bg: 'color-mix(in srgb, #22c55e 10%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, #22c55e 8%, var(--bg-canvas))',
     border: '#22c55e',
-    text: '#22c55e',
+    text: '#166534',
+    subtext: '#16a34a'
   },
-  rejected: { bg: 'var(--bg-canvas)', border: 'var(--border)', text: 'var(--text-main)' },
+  rejected: { 
+    bg: 'var(--bg-canvas)', 
+    border: 'var(--border)', 
+    text: 'var(--muted-foreground)',
+    subtext: 'var(--muted-foreground)'
+  },
   done: {
-    bg: 'color-mix(in srgb, var(--primary) 10%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
+    subtext: 'var(--primary)'
   },
 };
 
@@ -102,9 +115,12 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
   const x1 = from.x;
   const y1 = from.y + NODE_H / 2;
   const x2 = to.x;
+  // Stop exactly at the card edge
   const y2 = to.y - NODE_H / 2;
-  const cy = (y1 + y2) / 2;
-  return `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`;
+  // Use two control points to ensure the line enters the target node vertically
+  const cy1 = y1 + (y2 - y1) * 0.5;
+  const cy2 = y1 + (y2 - y1) * 0.5;
+  return `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`;
 }
 
 interface MindMapProps {
@@ -137,8 +153,22 @@ export default function MindMap({ nodes }: MindMapProps) {
   const selectedId = state.ui.selectedNodeId;
 
   return (
-    <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
+    <div style={{ width: '100%', height: '100%', overflow: 'auto' }} className="canvas-dot-grid">
       <svg width={svgW} height={svgH} style={{ display: 'block' }} role="img" aria-label="Mind map">
+        <defs>
+          <marker
+            id="arrowhead"
+            viewBox="0 0 10 10"
+            refX="10"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto"
+          >
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+          </marker>
+        </defs>
+
         {/* Edges */}
         {edges.map((e) => {
           const from = layoutNodes.find((n) => n.id === e.from);
@@ -149,8 +179,10 @@ export default function MindMap({ nodes }: MindMapProps) {
               key={`${e.from}-${e.to}`}
               d={edgePath(from, to)}
               fill="none"
-              stroke="#404040"
-              strokeWidth={2}
+              stroke="#94a3b8"
+              strokeWidth={1.5}
+              markerEnd="url(#arrowhead)"
+              className="opacity-70"
             />
           );
         })}
@@ -175,58 +207,110 @@ export default function MindMap({ nodes }: MindMapProps) {
               }}
               role="button"
               tabIndex={0}
-              className="cursor-pointer outline-none"
+              className="group cursor-pointer outline-none transition-transform duration-200 active:scale-95"
             >
               <title>{tooltip}</title>
-              {/* Selection ring */}
+              
+              {/* Card Shadow/Glow (Selection) */}
               {isSelected && (
                 <rect
-                  x={n.x - NODE_W / 2 - 2}
-                  y={n.y - NODE_H / 2 - 2}
-                  width={NODE_W + 4}
-                  height={NODE_H + 4}
-                  rx={10}
-                  ry={10}
-                  fill="none"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
+                  x={n.x - NODE_W / 2 - 4}
+                  y={n.y - NODE_H / 2 - 4}
+                  width={NODE_W + 8}
+                  height={NODE_H + 8}
+                  rx={14}
+                  ry={14}
+                  fill="color-mix(in srgb, var(--primary) 12%, transparent)"
                 />
               )}
+
               {/* Node body */}
               <rect
                 x={n.x - NODE_W / 2}
                 y={n.y - NODE_H / 2}
                 width={NODE_W}
                 height={NODE_H}
-                rx={8}
-                ry={8}
+                rx={12}
+                ry={12}
                 fill={colors.bg}
-                stroke={isActive ? 'var(--accent)' : colors.border}
-                strokeWidth={isActive ? 2 : 1}
-                className={isActive ? 'processing-node' : undefined}
+                stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : colors.border}
+                strokeWidth={isSelected || isActive ? 2 : 1}
+                className={isActive ? 'processing-node' : 'transition-colors duration-200 group-hover:stroke-primary/40'}
+                filter="drop-shadow(0 1px 2px rgb(0 0 0 / 0.03))"
               />
+
+              {/* Content via foreignObject for robust truncation */}
+              <foreignObject
+                x={n.x - NODE_W / 2 + 12}
+                y={n.y - NODE_H / 2 + 12}
+                width={NODE_W - 24}
+                height={NODE_H - 24}
+                style={{ pointerEvents: 'none' }}
+              >
+                <div 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'center',
+                    gap: '2px'
+                  }}
+                >
+                  <div 
+                    style={{ 
+                      color: colors.text, 
+                      fontSize: '13px', 
+                      fontWeight: 600, 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis',
+                      lineHeight: '1.2'
+                    }}
+                    className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
+                  >
+                    {n.label}
+                  </div>
+                  {n.description && (
+                    <div 
+                      style={{ 
+                        color: colors.subtext, 
+                        fontSize: '11px', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        opacity: 0.7,
+                        lineHeight: '1.2'
+                      }}
+                    >
+                      {n.description}
+                    </div>
+                  )}
+                </div>
+              </foreignObject>
+
               {/* Unprocessed feedback dot */}
               {fbCount > 0 && (
                 <circle
-                  cx={n.x + NODE_W / 2 - 6}
-                  cy={n.y - NODE_H / 2 + 6}
-                  r={4}
+                  cx={n.x + NODE_W / 2 - 8}
+                  cy={n.y - NODE_H / 2 + 8}
+                  r={5}
                   fill="#f97316"
+                  stroke="white"
+                  strokeWidth={2}
                 />
               )}
-              {/* Label */}
-              <text
-                x={n.x}
-                y={n.y + 1}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={colors.text}
-                fontSize={13}
-                className={isRejected ? 'opacity-40 line-through' : 'opacity-100'}
-                style={{ userSelect: 'none' }}
-              >
-                {n.label.length > 22 ? `${n.label.slice(0, 20)}…` : n.label}
-              </text>
+
+              {/* Status Indicator Bar (Left) */}
+              <rect
+                x={n.x - NODE_W / 2}
+                y={n.y - NODE_H / 2 + 16}
+                width={3}
+                height={NODE_H - 32}
+                rx={1.5}
+                fill={isSelected ? 'var(--primary)' : colors.border}
+                className={isRejected ? 'opacity-20' : 'opacity-100'}
+              />
             </g>
           );
         })}
