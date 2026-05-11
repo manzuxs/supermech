@@ -1,0 +1,133 @@
+{
+  "meta": {
+    "projectName": "Superpowers+",
+    "sessionId": "brainstorming",
+    "activeSkill": "brainstorming",
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "brainstorming",
+    "nodes": [
+      {
+        "id": "root",
+        "label": "会话管理方案",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": null,
+        "children": [
+          "q-scope",
+          "q-persist",
+          "q-switch"
+        ],
+        "metadata": {}
+      },
+      {
+        "id": "q-scope",
+        "label": "按计划划分 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "root",
+        "children": [
+          "scope-plan-file"
+        ],
+        "metadata": {}
+      },
+      {
+        "id": "scope-plan-file",
+        "label": "会话 = docs 下的计划文件 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-scope",
+        "children": [],
+        "metadata": {}
+      },
+      {
+        "id": "q-persist",
+        "label": "独立文件存储 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "root",
+        "children": [
+          "persist-naming"
+        ],
+        "metadata": {}
+      },
+      {
+        "id": "persist-naming",
+        "label": "按项目加载计划文件 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-persist",
+        "children": [],
+        "metadata": {}
+      },
+      {
+        "id": "q-switch",
+        "label": "切换交互 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "root",
+        "children": [
+          "switch-dropdown",
+          "switch-new",
+          "switch-rename-del"
+        ],
+        "metadata": {}
+      },
+      {
+        "id": "switch-dropdown",
+        "label": "Header 下拉选择器 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": [],
+        "metadata": {}
+      },
+      {
+        "id": "switch-new",
+        "label": "新建 + Agent 交互 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": [],
+        "metadata": {}
+      },
+      {
+        "id": "switch-rename-del",
+        "label": "删除/重命名 ✅",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "q-switch",
+        "children": [
+          "rename-caveat"
+        ],
+        "metadata": {}
+      },
+      {
+        "id": "rename-caveat",
+        "label": "重命名仅 UI 层，不影响 Agent",
+        "status": "accepted",
+        "progress": 1,
+        "parentId": "switch-rename-del",
+        "children": [],
+        "metadata": {}
+      }
+    ],
+    "edges": []
+  },
+  "feedback": [
+    {
+      "id": "650194be-5138-4749-98d2-5d5bb9f58bdb",
+      "nodeId": "q-persist",
+      "text": "测试信息",
+      "quickAction": null,
+      "createdAt": "2026-05-11T06:16:42.835Z"
+    }
+  ],
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": "q-persist"
+  }
+}

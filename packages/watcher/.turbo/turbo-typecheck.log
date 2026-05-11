@@ -1,0 +1,4 @@
+
+> watcher@0.0.0 typecheck /Users/macxm/service/codex/superpowers-plus/packages/watcher
+> tsc --noEmit
+

@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "projectName": "Superpowers+",
+    "sessionId": "plan-session-001",
+    "activeSkill": null,
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "writing-plans",
+    "nodes": [
+      {
+        "id": "task-1",
+        "label": "Session 文件管理模块",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": [],
+          "description": "实现 scan/read/write/delete state-*.json 文件的工具函数"
+        }
+      },
+      {
+        "id": "task-2",
+        "label": "Vite 插件：动态 statePath",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-1"],
+          "description": "插件支持运行时切换 statePath，不重启 dev server"
+        }
+      },
+      {
+        "id": "task-3",
+        "label": "Header 会话下拉选择器",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-1", "task-2"],
+          "description": "Header 右侧 dropdown，列出所有 state-*.json，点击切换"
+        }
+      },
+      {
+        "id": "task-4",
+        "label": "新建会话（UI → Agent 协同）",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-3"],
+          "description": "新建会话按钮 → Agent 初始化会话内容"
+        }
+      },
+      {
+        "id": "task-5",
+        "label": "重命名/删除会话",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-3"],
+          "description": "下拉菜单附带操作，重命名仅 UI 层不改变 Agent sessionId"
+        }
+      },
+      {
+        "id": "task-6",
+        "label": "端口复用检测 + 项目隔离",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-2"],
+          "description": "启动时检测端口是否已启用；Agent 上下文绑定项目根目录"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "task-1",
+        "to": "task-2",
+        "label": "blocks"
+      },
+      {
+        "from": "task-1",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-4",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-5",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-6",
+        "label": "blocks"
+      }
+    ]
+  },
+  "feedback": [],
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-3"
+  }
+}

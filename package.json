@@ -1,0 +1,23 @@
+{
+  "name": "superpowers-plus",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.17.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  }
+}

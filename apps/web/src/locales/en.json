@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Superpowers+",
+    "subtitle": "Visual Workbench"
+  },
+  "sidebar": {
+    "skills": "Skills",
+    "brainstorming": "Brainstorming",
+    "writingPlans": "Writing Plans",
+    "executingPlans": "Executing Plans"
+  },
+  "canvas": {
+    "empty": "Select a skill from the left sidebar to begin",
+    "noSelection": "No node selected"
+  },
+  "feedback": {
+    "placeholder": "Add feedback...",
+    "submit": "Send"
+  },
+  "footer": {
+    "status": "Status",
+    "idle": "Idle",
+    "thinking": "Thinking",
+    "writing": "Writing",
+    "error": "Error"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "meta": {
+    "projectName": "Superpowers+",
+    "sessionId": "writing-plans",
+    "activeSkill": "writing-plans",
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "writing-plans",
+    "nodes": [
+      {
+        "id": "task-1",
+        "label": "Session 文件管理模块",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": [],
+          "description": "实现 scan/read/write/delete 工具函数",
+          "estimatedMinutes": 10,
+          "files": ["packages/watcher/src/session-manager.ts"]
+        }
+      },
+      {
+        "id": "task-2",
+        "label": "Vite 插件动态 statePath",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-1"],
+          "description": "插件支持运行时切换 statePath",
+          "estimatedMinutes": 15,
+          "files": ["packages/watcher/src/vite-plugin.ts"]
+        }
+      },
+      {
+        "id": "task-3",
+        "label": "Header 计划下拉选择器",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-1", "task-2"],
+          "description": "Header 右侧 plan dropdown",
+          "estimatedMinutes": 20
+        }
+      },
+      {
+        "id": "task-4",
+        "label": "新建计划",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-3"],
+          "description": "新建计划按钮，自动初始化 skill 文件",
+          "estimatedMinutes": 15
+        }
+      },
+      {
+        "id": "task-5",
+        "label": "侧边栏技能切换",
+        "status": "done",
+        "progress": 1,
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "dependencies": ["task-2"],
+          "description": "LeftSidebar 点击切换当前 plan 下的 skill 文件",
+          "estimatedMinutes": 10
+        }
+      }
+    ],
+    "edges": [
+      { "from": "task-1", "to": "task-2", "label": "blocks" },
+      { "from": "task-1", "to": "task-3", "label": "blocks" },
+      { "from": "task-2", "to": "task-3", "label": "blocks" },
+      { "from": "task-3", "to": "task-5", "label": "blocks" }
+    ]
+  },
+  "feedback": [],
+  "ui": {
+    "theme": "dark",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": null
+  }
+}

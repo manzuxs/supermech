@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Superpowers+",
+    "subtitle": "视觉工作台"
+  },
+  "sidebar": {
+    "skills": "技能",
+    "brainstorming": "头脑风暴",
+    "writingPlans": "编写计划",
+    "executingPlans": "执行计划"
+  },
+  "canvas": {
+    "empty": "从左侧边栏选择一个技能开始",
+    "noSelection": "未选中节点"
+  },
+  "feedback": {
+    "placeholder": "添加反馈...",
+    "submit": "发送"
+  },
+  "footer": {
+    "status": "状态",
+    "idle": "空闲",
+    "thinking": "思考中",
+    "writing": "写作中",
+    "error": "错误"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统"
+  }
+}

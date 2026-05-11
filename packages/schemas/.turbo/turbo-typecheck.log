@@ -1,0 +1,4 @@
+
+> schemas@0.0.0 typecheck /Users/macxm/service/codex/superpowers-plus/packages/schemas
+> tsc --noEmit
+
