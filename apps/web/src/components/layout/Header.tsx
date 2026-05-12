@@ -65,7 +65,7 @@ export default function Header() {
             <SelectTrigger className="h-8 border-none bg-transparent px-2 text-xs font-medium hover:bg-accent/50 focus:ring-0">
               <div className="flex items-center gap-2">
                 <Layers size={14} className="text-muted-foreground" />
-                <SelectValue placeholder="Select plan" />
+                <SelectValue placeholder={t('common.select_plan')} />
               </div>
             </SelectTrigger>
             <SelectContent align="end" className="min-w-[180px]">
@@ -97,7 +97,7 @@ export default function Header() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">
-                    Name
+                    {t('common.name')}
                   </Label>
                   <Input
                     id="name"
@@ -113,9 +113,9 @@ export default function Header() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
-                <Button onClick={handleCreatePlan}>Create</Button>
+                <Button onClick={handleCreatePlan}>{t('common.create')}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

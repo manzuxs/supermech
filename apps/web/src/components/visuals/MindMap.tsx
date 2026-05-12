@@ -1,14 +1,27 @@
-import { CheckCircle2, Circle, Hash, PlayCircle, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Circle,
+  Crosshair,
+  Hash,
+  Minus,
+  PlayCircle,
+  Plus,
+  XCircle,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 const NODE_W = 200;
-const NODE_H = 100; // Increased to accommodate 3 rows
+const NODE_H = 88;
 const H_GAP = 32;
 const V_GAP = 160;
 const PAD = 40;
+const VIEWPORT_PAD_X = 56;
+const VIEWPORT_PAD_Y = 44;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 2.5;
 
 interface LayoutNode {
   id: string;
@@ -139,46 +152,20 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
   return `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`;
 }
 
-// Progress Ring Component for SVG
-function ProgressRing({
-  x,
-  y,
-  radius,
-  progress,
-  color,
-}: {
-  x: number;
-  y: number;
-  radius: number;
-  progress: number;
-  color: string;
-}) {
-  const stroke = 3;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - progress * circumference;
+function getLayoutBounds(layoutNodes: LayoutNode[]) {
+  const minX = Math.min(...layoutNodes.map((n) => n.x)) - NODE_W / 2;
+  const maxX = Math.max(...layoutNodes.map((n) => n.x)) + NODE_W / 2;
+  const minY = Math.min(...layoutNodes.map((n) => n.y)) - NODE_H / 2;
+  const maxY = Math.max(...layoutNodes.map((n) => n.y)) + NODE_H / 2;
 
-  return (
-    <g transform={`translate(${x}, ${y})`}>
-      <circle
-        stroke="var(--border)"
-        fill="transparent"
-        strokeWidth={stroke}
-        r={normalizedRadius}
-        className="opacity-20"
-      />
-      <circle
-        stroke={color}
-        fill="transparent"
-        strokeWidth={stroke}
-        strokeDasharray={`${circumference} ${circumference}`}
-        style={{ strokeDashoffset }}
-        strokeLinecap="round"
-        r={normalizedRadius}
-        className="transition-all duration-500 -rotate-90 origin-center"
-      />
-    </g>
-  );
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
 }
 
 interface MindMapProps {
@@ -190,29 +177,82 @@ export default function MindMap({ nodes }: MindMapProps) {
   const { state, updateUI } = useWorkbench();
   const { nodes: layoutNodes, edges } = buildLayout(nodes);
   const containerRef = useRef<HTMLDivElement>(null);
+  const layoutSignature = layoutNodes.map((n) => `${n.id}:${n.x}:${n.y}`).join('|');
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // Reset transform when nodes change first time
-  useEffect(() => {
-    if (layoutNodes.length > 0 && transform.x === 0 && transform.y === 0) {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const minX = Math.min(...layoutNodes.map((n) => n.x)) - NODE_W / 2;
-        const maxX = Math.max(...layoutNodes.map((n) => n.x)) + NODE_W / 2;
-        const mapW = maxX - minX;
-        setTransform({
-          x: (rect.width - mapW) / 2 - minX,
-          y: PAD,
-          k: 1,
-        });
-      }
-    }
-  }, [layoutNodes.length]);
+  function fitToView() {
+    const el = containerRef.current;
+    if (!el || layoutNodes.length === 0) return;
 
-  // Handle Wheel (Pan & Zoom)
+    const rect = el.getBoundingClientRect();
+    const bounds = getLayoutBounds(layoutNodes);
+    const availableWidth = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+    const availableHeight = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
+    const nextK = Math.min(
+      MAX_ZOOM,
+      Math.max(MIN_ZOOM, Math.min(availableWidth / bounds.width, availableHeight / bounds.height)),
+    );
+
+    setTransform({
+      x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
+      y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
+      k: nextK,
+    });
+  }
+
+  function scaleAtPoint(anchorX: number, anchorY: number, nextK: number) {
+    setTransform((prev) => {
+      const clampedK = Math.min(Math.max(nextK, MIN_ZOOM), MAX_ZOOM);
+      const dx = (anchorX - prev.x) / prev.k;
+      const dy = (anchorY - prev.y) / prev.k;
+
+      return {
+        x: anchorX - dx * clampedK,
+        y: anchorY - dy * clampedK,
+        k: clampedK,
+      };
+    });
+  }
+
+  function stepZoom(direction: 'in' | 'out') {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const factor = direction === 'in' ? 1.15 : 1 / 1.15;
+    scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
+  }
+
+  useEffect(() => {
+    fitToView();
+  }, [layoutSignature]);
+
+  useEffect(() => {
+    function handleFocusNode(event: Event) {
+      const customEvent = event as CustomEvent<{ nodeId?: string }>;
+      const nodeId = customEvent.detail?.nodeId;
+      if (!nodeId) return;
+
+      const targetNode = layoutNodes.find((node) => node.id === nodeId);
+      const el = containerRef.current;
+      if (!targetNode || !el) return;
+
+      const rect = el.getBoundingClientRect();
+      setTransform((prev) => ({
+        ...prev,
+        x: rect.width / 2 - targetNode.x * prev.k,
+        y: rect.height / 2 - targetNode.y * prev.k,
+      }));
+    }
+
+    window.addEventListener('workbench:focus-node', handleFocusNode as EventListener);
+    return () => {
+      window.removeEventListener('workbench:focus-node', handleFocusNode as EventListener);
+    };
+  }, [layoutNodes]);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -221,27 +261,13 @@ export default function MindMap({ nodes }: MindMapProps) {
       e.preventDefault();
 
       if (e.ctrlKey || e.metaKey) {
-        // Zoom
         const delta = -e.deltaY;
         const factor = 1.1 ** (delta / 100);
-
-        setTransform((prev) => {
-          const newK = Math.min(Math.max(prev.k * factor, 0.1), 5);
-          const rect = el.getBoundingClientRect();
-          const mouseX = e.clientX - rect.left;
-          const mouseY = e.clientY - rect.top;
-
-          const dx = (mouseX - prev.x) / prev.k;
-          const dy = (mouseY - prev.y) / prev.k;
-
-          return {
-            x: mouseX - dx * newK,
-            y: mouseY - dy * newK,
-            k: newK,
-          };
-        });
+        const rect = el.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        scaleAtPoint(mouseX, mouseY, transform.k * factor);
       } else {
-        // Pan
         setTransform((prev) => ({
           ...prev,
           x: prev.x - e.deltaX,
@@ -252,7 +278,7 @@ export default function MindMap({ nodes }: MindMapProps) {
 
     el.addEventListener('wheel', handleWheelRaw, { passive: false });
     return () => el.removeEventListener('wheel', handleWheelRaw);
-  }, []);
+  }, [transform.k]);
 
   if (layoutNodes.length === 0) {
     return (
@@ -283,7 +309,28 @@ export default function MindMap({ nodes }: MindMapProps) {
     setIsDragging(false);
   };
 
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('g[role="button"]')) return;
+    updateUI({ selectedNodeId: null, rightSidebarOpen: false });
+  };
+
   const selectedId = state.ui.selectedNodeId;
+  const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
+  const focusIds = new Set<string>();
+
+  if (selectedNode) {
+    focusIds.add(selectedNode.id);
+
+    let currentParentId = selectedNode.parentId;
+    while (currentParentId) {
+      focusIds.add(currentParentId);
+      currentParentId = nodes.find((node) => node.id === currentParentId)?.parentId ?? null;
+    }
+
+    for (const childId of selectedNode.children) {
+      focusIds.add(childId);
+    }
+  }
 
   return (
     <div
@@ -293,11 +340,13 @@ export default function MindMap({ nodes }: MindMapProps) {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onClick={handleBackgroundClick}
       style={{
         backgroundPosition: `${transform.x}px ${transform.y}px`,
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
       }}
     >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-main)_0%,transparent_44%)] opacity-28" />
       <svg width="100%" height="100%" style={{ display: 'block' }} role="img" aria-label="Mind map">
         <defs>
           <marker
@@ -319,6 +368,7 @@ export default function MindMap({ nodes }: MindMapProps) {
             const from = layoutNodes.find((n) => n.id === e.from);
             const to = layoutNodes.find((n) => n.id === e.to);
             if (!from || !to) return null;
+            const isFocused = !selectedId || (focusIds.has(e.from) && focusIds.has(e.to));
             return (
               <path
                 key={`${e.from}-${e.to}`}
@@ -327,7 +377,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                 stroke="#94a3b8"
                 strokeWidth={1.5}
                 markerEnd="url(#arrowhead)"
-                className="opacity-70"
+                className={isFocused ? 'opacity-62' : 'opacity-24'}
               />
             );
           })}
@@ -343,20 +393,27 @@ export default function MindMap({ nodes }: MindMapProps) {
             ).length;
             const tooltip = n.description || n.label;
             const StatusIcon = config.icon;
+            const isFocusNode = !selectedId || focusIds.has(n.id);
+            const contentOpacity = isSelected ? 1 : isFocusNode ? 0.94 : 0.62;
+            const cardOpacity = isSelected ? 1 : isFocusNode ? 0.98 : 0.58;
 
             return (
               <g
                 key={n.id}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateUI({ selectedNodeId: n.id });
+                  updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') updateUI({ selectedNodeId: n.id });
+                  if (e.key === 'Enter') updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
                 }}
                 role="button"
                 tabIndex={0}
-                className="group cursor-pointer outline-none transition-transform duration-200 active:scale-95"
+                className="group cursor-pointer outline-none"
+                style={{ opacity: cardOpacity }}
               >
                 <title>{tooltip}</title>
 
@@ -401,9 +458,8 @@ export default function MindMap({ nodes }: MindMapProps) {
                   height={NODE_H}
                   style={{ pointerEvents: 'none' }}
                 >
-                  <div className="flex h-full w-full flex-col p-3 relative">
-                    {/* 1. Header: Status Icon + Title */}
-                    <div className="flex items-start gap-2 min-w-0 mb-2">
+                  <div className="relative flex h-full w-full flex-col p-3">
+                    <div className="mb-2 flex min-w-0 items-start gap-2">
                       <StatusIcon
                         size={14}
                         strokeWidth={2.5}
@@ -417,51 +473,43 @@ export default function MindMap({ nodes }: MindMapProps) {
                           fontWeight: 700,
                           lineHeight: '1.2',
                         }}
-                        className={`min-w-0 truncate ${isRejected ? 'opacity-40 line-through' : 'opacity-100'}`}
+                        className={`min-w-0 truncate ${isRejected ? 'line-through' : ''}`}
                       >
                         {n.label}
                       </div>
                     </div>
 
-                    {/* 2. Middle: Description (2 lines max) */}
                     <div
-                      className="mb-auto px-5 text-[11px] leading-relaxed line-clamp-2"
-                      style={{ color: config.text, opacity: 0.6 }}
+                      className="mb-auto text-[11px] leading-relaxed line-clamp-1"
+                      style={{ color: config.text, opacity: contentOpacity * 0.66 }}
                     >
-                      {n.description || 'No description'}
+                      {n.description}
                     </div>
 
-                    {/* 3. Bottom: Tags */}
-                    <div className="flex flex-wrap gap-1 px-5">
-                      {n.tags.length > 0 ? (
-                        n.tags.slice(0, 2).map((tag) => (
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="flex min-h-3 flex-wrap gap-1">
+                        {(isSelected ? n.tags.slice(0, 2) : n.tags.slice(0, 1)).map((tag) => (
                           <div
                             key={tag}
-                            className="flex items-center gap-0.5 rounded-full bg-[var(--border)]/10 px-1.5 py-0.5 text-[8px] font-bold text-[var(--text-main)] opacity-50"
+                          className="flex items-center gap-0.5 rounded-full bg-[var(--border)]/10 px-1.5 py-0.5 text-[8px] font-bold text-[var(--text-main)]"
+                          style={{ opacity: isSelected ? 0.74 : 0.58 }}
                           >
                             <Hash size={8} />
                             <span>{tag}</span>
                           </div>
-                        ))
-                      ) : (
-                        <div className="h-3" /> // Maintain layout
+                        ))}
+                      </div>
+                      {n.progress > 0 && (
+                        <div
+                          className="shrink-0 text-[10px] font-semibold tabular-nums"
+                          style={{ color: config.subtext, opacity: isSelected ? 0.82 : 0.56 }}
+                        >
+                          {Math.round(n.progress * 100)}%
+                        </div>
                       )}
                     </div>
                   </div>
                 </foreignObject>
-
-                {/* Progress Ring (Bottom Right) */}
-                <ProgressRing
-                  x={n.x + NODE_W / 2 - 16}
-                  y={n.y + NODE_H / 2 - 16}
-                  radius={12}
-                  progress={n.progress}
-                  color={
-                    n.status === 'done' || n.status === 'accepted'
-                      ? 'var(--primary)'
-                      : 'var(--accent)'
-                  }
-                />
 
                 {/* Unprocessed feedback dot */}
                 {fbCount > 0 && (
@@ -479,6 +527,50 @@ export default function MindMap({ nodes }: MindMapProps) {
           })}
         </g>
       </svg>
+      <div className="absolute bottom-4 right-4 flex items-center gap-2">
+        <div className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 px-3 py-1 text-[11px] font-medium text-[var(--text-main)] shadow-sm backdrop-blur">
+          {Math.round(transform.k * 100)}%
+        </div>
+        <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 p-1 shadow-sm backdrop-blur">
+          <CanvasControlButton
+            label={t('canvas.zoomOut')}
+            onClick={() => stepZoom('out')}
+            icon={<Minus size={14} />}
+          />
+          <CanvasControlButton
+            label={t('canvas.zoomIn')}
+            onClick={() => stepZoom('in')}
+            icon={<Plus size={14} />}
+          />
+          <CanvasControlButton
+            label={t('canvas.fitView')}
+            onClick={fitToView}
+            icon={<Crosshair size={14} />}
+          />
+        </div>
+      </div>
     </div>
+  );
+}
+
+function CanvasControlButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+    >
+      {icon}
+    </button>
   );
 }
