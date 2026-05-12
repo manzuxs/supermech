@@ -22,12 +22,14 @@
           "estimatedMinutes": 10,
           "implementationSteps": [
             { "description": "workbench.ts: FeedbackEntry 接口增加 rating?: number 字段" },
-            { "description": "validate.ts: 在 ui 校验后新增 feedback 数组校验，含 rating 范围 (1-5) 检查" },
-            { "description": "vite-plugin.ts: feedback endpoint 将 data.rating 写入 s.feedback.push" }
+            {
+              "description": "validate.ts: 在 ui 校验后新增 feedback 数组校验，含 rating 范围 (1-5) 检查"
+            },
+            {
+              "description": "vite-plugin.ts: feedback endpoint 将 data.rating 写入 s.feedback.push"
+            }
           ],
-          "verificationSteps": [
-            { "description": "pnpm typecheck 通过" }
-          ]
+          "verificationSteps": [{ "description": "pnpm typecheck 通过" }]
         }
       },
       {
@@ -45,8 +47,12 @@
           "implementationSteps": [
             { "description": "删除 STATUS_DOT、REVIEW_CYCLE、cycleStatus 函数" },
             { "description": "删除 PlanHeader 概览区的进度条和 doneCount/totalCount" },
-            { "description": "删除 PhaseGroup 的 doneCount、onStatusCycle props 和状态圆点、isDone line-through" },
-            { "description": "删除 GoalTab 的 handleStatusChange、handleProgressClick、Status 按钮组、Progress 条" }
+            {
+              "description": "删除 PhaseGroup 的 doneCount、onStatusCycle props 和状态圆点、isDone line-through"
+            },
+            {
+              "description": "删除 GoalTab 的 handleStatusChange、handleProgressClick、Status 按钮组、Progress 条"
+            }
           ],
           "verificationSteps": [
             { "description": "写计划时 PlanEditor 无状态圆点、无进度条、无状态切换按钮" },
@@ -93,7 +99,9 @@
             { "description": "修改 KanbanBoard 布局：flex 容器 + kanban 列 + 可选的详情面板" },
             { "description": "构建 ratingMap: 从 feedback 中提取 nodeId→rating 映射" },
             { "description": "卡片上显示星级（如果该节点有评分）" },
-            { "description": "TaskDetail 组件：只读 status 徽章、只读 progress 条、1-5 星可点击评分、CommandInput 反馈" }
+            {
+              "description": "TaskDetail 组件：只读 status 徽章、只读 progress 条、1-5 星可点击评分、CommandInput 反馈"
+            }
           ],
           "verificationSteps": [
             { "description": "选中 Kanban 卡片 → 右侧显示详情面板" },
@@ -138,14 +146,16 @@
           "riskLevel": "low",
           "estimatedMinutes": 10,
           "implementationSteps": [
-            { "description": "visual-writing-plans: 从 task node 模板中删除 status 和 progress 字段" },
+            {
+              "description": "visual-writing-plans: 从 task node 模板中删除 status 和 progress 字段"
+            },
             { "description": "visual-writing-plans: Execution Handoff 改为引导用户输入 /execute" },
-            { "description": "visual-executing-plans: Key Rules 加 Agent-only status/progress 声明" },
+            {
+              "description": "visual-executing-plans: Key Rules 加 Agent-only status/progress 声明"
+            },
             { "description": "visual-executing-plans: Step 3.5 加评分收集说明" }
           ],
-          "verificationSteps": [
-            { "description": "SKILL.md 格式正确" }
-          ]
+          "verificationSteps": [{ "description": "SKILL.md 格式正确" }]
         }
       },
       {
@@ -165,9 +175,7 @@
             { "description": "Available Skills 表修正 PlanEditor 与 KanbanBoard 的角色说明" },
             { "description": "新增 Design Decisions 章节" }
           ],
-          "verificationSteps": [
-            { "description": "CLAUDE.md 内容准确" }
-          ]
+          "verificationSteps": [{ "description": "CLAUDE.md 内容准确" }]
         }
       },
       {
@@ -188,9 +196,7 @@
             { "description": "添加 edges 建立阶段间依赖关系" },
             { "description": "编写 executing-plans 状态文件，全部标记 done" }
           ],
-          "verificationSteps": [
-            { "description": "validateState() 对文件内容校验通过" }
-          ]
+          "verificationSteps": [{ "description": "validateState() 对文件内容校验通过" }]
         }
       }
     ],

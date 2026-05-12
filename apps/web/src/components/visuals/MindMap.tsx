@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Circle, Hash, PlayCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Hash, PlayCircle, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, NodeStatus } from 'schemas';

@@ -1,10 +1,11 @@
-import { Beaker, ChevronRight, Code, FileText } from 'lucide-react';
+import { Beaker, ChevronRight, Code, FileText, LayoutList, Presentation } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, ImplementationStep, PlanHeader, WorkbenchState } from 'schemas';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import CommandInput from '../shared/CommandInput.tsx';
+import SlideMode from './SlideMode.tsx';
 
 const FILE_TYPE_STYLES: Record<string, string> = {
   create: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
@@ -29,6 +30,7 @@ function getTaskMeta(node: CanvasNode): Record<string, unknown> {
 export default function PlanEditor() {
   const { t } = useTranslation();
   const { state, selectNode, addFeedback } = useWorkbench();
+  const [viewMode, setViewMode] = useState<'list' | 'slide'>('list');
   const { nodes } = state.canvas;
   const planHeader = getPlanHeader(state);
   const selectedId = state.ui.selectedNodeId;
@@ -65,100 +67,135 @@ export default function PlanEditor() {
   }
 
   return (
-    <div className="flex h-full">
-      {/* ── LEFT: Card list ── */}
-      <div className="flex w-56 shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-main)]">
-        {planHeader && (
-          <div className="border-b border-[var(--border)] p-3">
-            <h2 className="text-xs font-bold leading-snug text-[var(--text-main)]">
-              {planHeader.goal}
-            </h2>
-          </div>
-        )}
+    <div className="relative flex h-full w-full overflow-hidden">
+      {/* ── View Mode Toggle ── */}
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg-main)]/80 p-1 shadow-sm backdrop-blur-md transition-all hover:bg-[var(--bg-main)]">
+        <button
+          type="button"
+          onClick={() => setViewMode('list')}
+          className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+            viewMode === 'list'
+              ? 'bg-[var(--primary)] text-white shadow-sm'
+              : 'text-[var(--text-main)] opacity-40 hover:opacity-100'
+          }`}
+          title={t('editor.viewMode.list')}
+        >
+          <LayoutList size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode('slide')}
+          className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+            viewMode === 'slide'
+              ? 'bg-[var(--primary)] text-white shadow-sm'
+              : 'text-[var(--text-main)] opacity-40 hover:opacity-100'
+          }`}
+          title={t('editor.viewMode.slide')}
+        >
+          <Presentation size={14} />
+        </button>
+      </div>
 
-        {phaseOrder.map((name) => {
-          const items = phaseMap.get(name) ?? [];
-          if (items.length === 0) return null;
-          return (
-            <div key={name} className="px-2 pt-3 first:pt-3">
-              <h3 className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-main)] opacity-40">
-                {name}
-              </h3>
-              <div className="space-y-1">
-                {items.map((node) => {
-                  const meta = getTaskMeta(node);
-                  const goal = (meta.goal as string) || '';
-                  const isSelected = node.id === selectedId;
-                  return (
+      {viewMode === 'slide' ? (
+        <SlideMode
+          nodes={nodes}
+          selectedId={selectedId || (nodes[0]?.id ?? null)}
+          selectNode={selectNode}
+        />
+      ) : (
+        <div className="flex h-full w-full">
+          {/* ── LEFT: Card list ── */}
+          <div className="flex w-56 shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--bg-main)]">
+            {planHeader && (
+              <div className="border-b border-[var(--border)] p-3">
+                <h2 className="text-xs font-bold leading-snug text-[var(--text-main)]">
+                  {planHeader.goal}
+                </h2>
+              </div>
+            )}
+
+            {phaseOrder.map((name) => {
+              const items = phaseMap.get(name) ?? [];
+              if (items.length === 0) return null;
+              return (
+                <div key={name} className="px-2 pt-3 first:pt-3">
+                  <h3 className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-main)] opacity-40">
+                    {name}
+                  </h3>
+                  <div className="space-y-1">
+                    {items.map((node) => {
+                      const meta = getTaskMeta(node);
+                      const goal = (meta.goal as string) || '';
+                      const isSelected = node.id === selectedId;
+                      return (
+                        <button
+                          key={node.id}
+                          type="button"
+                          onClick={() => selectNode(node.id)}
+                          className={`w-full rounded-lg border px-3 py-2.5 text-left transition-all ${
+                            isSelected
+                              ? 'border-[var(--primary)]/40 bg-[var(--primary)]/8 shadow-sm'
+                              : 'border-transparent hover:border-[var(--border)] hover:bg-[var(--border)]/10'
+                          }`}
+                        >
+                          <span
+                            className={`block text-xs font-medium leading-snug ${
+                              isSelected ? 'text-[var(--primary)]' : 'text-[var(--text-main)]'
+                            }`}
+                          >
+                            {node.label}
+                          </span>
+                          {goal && (
+                            <span className="mt-0.5 line-clamp-2 block text-[10px] leading-relaxed text-[var(--text-main)] opacity-50">
+                              {goal}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            {noPhase.length > 0 && (
+              <div className="px-2 pt-3">
+                <h3 className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-main)] opacity-40">
+                  Other
+                </h3>
+                <div className="space-y-1">
+                  {noPhase.map((node) => (
                     <button
                       key={node.id}
                       type="button"
                       onClick={() => selectNode(node.id)}
                       className={`w-full rounded-lg border px-3 py-2.5 text-left transition-all ${
-                        isSelected
+                        node.id === selectedId
                           ? 'border-[var(--primary)]/40 bg-[var(--primary)]/8 shadow-sm'
                           : 'border-transparent hover:border-[var(--border)] hover:bg-[var(--border)]/10'
                       }`}
                     >
-                      <span
-                        className={`block text-xs font-medium leading-snug ${
-                          isSelected ? 'text-[var(--primary)]' : 'text-[var(--text-main)]'
-                        }`}
-                      >
+                      <span className="block text-xs font-medium text-[var(--text-main)]">
                         {node.label}
                       </span>
-                      {goal && (
-                        <span className="mt-0.5 line-clamp-2 block text-[10px] leading-relaxed text-[var(--text-main)] opacity-50">
-                          {goal}
-                        </span>
-                      )}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-        {noPhase.length > 0 && (
-          <div className="px-2 pt-3">
-            <h3 className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--text-main)] opacity-40">
-              Other
-            </h3>
-            <div className="space-y-1">
-              {noPhase.map((node) => (
-                <button
-                  key={node.id}
-                  type="button"
-                  onClick={() => selectNode(node.id)}
-                  className={`w-full rounded-lg border px-3 py-2.5 text-left transition-all ${
-                    node.id === selectedId
-                      ? 'border-[var(--primary)]/40 bg-[var(--primary)]/8 shadow-sm'
-                      : 'border-transparent hover:border-[var(--border)] hover:bg-[var(--border)]/10'
-                  }`}
-                >
-                  <span className="block text-xs font-medium text-[var(--text-main)]">
-                    {node.label}
-                  </span>
-                </button>
-              ))}
-            </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── CENTER: Content page ── */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-canvas)]">
-        {selectedNode ? (
-          <TaskDetail
-            node={selectedNode}
-            onFeedback={(params) => addFeedback(params)}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--text-main)] opacity-40">
-            {t('editor.selectTask')}
+          {/* ── CENTER: Content page ── */}
+          <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-canvas)]">
+            {selectedNode ? (
+              <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-[var(--text-main)] opacity-40">
+                {t('editor.selectTask')}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

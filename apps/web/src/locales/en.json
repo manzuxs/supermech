@@ -58,6 +58,10 @@
     "sent": "Sent",
     "expected": "Expected:",
     "legacyNote": "legacy note available",
-    "risk": "risk"
+    "risk": "risk",
+    "viewMode": {
+      "list": "List Mode",
+      "slide": "Slide Mode"
+    }
   }
 }

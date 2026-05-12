@@ -58,6 +58,10 @@
     "sent": "已发送",
     "expected": "预期结果:",
     "legacyNote": "包含旧版说明",
-    "risk": "风险"
+    "risk": "风险",
+    "viewMode": {
+      "list": "列表模式",
+      "slide": "幻灯片模式"
+    }
   }
 }
