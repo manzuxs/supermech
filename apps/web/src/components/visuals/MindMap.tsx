@@ -1,13 +1,6 @@
+import { AlertCircle, CheckCircle2, Circle, Hash, PlayCircle, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Circle, 
-  PlayCircle, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle,
-  Hash
-} from 'lucide-react';
 import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
@@ -37,35 +30,35 @@ const STATUS_CONFIG: Record<
     border: 'var(--border)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
-    icon: Circle
+    icon: Circle,
   },
   active: {
     bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
     border: 'var(--accent)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
-    icon: PlayCircle
+    icon: PlayCircle,
   },
   accepted: {
     bg: 'color-mix(in srgb, var(--success) 8%, var(--bg-canvas))',
     border: 'var(--success)',
     text: 'var(--success)',
     subtext: 'var(--success)',
-    icon: CheckCircle2
+    icon: CheckCircle2,
   },
   rejected: {
     bg: 'var(--bg-canvas)',
     border: 'var(--border)',
     text: 'var(--muted-foreground)',
     subtext: 'var(--muted-foreground)',
-    icon: XCircle
+    icon: XCircle,
   },
   done: {
     bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
     subtext: 'var(--primary)',
-    icon: CheckCircle2
+    icon: CheckCircle2,
   },
 };
 
@@ -147,7 +140,19 @@ function edgePath(from: LayoutNode, to: LayoutNode): string {
 }
 
 // Progress Ring Component for SVG
-function ProgressRing({ x, y, radius, progress, color }: { x: number, y: number, radius: number, progress: number, color: string }) {
+function ProgressRing({
+  x,
+  y,
+  radius,
+  progress,
+  color,
+}: {
+  x: number;
+  y: number;
+  radius: number;
+  progress: number;
+  color: string;
+}) {
   const stroke = 3;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -399,10 +404,10 @@ export default function MindMap({ nodes }: MindMapProps) {
                   <div className="flex h-full w-full flex-col p-3 relative">
                     {/* 1. Header: Status Icon + Title */}
                     <div className="flex items-start gap-2 min-w-0 mb-2">
-                      <StatusIcon 
-                        size={14} 
+                      <StatusIcon
+                        size={14}
                         strokeWidth={2.5}
-                        className="mt-0.5 shrink-0" 
+                        className="mt-0.5 shrink-0"
                         style={{ color: isSelected ? 'var(--primary)' : config.border }}
                       />
                       <div
@@ -446,12 +451,16 @@ export default function MindMap({ nodes }: MindMapProps) {
                 </foreignObject>
 
                 {/* Progress Ring (Bottom Right) */}
-                <ProgressRing 
-                  x={n.x + NODE_W / 2 - 16} 
-                  y={n.y + NODE_H / 2 - 16} 
-                  radius={12} 
-                  progress={n.progress} 
-                  color={n.status === 'done' || n.status === 'accepted' ? 'var(--primary)' : 'var(--accent)'} 
+                <ProgressRing
+                  x={n.x + NODE_W / 2 - 16}
+                  y={n.y + NODE_H / 2 - 16}
+                  radius={12}
+                  progress={n.progress}
+                  color={
+                    n.status === 'done' || n.status === 'accepted'
+                      ? 'var(--primary)'
+                      : 'var(--accent)'
+                  }
                 />
 
                 {/* Unprocessed feedback dot */}

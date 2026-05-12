@@ -1,6 +1,6 @@
+import { MessageSquare, Minus, Send, Target, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, Send, Minus, X, Target } from 'lucide-react';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 export default function FloatingFeedback() {
