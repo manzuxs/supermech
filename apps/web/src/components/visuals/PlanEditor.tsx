@@ -341,7 +341,7 @@ function PhaseGroup({
             }`;
 
             return (
-              <div key={node.id} className={rowClass}>
+              <div key={node.id} className={rowClass} onClick={() => onSelect(node.id)} role="button" tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Enter') onSelect(node.id); }}>
                 {/* Clickable status dot */}
                 <span
                   role="button"
