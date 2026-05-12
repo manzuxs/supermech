@@ -58,6 +58,10 @@ After each task:
 - If verification fails, set task back to `pending` and add feedback
 - If pass, keep as `done` and move to next
 
+### Step 3.5: Await User Rating
+
+After a task is marked `done`, the KanbanBoard will show star-rating controls. The user can optionally rate the task (1–5 stars) and add text feedback via the detail panel. These ratings are stored in `feedback[].rating`. You do NOT need to prompt for ratings — the UI handles it.
+
 ### Step 4: Complete
 
 Set agent status to idle and clear the active skill:
@@ -67,6 +71,7 @@ Set agent status to idle and clear the active skill:
 
 ## Key Rules
 
+- Status (pending/active/done) and progress (0.0–1.0) are **Agent-only**. The UI does not allow the user to change them. The user only rates quality.
 - Do NOT add new tasks — the plan is already defined
 - Do NOT modify task labels or metadata — only status and progress
 - Only one task should be `active` at a time

@@ -234,6 +234,7 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
               id: crypto.randomUUID(),
               nodeId: data.nodeId,
               text: data.text,
+              rating: data.rating ?? undefined,
               section: data.section ?? null,
               stepIndex: data.stepIndex ?? null,
               quickAction: data.quickAction ?? null,

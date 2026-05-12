@@ -1,30 +1,18 @@
-import { Beaker, Check, ChevronDown, ChevronRight, Code, Hourglass, Target } from 'lucide-react';
+import { Beaker, ChevronDown, ChevronRight, Code, Hourglass, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  CanvasNode,
-  ImplementationStep,
-  NodeStatus,
-  PlanHeader,
-  WorkbenchState,
-} from 'schemas';
+import type { CanvasNode, ImplementationStep, PlanHeader, WorkbenchState } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import CommandInput from '../shared/CommandInput.tsx';
 
 type TabKey = 'goal' | 'code' | 'test';
-
-const STATUS_DOT: Record<string, string> = {
-  pending: 'bg-muted-foreground/40',
-  active: 'bg-[var(--accent)]',
-  done: 'bg-[var(--primary)]',
-  accepted: 'bg-[var(--success)]',
-  rejected: 'bg-[var(--muted-foreground)]',
-};
 
 const FILE_TYPE_STYLES: Record<string, string> = {
   create: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
   modify: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   test: 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20',
-  delete: 'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
+  delete:
+    'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
 };
 
 function getPlanHeader(state: WorkbenchState): PlanHeader | null {
@@ -49,14 +37,6 @@ export default function PlanEditor() {
   const [activeTab, setActiveTab] = useState<TabKey>('goal');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-
-  // helper: cycle status for writing-plans review
-  const REVIEW_CYCLE: NodeStatus[] = ['pending', 'accepted', 'rejected'];
-  function cycleStatus(node: CanvasNode) {
-    const idx = REVIEW_CYCLE.indexOf(node.status);
-    const next = idx >= 0 ? REVIEW_CYCLE[(idx + 1) % REVIEW_CYCLE.length] : 'pending';
-    updateNode(node.id, { status: next });
-  }
 
   function startEdit(node: CanvasNode) {
     setEditingId(node.id);
@@ -111,9 +91,6 @@ export default function PlanEditor() {
     depMap.set(edge.to, existing);
   }
 
-  const totalCount = nodes.length;
-  const doneCount = nodes.filter((n) => n.status === 'done' || n.status === 'accepted').length;
-
   return (
     <div className="flex h-full">
       {/* ── LEFT: Phase tree ── */}
@@ -137,20 +114,6 @@ export default function PlanEditor() {
                 </span>
               ))}
             </div>
-            {/* Progress */}
-            <div className="flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
-                <div
-                  className="h-full rounded-full bg-[var(--primary)] transition-all duration-500"
-                  style={{
-                    width: `${totalCount ? Math.round((doneCount / totalCount) * 100) : 0}%`,
-                  }}
-                />
-              </div>
-              <span className="whitespace-nowrap text-[11px] text-[var(--text-main)] opacity-40">
-                {doneCount}/{totalCount}
-              </span>
-            </div>
           </div>
         )}
 
@@ -158,7 +121,6 @@ export default function PlanEditor() {
         <div className="flex-1 space-y-1 p-2">
           {phaseOrder.map((name) => {
             const items = phaseMap.get(name) ?? [];
-            const pd = items.filter((n) => n.status === 'done' || n.status === 'accepted').length;
             const phaseDef = planHeader?.phases?.find((p) => p.name === name);
             return (
               <PhaseGroup
@@ -166,11 +128,9 @@ export default function PlanEditor() {
                 name={name}
                 description={phaseDef?.description}
                 items={items}
-                doneCount={pd}
                 selectedId={selectedId}
                 depMap={depMap}
                 onSelect={(id) => selectNode(id)}
-                onStatusCycle={cycleStatus}
                 onStartEdit={startEdit}
                 editingId={editingId}
                 editValue={editValue}
@@ -183,13 +143,9 @@ export default function PlanEditor() {
             <PhaseGroup
               name="Other"
               items={noPhase}
-              doneCount={
-                noPhase.filter((n) => n.status === 'done' || n.status === 'accepted').length
-              }
               selectedId={selectedId}
               depMap={depMap}
               onSelect={(id) => selectNode(id)}
-              onStatusCycle={cycleStatus}
               onStartEdit={startEdit}
               editingId={editingId}
               editValue={editValue}
@@ -254,11 +210,11 @@ export default function PlanEditor() {
                 />
               )}
 
-              {/* Section feedback */}
-              <SectionFeedback
-                onFeedback={(text) =>
-                  addFeedback({ nodeId: selectedNode.id, text, section: activeTab })
-                }
+              {/* Section feedback + commands */}
+              <CommandInput
+                onSubmit={async (text) => {
+                  await addFeedback({ nodeId: selectedNode.id, text, section: activeTab });
+                }}
               />
             </div>
           </>
@@ -278,11 +234,9 @@ function PhaseGroup({
   name,
   description,
   items,
-  doneCount,
   selectedId,
   depMap,
   onSelect,
-  onStatusCycle,
   onStartEdit,
   editingId,
   editValue,
@@ -292,11 +246,9 @@ function PhaseGroup({
   name: string;
   description?: string;
   items: CanvasNode[];
-  doneCount: number;
   selectedId: string | null;
   depMap: Map<string, string[]>;
   onSelect: (id: string) => void;
-  onStatusCycle: (node: CanvasNode) => void;
   onStartEdit: (node: CanvasNode) => void;
   editingId: string | null;
   editValue: string;
@@ -322,7 +274,7 @@ function PhaseGroup({
           </span>
         )}
         <span className="rounded-full bg-[var(--border)] px-2 py-1 text-[10px] font-medium text-[var(--text-main)] opacity-40">
-          {doneCount}/{items.length}
+          {items.length}
         </span>
       </button>
 
@@ -332,7 +284,6 @@ function PhaseGroup({
             const isSelected = node.id === selectedId;
             const isEditing = node.id === editingId;
             const deps = depMap.get(node.id);
-            const isDone = node.status === 'done' || node.status === 'accepted';
 
             const rowClass = `flex w-full items-center gap-2 rounded-md px-4 py-2 text-left text-xs transition-colors ${
               isSelected
@@ -341,25 +292,16 @@ function PhaseGroup({
             }`;
 
             return (
-              <div key={node.id} className={rowClass} onClick={() => onSelect(node.id)} role="button" tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Enter') onSelect(node.id); }}>
-                {/* Clickable status dot */}
-                <span
-                  role="button"
-                  tabIndex={0}
-                  title="Click to cycle status: pending → accepted → rejected"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusCycle(node);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.stopPropagation();
-                      onStatusCycle(node);
-                    }
-                  }}
-                  className={`h-2.5 w-2.5 shrink-0 cursor-pointer rounded-full hover:ring-2 hover:ring-[var(--primary)]/50 ${STATUS_DOT[node.status] ?? 'bg-muted-foreground/40'}`}
-                />
-
+              <div
+                key={node.id}
+                className={rowClass}
+                onClick={() => onSelect(node.id)}
+                role="button"
+                tabIndex={-1}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') onSelect(node.id);
+                }}
+              >
                 {/* Editable label */}
                 {isEditing ? (
                   <input
@@ -379,7 +321,7 @@ function PhaseGroup({
                   />
                 ) : (
                   <span
-                    className={`flex-1 truncate ${isDone ? 'opacity-40 line-through' : ''}`}
+                    className="flex-1 truncate"
                     onDoubleClick={(e) => {
                       e.stopPropagation();
                       onSelect(node.id);
@@ -409,7 +351,6 @@ function PhaseGroup({
 
 function GoalTab({ node }: { node: CanvasNode }) {
   const { t } = useTranslation();
-  const { updateNode } = useWorkbench();
   const meta = getTaskMeta(node);
   const goal = meta.goal as string | undefined;
   const oldDescription = meta.description as string | undefined;
@@ -422,75 +363,10 @@ function GoalTab({ node }: { node: CanvasNode }) {
 
   const displayGoal = goal || oldDescription || 'No description provided.';
 
-  function handleStatusChange(status: NodeStatus) {
-    updateNode(node.id, { status });
-  }
-
-  function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const pct = Math.round((x / rect.width) * 100) / 100;
-    updateNode(node.id, { progress: Math.min(1, Math.max(0, pct)) });
-  }
-
   return (
     <div className="space-y-4">
       {/* Goal text */}
       <p className="text-sm leading-relaxed text-[var(--text-main)]">{displayGoal}</p>
-
-      {/* Status + Progress controls */}
-      <div className="space-y-2 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-main)] opacity-40">
-            {t('editor.status')}
-          </span>
-          <div className="flex items-center gap-1.5">
-            {(['pending', 'accepted', 'rejected'] as NodeStatus[]).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => handleStatusChange(s)}
-                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-all ${
-                  node.status === s
-                    ? s === 'accepted'
-                      ? 'border-[var(--success)]/40 bg-[var(--success)]/15 text-[var(--success)]'
-                      : s === 'rejected'
-                        ? 'border-[var(--muted-foreground)]/40 bg-[var(--muted-foreground)]/15 text-[var(--muted-foreground)]'
-                        : 'border-[var(--border)] bg-[var(--border)]/20 text-[var(--text-main)]'
-                    : 'border-transparent text-[var(--text-main)] opacity-30 hover:opacity-60'
-                }`}
-              >
-                {s === 'pending' ? 'Pending' : s === 'accepted' ? 'Approved' : 'Rejected'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-main)] opacity-40">
-            {t('editor.progress')}
-          </span>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={handleProgressClick}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                const pct = e.key === ' ' ? 1 : node.progress >= 1 ? 0 : node.progress + 0.25;
-                updateNode(node.id, { progress: Math.min(1, pct) });
-              }
-            }}
-            className="h-2 flex-1 cursor-pointer overflow-hidden rounded-full bg-[var(--border)] hover:ring-1 hover:ring-[var(--primary)]/30"
-          >
-            <div
-              className="h-full rounded-full bg-[var(--primary)] transition-all duration-300"
-              style={{ width: `${Math.round(node.progress * 100)}%` }}
-            />
-          </div>
-          <span className="text-[11px] font-medium text-[var(--text-main)] opacity-60">
-            {Math.round(node.progress * 100)}%
-          </span>
-        </div>
-      </div>
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2">
@@ -631,56 +507,6 @@ function StepsTab({
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-// ─── Section Feedback (inline per-tab) ───
-
-function SectionFeedback({ onFeedback }: { onFeedback: (text: string) => void }) {
-  const { t } = useTranslation();
-  const [text, setText] = useState('');
-  const [sent, setSent] = useState(false);
-
-  async function handleSubmit() {
-    if (!text.trim()) return;
-    await onFeedback(text.trim());
-    setText('');
-    setSent(true);
-    setTimeout(() => setSent(false), 2000);
-  }
-
-  return (
-    <div className="mt-6 border-t border-[var(--border)] pt-4">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-main)] opacity-40">
-          {t('editor.feedbackTitle')}
-        </span>
-        {sent && (
-          <span className="flex items-center gap-1 text-[10px] text-[var(--primary)]">
-            <Check size={10} /> {t('editor.sent')}
-          </span>
-        )}
-      </div>
-      <div className="flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSubmit();
-          }}
-          placeholder={t('editor.feedbackPlaceholder')}
-          className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] px-4 py-2 text-xs text-[var(--text-main)] outline-none transition-colors placeholder:opacity-30 focus:border-[var(--primary)]"
-        />
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!text.trim()}
-          className="rounded-lg bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-30"
-        >
-          {t('editor.send')}
-        </button>
-      </div>
     </div>
   );
 }

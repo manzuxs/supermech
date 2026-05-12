@@ -1,0 +1,433 @@
+{
+  "meta": {
+    "projectName": "Superpowers+",
+    "sessionId": "writing-plans",
+    "activeSkill": "writing-plans",
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "writing-plans",
+    "nodes": [
+      {
+        "id": "task-1",
+        "label": "FeedbackEntry 加 rating 字段",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "在 FeedbackEntry 类型中增加可选 rating 字段（1-5 星），用于执行完成后用户对任务质量的评价。同时更新 validate.ts 增加 rating 校验，更新 vite-plugin.ts 持久化 rating。",
+          "phase": "Schema & Validation",
+          "riskLevel": "low",
+          "estimatedMinutes": 10,
+          "files": [
+            {
+              "path": "packages/schemas/src/workbench.ts",
+              "type": "modify",
+              "description": "FeedbackEntry 加 rating?: number"
+            },
+            {
+              "path": "packages/watcher/src/validate.ts",
+              "type": "modify",
+              "description": "加 feedback 完整性和 rating 范围校验"
+            },
+            {
+              "path": "packages/watcher/src/vite-plugin.ts",
+              "type": "modify",
+              "description": "feedback 端点持久化 rating"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "workbench.ts: FeedbackEntry 接口增加 rating?: number 字段",
+              "code": "export interface FeedbackEntry {\n  id: string;\n  nodeId: string;\n  text: string;\n  rating?: number;\n  section?: 'goal' | 'code' | 'test' | 'general';\n  stepIndex?: number;\n  quickAction: string | null;\n  createdAt: string;\n}"
+            },
+            {
+              "description": "validate.ts: 在 ui 校验后新增 feedback 数组校验，含 rating 范围 (1-5) 检查"
+            },
+            {
+              "description": "vite-plugin.ts: feedback endpoint 将 data.rating 写入 s.feedback.push"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "pnpm typecheck 通过"
+            },
+            {
+              "description": "提交含 rating 的 POST /__state/feedback，检查 state.json 中字段正确写入"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-2",
+        "label": "PlanEditor 去掉状态/进度 UI",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "写计划阶段是纯规划视图，不应展示执行态信息。移除状态圆点、进度条、状态切换按钮、Goal Tab 的状态/进度控制区。完成的任务不再显示删除线。",
+          "phase": "PlanEditor 精简",
+          "riskLevel": "medium",
+          "estimatedMinutes": 20,
+          "files": [
+            {
+              "path": "apps/web/src/components/visuals/PlanEditor.tsx",
+              "type": "modify",
+              "description": "大幅删除 status/progress 相关代码"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "删除 STATUS_DOT、REVIEW_CYCLE、cycleStatus 函数"
+            },
+            {
+              "description": "删除 PlanHeader 概览区的进度条和 doneCount/totalCount"
+            },
+            {
+              "description": "删除 PhaseGroup 的 doneCount、onStatusCycle props 和状态圆点、isDone line-through"
+            },
+            {
+              "description": "删除 GoalTab 的 handleStatusChange、handleProgressClick、Status 按钮组、Progress 条"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "写计划时 PlanEditor 无状态圆点、无进度条、无状态切换按钮"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-3",
+        "label": "通用指令系统 / CommandInput",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "新建指令注册表和共享输入组件，让底部输入框同时支持反馈提交和 / 指令调用。输入以 / 开头则查指令表执行，否则提交为反馈。预置 /execute 指令用于切换到执行模式。",
+          "phase": "Slash Command System",
+          "riskLevel": "low",
+          "estimatedMinutes": 15,
+          "files": [
+            {
+              "path": "apps/web/src/lib/commands.ts",
+              "type": "create",
+              "description": "Command 接口、registerCommand/getCommand/listCommands"
+            },
+            {
+              "path": "apps/web/src/components/shared/CommandInput.tsx",
+              "type": "create",
+              "description": "输入组件，检测 /cmd 并路由"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "commands.ts: 定义 Command 接口、Map 存储、register/get/list 函数"
+            },
+            {
+              "description": "CommandInput.tsx: 输入/发送按钮 + sent 反馈 + /cmd 路由逻辑"
+            },
+            {
+              "description": "WorkbenchContext.tsx: useEffect 中注册 /execute 指令"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "在 PlanEditor 底部输入 /execute → 自动切换到 KanbanBoard"
+            },
+            {
+              "description": "输入普通文本 → 提交为 feedback"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-4",
+        "label": "KanbanBoard 详情面板 + 星级评价",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "执行视图增强：选中卡片显示右侧详情面板，展示只读状态/进度 + 星级评分 + 反馈输入。已完成卡片上直接显示星级。评分通过现有 feedback 机制提交，携带 rating 字段。",
+          "phase": "KanbanBoard 增强",
+          "riskLevel": "medium",
+          "estimatedMinutes": 25,
+          "files": [
+            {
+              "path": "apps/web/src/components/visuals/KanbanBoard.tsx",
+              "type": "modify",
+              "description": "新增 TaskDetail 组件、星级展示、选中面板"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "修改 KanbanBoard 布局：flex 容器 + kanban 列 + 可选的详情面板"
+            },
+            {
+              "description": "构建 ratingMap: 从 feedback 中提取 nodeId→rating 映射"
+            },
+            {
+              "description": "卡片上显示星级（如果该节点有评分）"
+            },
+            {
+              "description": "TaskDetail 组件：只读 status 徽章、只读 progress 条、1-5 星可点击评分、CommandInput 反馈"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "选中 Kanban 卡片 → 右侧显示详情面板"
+            },
+            {
+              "description": "点星提交 rating → 卡片上显示星级"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-5",
+        "label": "PlanEditor 替换 SectionFeedback 为 CommandInput",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "移除 PlanEditor 中内联的 SectionFeedback 函数，替换为共享的 CommandInput 组件，并在每个 Tab 底部保留 section 上下文传入能力。",
+          "phase": "PlanEditor 精简",
+          "riskLevel": "low",
+          "estimatedMinutes": 5,
+          "files": [
+            {
+              "path": "apps/web/src/components/visuals/PlanEditor.tsx",
+              "type": "modify",
+              "description": "替换 SectionFeedback 为 CommandInput"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "删除内联 SectionFeedback 函数定义"
+            },
+            {
+              "description": "导入 CommandInput，替换 JSX 中的 <SectionFeedback>"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "PlanEditor 底部输入框正常工作"
+            },
+            {
+              "description": "输入 /execute 触发技能切换"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-6",
+        "label": "更新 SKILL.md 文档",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "更新两个技能的 Markdown 文档以反映新的设计：visual-writing-plans 移除 status/progress 模板并添加 /execute 交接说明；visual-executing-plans 明确 Agent 独占状态规则并添加 Step 3.5 评分收集。",
+          "phase": "Agent Skills 更新",
+          "riskLevel": "low",
+          "estimatedMinutes": 10,
+          "files": [
+            {
+              "path": "skills/visual-writing-plans/SKILL.md",
+              "type": "modify",
+              "description": "移除 status/progress，加 /execute 交接"
+            },
+            {
+              "path": "skills/visual-executing-plans/SKILL.md",
+              "type": "modify",
+              "description": "加 Agent-only 规则和评分步骤"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "visual-writing-plans: 从 task node 模板中删除 status 和 progress 字段"
+            },
+            {
+              "description": "visual-writing-plans: Execution Handoff 改为引导用户输入 /execute"
+            },
+            {
+              "description": "visual-executing-plans: Key Rules 加 Agent-only status/progress 声明"
+            },
+            {
+              "description": "visual-executing-plans: Step 3.5 加评分收集说明"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "SKILL.md 格式正确，无占位符"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-7",
+        "label": "更新 CLAUDE.md 项目文档",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "更新项目根 CLAUDE.md：补全目录结构、修正 Skill 渲染说明、新增 Design Decisions 章节记录四个关键架构决策。",
+          "phase": "Agent Skills 更新",
+          "riskLevel": "low",
+          "estimatedMinutes": 5,
+          "files": [
+            {
+              "path": "CLAUDE.md",
+              "type": "modify",
+              "description": "更新目录结构、技能表、加 Design Decisions"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "目录结构补充 components/shared/ 和 lib/commands.ts"
+            },
+            {
+              "description": "Available Skills 表修正 PlanEditor 与 KanbanBoard 的角色说明"
+            },
+            {
+              "description": "新增 Design Decisions 章节：Status ownership / Human role / Slash command system / Plan vs Execute separation"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "CLAUDE.md 内容准确，与代码行为一致"
+            }
+          ]
+        }
+      },
+      {
+        "id": "task-8",
+        "label": "落文件到计划目录",
+        "parentId": null,
+        "children": [],
+        "metadata": {
+          "goal": "将本次功能改造记录为系统自己的计划文件，存储在 docs/superpowers-plus/skill-ui-optimization/ 中。使用写计划的 JSON 格式描述：包含 PlanHeader、7 个任务节点、阶段分组、依赖边。",
+          "phase": "Agent Skills 更新",
+          "riskLevel": "low",
+          "estimatedMinutes": 10,
+          "files": [
+            {
+              "path": "docs/superpowers-plus/skill-ui-optimization/state-writing-plans.json",
+              "type": "create",
+              "description": "本计划文件"
+            }
+          ],
+          "implementationSteps": [
+            {
+              "description": "创建 skill-ui-optimization 计划目录"
+            },
+            {
+              "description": "编写 PlanHeader: goal/architecture/techStack/phases"
+            },
+            {
+              "description": "编写 7 个 task node，含 goal/files/steps/verification"
+            },
+            {
+              "description": "添加 edges 建立阶段间依赖关系"
+            }
+          ],
+          "verificationSteps": [
+            {
+              "description": "validateState() 对文件内容校验通过"
+            },
+            {
+              "description": "PlanEditor 能正确渲染该计划"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "task-1",
+        "to": "task-2",
+        "label": "blocks"
+      },
+      {
+        "from": "task-1",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-5",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-4",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-5",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-6",
+        "label": "blocks"
+      },
+      {
+        "from": "task-4",
+        "to": "task-6",
+        "label": "blocks"
+      },
+      {
+        "from": "task-5",
+        "to": "task-6",
+        "label": "blocks"
+      }
+    ],
+    "metadata": {
+      "planHeader": {
+        "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
+        "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板，用系统自己的写计划能力记录改造过程。",
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Tailwind v4",
+          "Vite"
+        ],
+        "phases": [
+          {
+            "name": "Schema & Validation",
+            "description": "数据层改动"
+          },
+          {
+            "name": "PlanEditor 精简",
+            "description": "移除状态/进度 UI"
+          },
+          {
+            "name": "Slash Command System",
+            "description": "通用指令体系"
+          },
+          {
+            "name": "KanbanBoard 增强",
+            "description": "星级评价 + 详情面板"
+          },
+          {
+            "name": "Agent Skills 更新",
+            "description": "SKILL.md + CLAUDE.md + 落文件"
+          }
+        ]
+      }
+    }
+  },
+  "feedback": [],
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-8"
+  }
+}

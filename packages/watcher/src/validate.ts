@@ -166,6 +166,29 @@ export function validateState(data: unknown): ValidationResult {
     }
   }
 
+  // ── feedback ──
+  const feedback = s.feedback as unknown[];
+  if (!Array.isArray(feedback)) {
+    errors.push(errs('feedback', 'must be an array'));
+  } else {
+    for (let i = 0; i < feedback.length; i++) {
+      const fb = feedback[i] as Record<string, unknown> | undefined;
+      if (!fb || typeof fb !== 'object') {
+        errors.push(errs(`feedback[${i}]`, 'must be an object'));
+        continue;
+      }
+      if (typeof fb.nodeId !== 'string')
+        errors.push(errs(`feedback[${i}].nodeId`, 'required string'));
+      if (typeof fb.text !== 'string') errors.push(errs(`feedback[${i}].text`, 'required string'));
+      if (
+        fb.rating !== undefined &&
+        (typeof fb.rating !== 'number' || fb.rating < 1 || fb.rating > 5)
+      ) {
+        errors.push(errs(`feedback[${i}].rating`, 'must be a number between 1 and 5'));
+      }
+    }
+  }
+
   // ── PlanHeader phase consistency ──
   const canvasMeta = canvas.metadata as Record<string, unknown> | undefined;
   const planHeader = canvasMeta?.planHeader as Record<string, unknown> | undefined;

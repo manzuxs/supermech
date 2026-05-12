@@ -1,12 +1,14 @@
 import rawState from 'virtual:superpowers/state';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import type { NodeStatus, UIPreferences, WorkbenchState } from 'schemas';
+import { registerCommand } from '../lib/commands.ts';
 
-interface FeedbackParams {
+export interface FeedbackParams {
   nodeId: string;
   text: string;
   section?: 'goal' | 'code' | 'test' | 'general';
   stepIndex?: number;
+  rating?: number;
   quickAction?: string;
 }
 
@@ -52,6 +54,12 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchMeta();
+    registerCommand({
+      name: 'execute',
+      aliases: ['start', 'run'],
+      description: 'Switch to execution mode',
+      run: () => switchSkill('executing-plans'),
+    });
     if (import.meta.hot) {
       import.meta.hot.on('superpowers:state-update', async () => {
         const res = await fetch('/__state');
@@ -60,6 +68,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
         fetchMeta();
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchMeta]);
 
   async function callAPI(path: string, method: string, data: Record<string, unknown>) {

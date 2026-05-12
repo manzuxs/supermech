@@ -55,8 +55,6 @@ steps, files, and verification steps — no big `description` blob.
 {
   "id": "task-1",
   "label": "OAuth2 provider setup",
-  "status": "pending",
-  "progress": 0,
   "parentId": null,
   "children": [],
   "metadata": {
@@ -178,9 +176,14 @@ Same rule as standard writing-plans: every field must contain real content.
 
 ## Execution Handoff
 
-After writing the plan, offer:
+After writing the plan, tell the user:
+> 计划已写好。确认无误后，请在底部的输入框中输入 **`/execute`** 进入执行模式。
+
+The PlanEditor's feedback input will detect `/execute` and automatically switch to the executing-plans skill. The user does not need to manually switch skills.
+
+Alternatively:
 1. **Subagent-Driven (recommended)** — fresh subagent per task
-2. **Visual Execution** — user switches to `visual-executing-plans` skill; KanbanBoard renders the plan for real-time tracking
+2. **Visual Execution** — user runs `/execute` in the input
 
 ---
 
@@ -193,7 +196,7 @@ After writing the plan, offer:
 5. **Dependencies** — `edges[]` between tasks
 6. **Self-review** — no placeholders, consistent types, spec coverage
 7. **Set activeSkill** — `meta.activeSkill: "writing-plans"`, `canvas.skillType: "writing-plans"`
-8. **Execution handoff** — offer options
+8. **Execution handoff** — guide the user to type `/execute`
 
 ---
 

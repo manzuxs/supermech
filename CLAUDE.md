@@ -28,8 +28,10 @@ apps/web/                       # React frontend (Vite + React 18 + Tailwind v4)
 │   ├── App.tsx                 # 5-zone grid layout
 │   ├── styles.css              # Tailwind v4 + CSS variables (light/dark)
 │   ├── components/layout/      # Header, LeftSidebar, CenterCanvas, RightSidebar, Footer, ThemeToggle
-│   ├── components/visuals/     # MindMap (brainstorming), KanbanBoard (plans)
+│   ├── components/visuals/     # MindMap (brainstorming), PlanEditor (writing-plans), KanbanBoard (executing-plans)
+│   ├── components/shared/      # CommandInput (feedback + slash commands)
 │   ├── context/WorkbenchContext.tsx  # React Context: state + API calls + session management
+│   ├── lib/commands.ts         # Slash command registry (/execute, etc.)
 │   ├── lib/i18n.ts             # i18next init
 │   ├── locales/                # en.json, zh.json
 │   └── env.d.ts                # virtual:superpowers/state declaration
@@ -94,8 +96,8 @@ interface WorkbenchState {
 | Skill | Renders As | Purpose |
 |-------|-----------|---------|
 | `visual-brainstorming` | MindMap (SVG tree) | Explore ideas, propose approaches, design |
-| `visual-writing-plans` | KanbanBoard (3-column) | Write implementation plans as task cards |
-| `visual-executing-plans` | KanbanBoard (3-column) | Execute plans, update progress in real-time |
+| `visual-writing-plans` | PlanEditor (tree + detail panel) | Write implementation plans as structured tasks; `status`/`progress` are Agent-only, not shown in UI |
+| `visual-executing-plans` | KanbanBoard (3-column + detail panel) | Execute plans; Agent sets status/progress, user rates quality via stars |
 
 ## Commands
 
@@ -111,9 +113,26 @@ pnpm build         # turbo run build
 
 - `state.json` at workspace root is the default session. Sessions create `state-<sessionId>.json`
 - Agent sets `meta.activeSkill` to enable canvas rendering (`null` = idle)
-- Agent sets `canvas.skillType` to choose MindMap vs KanbanBoard
-- Node status drives visual state (accepted=green, rejected=gray+strikethrough, active=breathing animation)
+- Agent sets `canvas.skillType` to choose MindMap vs PlanEditor vs KanbanBoard
 - MindMap uses `parentId`/`children` for tree hierarchy
-- KanbanBoard uses `edges[]` for dependency tracking
+- KanbanBoard and PlanEditor use `edges[]` for dependency tracking
 - Use `metadata.description` for long-form content, `label` for short titles (3-8 words)
 - Renaming a session only changes the UI label, not the Agent's internal sessionId
+
+## Design Decisions
+
+### Status ownership: Agent-only
+Status (`pending`/`active`/`done`) and `progress` (0.0–1.0) are **exclusively managed by the Agent** during execution. The UI (both PlanEditor and KanbanBoard) does not allow user to change them. This keeps "planner" and "executor" roles cleanly separated.
+
+### Human role: rating, not managing
+After a task is done, the user rates quality (1–5 stars) and optionally adds text feedback via the KanbanBoard detail panel. Ratings are stored in `feedback[].rating`. If rework is needed, the user asks the Agent to add a new task — no `reviewing` intermediate state.
+
+### Slash command system (`lib/commands.ts`)
+The bottom input box doubles as a CLI: normal text → submitted as feedback; input starting with `/` → dispatched to the command registry. `CommandInput` is the shared component handling this. Pre-registered commands:
+- `/execute` (aliases: `start`, `run`) — switches to `executing-plans` skill
+
+New skills can call `registerCommand()` to add their own commands.
+
+### Plan vs Execute separation
+- **PlanEditor** (writing-plans): pure planning view — task tree, goal, files, code steps, tests. No status dots, no progress bars, no state controls.
+- **KanbanBoard** (executing-plans): execution view — 3 columns (To Do / In Progress / Done), agent-driven status, user rating. Selected card opens a detail panel with read-only info + star rating + feedback form.
