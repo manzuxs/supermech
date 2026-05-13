@@ -1,7 +1,7 @@
-import { Clock, Crosshair, Minus, Plus, Circle, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, Crosshair, Minus, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState, NodeStatus } from 'schemas';
+import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
@@ -34,53 +34,11 @@ const LANE_COLORS = [
   '#6366f1',
 ];
 
-const STATUS_CONFIG: Record<
-  NodeStatus,
-  { bg: string; border: string; text: string; subtext: string; icon: any }
-> = {
-  pending: {
-    bg: 'var(--bg-canvas)',
-    border: 'var(--border)',
-    text: 'var(--text-main)',
-    subtext: 'var(--muted-foreground)',
-    icon: Circle,
-  },
-  active: {
-    bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
-    border: 'var(--accent)',
-    text: 'var(--text-main)',
-    subtext: 'var(--muted-foreground)',
-    icon: PlayCircle,
-  },
-  accepted: {
-    bg: 'color-mix(in srgb, var(--success) 8%, var(--bg-canvas))',
-    border: 'var(--success)',
-    text: 'var(--success)',
-    subtext: 'var(--success)',
-    icon: CheckCircle2,
-  },
-  rejected: {
-    bg: 'var(--bg-canvas)',
-    border: 'var(--border)',
-    text: 'var(--muted-foreground)',
-    subtext: 'var(--muted-foreground)',
-    icon: XCircle,
-  },
-  done: {
-    bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
-    border: 'var(--primary)',
-    text: 'var(--primary)',
-    subtext: 'var(--primary)',
-    icon: CheckCircle2,
-  },
-};
-
 // ─── Types ───
 
 interface SwimTask {
   id: string;
   label: string;
-  status: NodeStatus;
   goal: string;
   estimatedMinutes: number | null;
   riskLevel: string | null;
@@ -126,7 +84,6 @@ function buildLayout(
       const t: SwimTask = {
         id: node.id,
         label: node.label,
-        status: node.status,
         goal: (meta.goal as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
@@ -160,7 +117,6 @@ function buildLayout(
       const t: SwimTask = {
         id: node.id,
         label: node.label,
-        status: node.status,
         goal: (meta.goal as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
@@ -462,9 +418,6 @@ export default function SwimlaneCanvas() {
           {lanes.map((lane) =>
             lane.tasks.map((task) => {
               const isSelected = task.id === selectedId;
-              const config = STATUS_CONFIG[task.status];
-              const StatusIcon = config.icon;
-              const isActive = task.status === 'active';
 
               return (
                 <g
@@ -505,14 +458,10 @@ export default function SwimlaneCanvas() {
                     height={CARD_H}
                     rx={12}
                     ry={12}
-                    fill={config.bg}
-                    stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border}
-                    strokeWidth={isSelected || isActive ? 2 : 1}
-                    className={
-                      isActive
-                        ? 'processing-node'
-                        : 'transition-colors duration-200 group-hover:stroke-primary/40'
-                    }
+                    fill="var(--bg-canvas)"
+                    stroke={isSelected ? 'var(--primary)' : 'var(--border)'}
+                    strokeWidth={isSelected ? 2 : 1}
+                    className="transition-colors duration-200 group-hover:stroke-primary/40"
                     filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.04))"
                   />
 
@@ -524,21 +473,15 @@ export default function SwimlaneCanvas() {
                     height={CARD_H}
                     style={{ pointerEvents: 'none' }}
                   >
-                    <div className="relative flex h-full w-full flex-col p-3">
+                    <div className="relative flex h-full w-full flex-col overflow-hidden p-3">
                       {/* Label row */}
                       <div className="flex min-w-0 items-start gap-2">
-                        <StatusIcon
-                          size={14}
-                          strokeWidth={2.5}
-                          className="mt-0.5 shrink-0"
-                          style={{ color: isSelected ? 'var(--primary)' : config.border }}
-                        />
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-tight" style={{ color: config.text }}>
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-5 text-[var(--text-main)]">
                           {task.label}
                         </span>
                         <div className="flex shrink-0 items-center gap-1.5">
                           {task.estimatedMinutes && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-bold opacity-40" style={{ color: config.text }}>
+                            <span className="flex items-center gap-0.5 text-[9px] font-semibold text-[var(--text-main)] opacity-50">
                               <Clock size={9} />
                               {task.estimatedMinutes}m
                             </span>
@@ -561,7 +504,7 @@ export default function SwimlaneCanvas() {
 
                       {/* Goal text */}
                       {task.goal && (
-                        <div className="mt-1.5 text-[11px] leading-relaxed line-clamp-2" style={{ color: config.text, opacity: isSelected ? 0.8 : 0.66 }}>
+                        <div className="mt-1 text-[11px] leading-relaxed line-clamp-1 text-[var(--text-main)] opacity-62">
                           {task.goal}
                         </div>
                       )}
