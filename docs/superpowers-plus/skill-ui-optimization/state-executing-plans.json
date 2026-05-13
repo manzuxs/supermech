@@ -21,7 +21,9 @@
           "riskLevel": "low",
           "estimatedMinutes": 10,
           "implementationSteps": [
-            { "description": "workbench.ts: FeedbackEntry 接口增加 rating?: number 字段" },
+            {
+              "description": "workbench.ts: FeedbackEntry 接口增加 rating?: number 字段"
+            },
             {
               "description": "validate.ts: 在 ui 校验后新增 feedback 数组校验，含 rating 范围 (1-5) 检查"
             },
@@ -29,7 +31,11 @@
               "description": "vite-plugin.ts: feedback endpoint 将 data.rating 写入 s.feedback.push"
             }
           ],
-          "verificationSteps": [{ "description": "pnpm typecheck 通过" }]
+          "verificationSteps": [
+            {
+              "description": "pnpm typecheck 通过"
+            }
+          ]
         }
       },
       {
@@ -45,8 +51,12 @@
           "riskLevel": "medium",
           "estimatedMinutes": 20,
           "implementationSteps": [
-            { "description": "删除 STATUS_DOT、REVIEW_CYCLE、cycleStatus 函数" },
-            { "description": "删除 PlanHeader 概览区的进度条和 doneCount/totalCount" },
+            {
+              "description": "删除 STATUS_DOT、REVIEW_CYCLE、cycleStatus 函数"
+            },
+            {
+              "description": "删除 PlanHeader 概览区的进度条和 doneCount/totalCount"
+            },
             {
               "description": "删除 PhaseGroup 的 doneCount、onStatusCycle props 和状态圆点、isDone line-through"
             },
@@ -55,8 +65,12 @@
             }
           ],
           "verificationSteps": [
-            { "description": "写计划时 PlanEditor 无状态圆点、无进度条、无状态切换按钮" },
-            { "description": "pnpm typecheck 通过" }
+            {
+              "description": "写计划时 PlanEditor 无状态圆点、无进度条、无状态切换按钮"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
           ]
         }
       },
@@ -73,13 +87,23 @@
           "riskLevel": "low",
           "estimatedMinutes": 15,
           "implementationSteps": [
-            { "description": "commands.ts: 定义 Command 接口、Map 存储、register/get/list 函数" },
-            { "description": "CommandInput.tsx: 输入/发送按钮 + sent 反馈 + /cmd 路由逻辑" },
-            { "description": "WorkbenchContext.tsx: useEffect 中注册 /execute 指令" }
+            {
+              "description": "commands.ts: 定义 Command 接口、Map 存储、register/get/list 函数"
+            },
+            {
+              "description": "CommandInput.tsx: 输入/发送按钮 + sent 反馈 + /cmd 路由逻辑"
+            },
+            {
+              "description": "WorkbenchContext.tsx: useEffect 中注册 /execute 指令"
+            }
           ],
           "verificationSteps": [
-            { "description": "在 PlanEditor 底部输入 /execute → 自动切换到 KanbanBoard" },
-            { "description": "pnpm typecheck 通过" }
+            {
+              "description": "在 PlanEditor 底部输入 /execute → 自动切换到 KanbanBoard"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
           ]
         }
       },
@@ -96,17 +120,29 @@
           "riskLevel": "medium",
           "estimatedMinutes": 25,
           "implementationSteps": [
-            { "description": "修改 KanbanBoard 布局：flex 容器 + kanban 列 + 可选的详情面板" },
-            { "description": "构建 ratingMap: 从 feedback 中提取 nodeId→rating 映射" },
-            { "description": "卡片上显示星级（如果该节点有评分）" },
+            {
+              "description": "修改 KanbanBoard 布局：flex 容器 + kanban 列 + 可选的详情面板"
+            },
+            {
+              "description": "构建 ratingMap: 从 feedback 中提取 nodeId→rating 映射"
+            },
+            {
+              "description": "卡片上显示星级（如果该节点有评分）"
+            },
             {
               "description": "TaskDetail 组件：只读 status 徽章、只读 progress 条、1-5 星可点击评分、CommandInput 反馈"
             }
           ],
           "verificationSteps": [
-            { "description": "选中 Kanban 卡片 → 右侧显示详情面板" },
-            { "description": "点星提交 rating → 卡片上显示星级" },
-            { "description": "pnpm typecheck 通过" }
+            {
+              "description": "选中 Kanban 卡片 → 右侧显示详情面板"
+            },
+            {
+              "description": "点星提交 rating → 卡片上显示星级"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
           ]
         }
       },
@@ -123,13 +159,23 @@
           "riskLevel": "low",
           "estimatedMinutes": 5,
           "implementationSteps": [
-            { "description": "删除内联 SectionFeedback 函数定义" },
-            { "description": "导入 CommandInput，替换 JSX 中的 <SectionFeedback>" }
+            {
+              "description": "删除内联 SectionFeedback 函数定义"
+            },
+            {
+              "description": "导入 CommandInput，替换 JSX 中的 <SectionFeedback>"
+            }
           ],
           "verificationSteps": [
-            { "description": "PlanEditor 底部输入框正常工作" },
-            { "description": "输入 /execute 触发技能切换" },
-            { "description": "pnpm typecheck 通过" }
+            {
+              "description": "PlanEditor 底部输入框正常工作"
+            },
+            {
+              "description": "输入 /execute 触发技能切换"
+            },
+            {
+              "description": "pnpm typecheck 通过"
+            }
           ]
         }
       },
@@ -149,13 +195,21 @@
             {
               "description": "visual-writing-plans: 从 task node 模板中删除 status 和 progress 字段"
             },
-            { "description": "visual-writing-plans: Execution Handoff 改为引导用户输入 /execute" },
+            {
+              "description": "visual-writing-plans: Execution Handoff 改为引导用户输入 /execute"
+            },
             {
               "description": "visual-executing-plans: Key Rules 加 Agent-only status/progress 声明"
             },
-            { "description": "visual-executing-plans: Step 3.5 加评分收集说明" }
+            {
+              "description": "visual-executing-plans: Step 3.5 加评分收集说明"
+            }
           ],
-          "verificationSteps": [{ "description": "SKILL.md 格式正确" }]
+          "verificationSteps": [
+            {
+              "description": "SKILL.md 格式正确"
+            }
+          ]
         }
       },
       {
@@ -171,11 +225,21 @@
           "riskLevel": "low",
           "estimatedMinutes": 5,
           "implementationSteps": [
-            { "description": "目录结构补充 components/shared/ 和 lib/commands.ts" },
-            { "description": "Available Skills 表修正 PlanEditor 与 KanbanBoard 的角色说明" },
-            { "description": "新增 Design Decisions 章节" }
+            {
+              "description": "目录结构补充 components/shared/ 和 lib/commands.ts"
+            },
+            {
+              "description": "Available Skills 表修正 PlanEditor 与 KanbanBoard 的角色说明"
+            },
+            {
+              "description": "新增 Design Decisions 章节"
+            }
           ],
-          "verificationSteps": [{ "description": "CLAUDE.md 内容准确" }]
+          "verificationSteps": [
+            {
+              "description": "CLAUDE.md 内容准确"
+            }
+          ]
         }
       },
       {
@@ -191,36 +255,100 @@
           "riskLevel": "low",
           "estimatedMinutes": 10,
           "implementationSteps": [
-            { "description": "创建 skill-ui-optimization 计划目录" },
-            { "description": "编写 PlanHeader 和 7 个 task node" },
-            { "description": "添加 edges 建立阶段间依赖关系" },
-            { "description": "编写 executing-plans 状态文件，全部标记 done" }
+            {
+              "description": "创建 skill-ui-optimization 计划目录"
+            },
+            {
+              "description": "编写 PlanHeader 和 7 个 task node"
+            },
+            {
+              "description": "添加 edges 建立阶段间依赖关系"
+            },
+            {
+              "description": "编写 executing-plans 状态文件，全部标记 done"
+            }
           ],
-          "verificationSteps": [{ "description": "validateState() 对文件内容校验通过" }]
+          "verificationSteps": [
+            {
+              "description": "validateState() 对文件内容校验通过"
+            }
+          ]
         }
       }
     ],
     "edges": [
-      { "from": "task-1", "to": "task-2", "label": "blocks" },
-      { "from": "task-1", "to": "task-3", "label": "blocks" },
-      { "from": "task-3", "to": "task-5", "label": "blocks" },
-      { "from": "task-3", "to": "task-4", "label": "blocks" },
-      { "from": "task-2", "to": "task-5", "label": "blocks" },
-      { "from": "task-2", "to": "task-6", "label": "blocks" },
-      { "from": "task-4", "to": "task-6", "label": "blocks" },
-      { "from": "task-5", "to": "task-6", "label": "blocks" }
+      {
+        "from": "task-1",
+        "to": "task-2",
+        "label": "blocks"
+      },
+      {
+        "from": "task-1",
+        "to": "task-3",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-5",
+        "label": "blocks"
+      },
+      {
+        "from": "task-3",
+        "to": "task-4",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-5",
+        "label": "blocks"
+      },
+      {
+        "from": "task-2",
+        "to": "task-6",
+        "label": "blocks"
+      },
+      {
+        "from": "task-4",
+        "to": "task-6",
+        "label": "blocks"
+      },
+      {
+        "from": "task-5",
+        "to": "task-6",
+        "label": "blocks"
+      }
     ],
     "metadata": {
       "planHeader": {
         "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
         "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板。",
-        "techStack": ["React", "TypeScript", "Tailwind v4", "Vite"],
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Tailwind v4",
+          "Vite"
+        ],
         "phases": [
-          { "name": "Schema & Validation", "description": "数据层改动" },
-          { "name": "PlanEditor 精简", "description": "移除状态/进度 UI" },
-          { "name": "Slash Command System", "description": "通用指令体系" },
-          { "name": "KanbanBoard 增强", "description": "星级评价 + 详情面板" },
-          { "name": "Agent Skills 更新", "description": "SKILL.md + CLAUDE.md + 落文件" }
+          {
+            "name": "Schema & Validation",
+            "description": "数据层改动"
+          },
+          {
+            "name": "PlanEditor 精简",
+            "description": "移除状态/进度 UI"
+          },
+          {
+            "name": "Slash Command System",
+            "description": "通用指令体系"
+          },
+          {
+            "name": "KanbanBoard 增强",
+            "description": "星级评价 + 详情面板"
+          },
+          {
+            "name": "Agent Skills 更新",
+            "description": "SKILL.md + CLAUDE.md + 落文件"
+          }
         ]
       }
     }
@@ -241,6 +369,6 @@
     "theme": "system",
     "leftSidebarOpen": true,
     "rightSidebarOpen": true,
-    "selectedNodeId": null
+    "selectedNodeId": "task-8"
   }
 }

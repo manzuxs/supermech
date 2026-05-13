@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "projectName": "My Project",
+    "sessionId": "writing-plans",
+    "activeSkill": null,
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "writing-plans",
+    "nodes": [],
+    "edges": []
+  },
+  "feedback": [],
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": null
+  }
+}

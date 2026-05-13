@@ -579,7 +579,7 @@
   "ui": {
     "theme": "dark",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-1"
   }
 }

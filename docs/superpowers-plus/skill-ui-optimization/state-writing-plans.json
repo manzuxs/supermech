@@ -3,7 +3,7 @@
     "projectName": "Superpowers+",
     "sessionId": "writing-plans",
     "activeSkill": "writing-plans",
-    "agentStatus": "idle"
+    "agentStatus": "error"
   },
   "canvas": {
     "skillType": "writing-plans",
@@ -392,7 +392,12 @@
       "planHeader": {
         "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
         "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板，用系统自己的写计划能力记录改造过程。",
-        "techStack": ["React", "TypeScript", "Tailwind v4", "Vite"],
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Tailwind v4",
+          "Vite"
+        ],
         "phases": [
           {
             "name": "Schema & Validation",
@@ -418,11 +423,75 @@
       }
     }
   },
-  "feedback": [],
+  "feedback": [
+    {
+      "id": "db30b857-075a-4d29-9544-8aaf913e60f3",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:18:25.113Z"
+    },
+    {
+      "id": "09485ace-03eb-4671-9485-8d4991261ac2",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:22:19.258Z"
+    },
+    {
+      "id": "5877602e-f605-474e-bc6b-573c921c97c9",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:22:20.737Z"
+    },
+    {
+      "id": "15d0724f-f9ed-471b-a0bd-e40c7e5c7e5e",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:22:21.948Z"
+    },
+    {
+      "id": "a5da1240-f569-4599-9df5-06a6dd9023d5",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:22:23.852Z"
+    },
+    {
+      "id": "323e7a3f-dd1d-4b73-81eb-f22b59470e49",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:22:27.025Z"
+    },
+    {
+      "id": "ba0eae7f-2eea-4dd2-b027-2c587b24f5b5",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T10:24:00.701Z"
+    }
+  ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": true,
-    "selectedNodeId": "task-4"
+    "rightSidebarOpen": false,
+    "selectedNodeId": null
   }
 }
