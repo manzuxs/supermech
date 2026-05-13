@@ -68,7 +68,8 @@
     "statusActive": "In progress",
     "statusAccepted": "Accepted",
     "statusRejected": "Rejected",
-    "statusDone": "Done"
+    "statusDone": "Done",
+    "rating": "Quality"
   },
   "footer": {
     "status": "Status",

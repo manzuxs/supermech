@@ -68,7 +68,8 @@
     "statusActive": "进行中",
     "statusAccepted": "已采纳",
     "statusRejected": "已否决",
-    "statusDone": "已完成"
+    "statusDone": "已完成",
+    "rating": "质量评分"
   },
   "footer": {
     "status": "状态",

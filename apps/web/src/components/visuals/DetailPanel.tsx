@@ -1,8 +1,9 @@
-import { Beaker, ChevronRight, Code, FileText } from 'lucide-react';
+import { Beaker, ChevronRight, Code, FileText, Star } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, ImplementationStep } from 'schemas';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
+import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import CommandInput from '../shared/CommandInput.tsx';
 
 export const FILE_TYPE_STYLES: Record<string, string> = {
@@ -22,9 +23,10 @@ export function getTaskMeta(node: CanvasNode): Record<string, unknown> {
 interface TaskDetailProps {
   node: CanvasNode;
   onFeedback: (params: FeedbackParams) => Promise<void>;
+  showRating?: boolean;
 }
 
-export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
+export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
   const { t } = useTranslation();
   const meta = getTaskMeta(node);
   const goal = (meta.goal as string) || (meta.description as string) || undefined;
@@ -151,12 +153,69 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
         </div>
       </div>
 
+      {showRating && (
+        <RatingSection nodeId={node.id} onFeedback={onFeedback} />
+      )}
+
       <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-6 py-4">
         <CommandInput
           onSubmit={async (text) => {
             await onFeedback({ nodeId: node.id, text, section: 'general' });
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+// ─── Rating Section ───
+
+function RatingSection({
+  nodeId,
+  onFeedback,
+}: {
+  nodeId: string;
+  onFeedback: (params: FeedbackParams) => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const { state } = useWorkbench();
+  const ratings = state.feedback
+    .filter((f) => f.nodeId === nodeId && f.rating != null)
+    .map((f) => f.rating!)
+    .sort((a, b) => b - a);
+  const currentRating = ratings[0] ?? 0;
+
+  async function setRating(rating: number) {
+    await onFeedback({ nodeId, text: '', rating });
+  }
+
+  return (
+    <div className="border-t border-[var(--border)] px-6 py-4">
+      <div className="uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40 mb-3">
+        {t('feedback.rating') || 'Quality'}
+      </div>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            className="transition hover:scale-110 active:scale-95"
+            title={`${star} star${star > 1 ? 's' : ''}`}
+          >
+            <Star
+              size={18}
+              fill={star <= currentRating ? 'var(--accent)' : 'none'}
+              stroke={star <= currentRating ? 'var(--accent)' : 'var(--border)'}
+              className="transition-colors"
+            />
+          </button>
+        ))}
+        {currentRating > 0 && (
+          <span className="ml-2 text-[11px] text-[var(--text-main)] opacity-50">
+            {currentRating}/5
+          </span>
+        )}
       </div>
     </div>
   );

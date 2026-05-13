@@ -11,8 +11,9 @@ export default function FloatingFeedback() {
   const [isExpanded, setIsExpanded] = useState(true);
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
   const isWritingPlans = state.meta.activeSkill === 'writing-plans';
+  const isExecutingPlans = state.meta.activeSkill === 'executing-plans';
   const isInspectorOpen =
-    isBrainstorming || isWritingPlans ? state.ui.rightSidebarOpen : isExpanded;
+    isBrainstorming || isWritingPlans || isExecutingPlans ? state.ui.rightSidebarOpen : isExpanded;
 
   const selectedNode = state.ui.selectedNodeId
     ? (state.canvas.nodes.find((n) => n.id === state.ui.selectedNodeId) ?? null)
@@ -105,7 +106,7 @@ export default function FloatingFeedback() {
   }
 
   function handleCollapse() {
-    if (isBrainstorming || isWritingPlans) {
+    if (isBrainstorming || isWritingPlans || isExecutingPlans) {
       updateUI({ rightSidebarOpen: false });
       return;
     }
@@ -114,7 +115,7 @@ export default function FloatingFeedback() {
   }
 
   function handleExpand() {
-    if (isBrainstorming || isWritingPlans) {
+    if (isBrainstorming || isWritingPlans || isExecutingPlans) {
       updateUI({ rightSidebarOpen: true });
       return;
     }
@@ -361,6 +362,29 @@ export default function FloatingFeedback() {
         {selectedNode ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <div>
+              <div className="text-[14px] font-medium text-[var(--text-main)]">
+                {t('feedback.emptyTitle')}
+              </div>
+              <p className="mt-2 text-[12px] leading-6 text-[var(--text-main)] opacity-45">
+                {t('feedback.emptyHint')}
+              </p>
+            </div>
+          </div>
+        )}
+      </aside>
+    );
+  }
+
+  if (isExecutingPlans) {
+    return (
+      <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
+        {selectedNode ? (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} showRating />
           </div>
         ) : (
           <div className="flex h-full items-center justify-center px-6 text-center">

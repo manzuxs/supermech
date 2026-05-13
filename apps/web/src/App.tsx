@@ -9,8 +9,9 @@ export default function App() {
   const { state } = useWorkbench();
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
   const isWritingPlans = state.meta.activeSkill === 'writing-plans';
+  const isExecutingPlans = state.meta.activeSkill === 'executing-plans';
   const showInspector =
-    (isBrainstorming || isWritingPlans) &&
+    (isBrainstorming || isWritingPlans || isExecutingPlans) &&
     state.ui.rightSidebarOpen &&
     state.ui.selectedNodeId !== null;
 
@@ -24,7 +25,7 @@ export default function App() {
         }`}
       >
         <CenterCanvas />
-        {(isBrainstorming || isWritingPlans) && <FloatingFeedback />}
+        {(isBrainstorming || isWritingPlans || isExecutingPlans) && <FloatingFeedback />}
       </div>
       <Footer />
     </div>

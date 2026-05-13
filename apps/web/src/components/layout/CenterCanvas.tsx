@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { SkillType } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
-import KanbanBoard from '../visuals/KanbanBoard.tsx';
+import FlowchartCanvas from '../visuals/FlowchartCanvas.tsx';
 import MindMap from '../visuals/MindMap.tsx';
 import SwimlaneCanvas from '../visuals/SwimlaneCanvas.tsx';
 
@@ -28,7 +28,7 @@ export default function CenterCanvas() {
       ) : state.canvas.skillType === 'writing-plans' ? (
         <SwimlaneCanvas />
       ) : kanbanTypes.includes(state.canvas.skillType) ? (
-        <KanbanBoard nodes={state.canvas.nodes} edges={state.canvas.edges} />
+        <FlowchartCanvas nodes={state.canvas.nodes} edges={state.canvas.edges} />
       ) : (
         <MindMap nodes={state.canvas.nodes} />
       )}
