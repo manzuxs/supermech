@@ -12,20 +12,20 @@
   /* Linear Palette */
   --background: #010102;
   --foreground: #f7f8f8;
-  
+
   /* Surface Ladder */
   --surface-1: #0f1011;
   --surface-2: #141516;
   --surface-3: #18191a;
   --surface-4: #191a1b;
-  
+
   /* Accents */
   --primary: #5e6ad2;
   --primary-foreground: #ffffff;
   --primary-hover: #828fff;
   --primary-focus: #5e69d1;
   --amber: #d97706;
-  
+
   /* UI Components */
   --card: var(--surface-1);
   --card-foreground: var(--foreground);
@@ -51,8 +51,9 @@
   --success: #27a644;
 }
 
-body {
+html, body {
   margin: 0;
+  overflow: hidden;
   background: var(--bg-main);
   color: var(--text-main);
   font-family: Inter, system-ui, -apple-system, sans-serif;
@@ -89,10 +90,30 @@ body {
   animation: flow 1s linear infinite;
 }
 
+/* ─── Custom Scrollbar ─── */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
 @theme inline {
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
-  
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -132,7 +153,10 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, .font-heading {
+  h1,
+  h2,
+  h3,
+  .font-heading {
     letter-spacing: -0.04em;
   }
 }
