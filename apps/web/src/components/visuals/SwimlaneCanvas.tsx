@@ -1,18 +1,18 @@
-import { Clock, Crosshair, Minus, Plus } from 'lucide-react';
+import { Clock, Crosshair, Minus, Plus, Circle, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from 'schemas';
+import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
 // ─── Constants ───
 
-const CARD_W = 220;
-const CARD_H = 85;
+const CARD_W = 200;
+const CARD_H = 88;
 const H_GAP = 32;
 const LANE_MIN_W = 480;
-const HEADER_H = 36;
-const HEADER_BAR_W = 4;
+const HEADER_H = 32;
+const HEADER_BAR_W = 3;
 const PAD_TOP = 24;
 const PAD_LEFT = 32;
 const PAD_RIGHT = 48;
@@ -34,11 +34,53 @@ const LANE_COLORS = [
   '#6366f1',
 ];
 
+const STATUS_CONFIG: Record<
+  NodeStatus,
+  { bg: string; border: string; text: string; subtext: string; icon: any }
+> = {
+  pending: {
+    bg: 'var(--bg-canvas)',
+    border: 'var(--border)',
+    text: 'var(--text-main)',
+    subtext: 'var(--muted-foreground)',
+    icon: Circle,
+  },
+  active: {
+    bg: 'color-mix(in srgb, var(--accent) 5%, var(--bg-canvas))',
+    border: 'var(--accent)',
+    text: 'var(--text-main)',
+    subtext: 'var(--muted-foreground)',
+    icon: PlayCircle,
+  },
+  accepted: {
+    bg: 'color-mix(in srgb, var(--success) 8%, var(--bg-canvas))',
+    border: 'var(--success)',
+    text: 'var(--success)',
+    subtext: 'var(--success)',
+    icon: CheckCircle2,
+  },
+  rejected: {
+    bg: 'var(--bg-canvas)',
+    border: 'var(--border)',
+    text: 'var(--muted-foreground)',
+    subtext: 'var(--muted-foreground)',
+    icon: XCircle,
+  },
+  done: {
+    bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
+    border: 'var(--primary)',
+    text: 'var(--primary)',
+    subtext: 'var(--primary)',
+    icon: CheckCircle2,
+  },
+};
+
 // ─── Types ───
 
 interface SwimTask {
   id: string;
   label: string;
+  status: NodeStatus;
   goal: string;
   estimatedMinutes: number | null;
   riskLevel: string | null;
@@ -84,6 +126,7 @@ function buildLayout(
       const t: SwimTask = {
         id: node.id,
         label: node.label,
+        status: node.status,
         goal: (meta.goal as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
@@ -117,6 +160,7 @@ function buildLayout(
       const t: SwimTask = {
         id: node.id,
         label: node.label,
+        status: node.status,
         goal: (meta.goal as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
@@ -166,8 +210,8 @@ function getBounds(lanes: SwimLane[]) {
   let maxX = -Infinity;
   for (const lane of lanes) {
     for (const t of lane.tasks) {
-      const left = t.x - CARD_W / 2;
-      const right = t.x + CARD_W / 2;
+      const left = t.x;
+      const right = t.x + CARD_W;
       if (left < minX) minX = left;
       if (right > maxX) maxX = right;
     }
@@ -181,18 +225,20 @@ function getBounds(lanes: SwimLane[]) {
 }
 
 function arrowPath(from: { x: number; y: number }, to: { x: number; y: number }): string {
-  const x1 = from.x + CARD_W / 2;
-  const y1 = from.y;
-  const x2 = to.x - CARD_W / 2;
-  const y2 = to.y;
+  const x1 = from.x + CARD_W;
+  const y1 = from.y + CARD_H / 2;
+  const x2 = to.x;
+  const y2 = to.y + CARD_H / 2;
+  
   if (Math.abs(y2 - y1) < 10) {
     // Same lane — horizontal bezier
     const cx = (x1 + x2) / 2;
     return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`;
   }
-  // Cross-lane — S-curve
-  const cy = (y1 + y2) / 2;
-  return `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`;
+  // Cross-lane — standard bezier curve
+  const cx1 = x1 + (x2 - x1) * 0.5;
+  const cx2 = x1 + (x2 - x1) * 0.5;
+  return `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`;
 }
 
 // ─── Component ───
@@ -229,8 +275,8 @@ export default function SwimlaneCanvas() {
       Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
     );
     setTransform({
-      x: (rect.width - bounds.width * nextK) / 2,
-      y: (rect.height - bounds.height * nextK) / 2,
+      x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
+      y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
       k: nextK,
     });
   }
@@ -345,48 +391,51 @@ export default function SwimlaneCanvas() {
             <g key={lane.name}>
               {/* Lane background */}
               <rect
-                x={-PAD_LEFT}
+                x={0}
                 y={lane.y - LANE_PAD_Y}
-                width={lane.width + PAD_LEFT + PAD_RIGHT + 80}
+                width={lane.width}
                 height={lane.height}
-                rx={10}
-                ry={10}
-                fill="color-mix(in srgb, var(--bg-main) 60%, var(--bg-canvas))"
+                rx={12}
+                ry={12}
+                fill="none"
                 stroke="var(--border)"
                 strokeWidth={1}
+                strokeDasharray="4 4"
+                opacity={0.3}
               />
               {/* Header bar */}
               <rect
-                x={-PAD_LEFT}
+                x={0}
                 y={lane.y - LANE_PAD_Y}
                 width={HEADER_BAR_W}
                 height={HEADER_H}
-                rx={2}
-                ry={2}
+                rx={1.5}
+                ry={1.5}
                 fill={LANE_COLORS[idx % LANE_COLORS.length]}
               />
               <text
-                x={-PAD_LEFT + HEADER_BAR_W + 10}
-                y={lane.y - LANE_PAD_Y + HEADER_H / 2 + 1}
-                fontSize={12}
+                x={HEADER_BAR_W + 8}
+                y={lane.y - LANE_PAD_Y + HEADER_H / 2}
+                fontSize={11}
                 fontWeight={700}
                 fill="var(--text-main)"
                 dominantBaseline="middle"
+                className="uppercase tracking-widest opacity-40"
               >
                 {lane.name === 'Other' ? t('editor.otherTasks') : lane.name}
               </text>
               <text
-                x={-PAD_LEFT + HEADER_BAR_W + 10 + lane.name.length * 8 + 6}
-                y={lane.y - LANE_PAD_Y + HEADER_H / 2 + 1}
+                x={HEADER_BAR_W + 8 + (lane.name === 'Other' ? t('editor.otherTasks') : lane.name).length * 7 + 8}
+                y={lane.y - LANE_PAD_Y + HEADER_H / 2}
                 fontSize={10}
                 fontWeight={500}
                 fill="var(--text-main)"
                 dominantBaseline="middle"
-                opacity={0.4}
+                opacity={0.2}
               >
                 {lane.tasks.length === 1
-                  ? `(${lane.tasks.length} ${t('editor.task')})`
-                  : `(${lane.tasks.length} ${t('editor.tasks')})`}
+                  ? `${lane.tasks.length} ${t('editor.task')}`
+                  : `${lane.tasks.length} ${t('editor.tasks')}`}
               </text>
             </g>
           ))}
@@ -400,7 +449,7 @@ export default function SwimlaneCanvas() {
               stroke="var(--border)"
               strokeWidth={1.5}
               markerEnd="url(#swim-arrowhead)"
-              opacity={0.6}
+              className="opacity-24"
             />
           ))}
 
@@ -408,6 +457,9 @@ export default function SwimlaneCanvas() {
           {lanes.map((lane) =>
             lane.tasks.map((task) => {
               const isSelected = task.id === selectedId;
+              const config = STATUS_CONFIG[task.status];
+              const StatusIcon = config.icon;
+              const isActive = task.status === 'active';
 
               return (
                 <g
@@ -423,55 +475,65 @@ export default function SwimlaneCanvas() {
                       updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
                     }
                   }}
-                  className="group cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 rounded-lg"
+                  className="group cursor-pointer outline-none rounded-xl"
                   role="button"
                   tabIndex={0}
                 >
                   {/* Selection glow */}
                   {isSelected && (
                     <rect
-                      x={task.x - CARD_W / 2 - 4}
-                      y={task.y - CARD_H / 2 - 4}
+                      x={task.x - 4}
+                      y={task.y - 4}
                       width={CARD_W + 8}
                       height={CARD_H + 8}
-                      rx={14}
-                      ry={14}
-                      fill="color-mix(in srgb, var(--primary) 8%, transparent)"
+                      rx={16}
+                      ry={16}
+                      fill="color-mix(in srgb, var(--primary) 12%, transparent)"
                     />
                   )}
 
                   {/* Card body */}
                   <rect
-                    x={task.x - CARD_W / 2}
-                    y={task.y - CARD_H / 2}
+                    x={task.x}
+                    y={task.y}
                     width={CARD_W}
                     height={CARD_H}
-                    rx={10}
-                    ry={10}
-                    fill="var(--bg-canvas)"
-                    stroke={isSelected ? 'var(--primary)' : 'var(--border)'}
-                    strokeWidth={isSelected ? 2 : 1}
-                    className="transition-colors duration-200 group-hover:stroke-primary/40"
+                    rx={12}
+                    ry={12}
+                    fill={config.bg}
+                    stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border}
+                    strokeWidth={isSelected || isActive ? 2 : 1}
+                    className={
+                      isActive
+                        ? 'processing-node'
+                        : 'transition-colors duration-200 group-hover:stroke-primary/40'
+                    }
                     filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.04))"
                   />
 
                   {/* Card content */}
                   <foreignObject
-                    x={task.x - CARD_W / 2}
-                    y={task.y - CARD_H / 2}
+                    x={task.x}
+                    y={task.y}
                     width={CARD_W}
                     height={CARD_H}
                     style={{ pointerEvents: 'none' }}
                   >
-                    <div className="relative flex h-full w-full flex-col overflow-hidden p-3">
+                    <div className="relative flex h-full w-full flex-col p-3">
                       {/* Label row */}
                       <div className="flex min-w-0 items-start gap-2">
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-5 text-[var(--text-main)]">
+                        <StatusIcon
+                          size={14}
+                          strokeWidth={2.5}
+                          className="mt-0.5 shrink-0"
+                          style={{ color: isSelected ? 'var(--primary)' : config.border }}
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-tight" style={{ color: config.text }}>
                           {task.label}
                         </span>
                         <div className="flex shrink-0 items-center gap-1.5">
                           {task.estimatedMinutes && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-semibold text-[var(--text-main)] opacity-50">
+                            <span className="flex items-center gap-0.5 text-[9px] font-bold opacity-40" style={{ color: config.text }}>
                               <Clock size={9} />
                               {task.estimatedMinutes}m
                             </span>
@@ -494,7 +556,7 @@ export default function SwimlaneCanvas() {
 
                       {/* Goal text */}
                       {task.goal && (
-                        <div className="mt-1 text-[11px] leading-relaxed line-clamp-1 text-[var(--text-main)] opacity-62">
+                        <div className="mt-1.5 text-[11px] leading-relaxed line-clamp-2" style={{ color: config.text, opacity: isSelected ? 0.8 : 0.66 }}>
                           {task.goal}
                         </div>
                       )}

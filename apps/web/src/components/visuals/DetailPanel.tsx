@@ -40,27 +40,27 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto px-10 py-8">
-        <div className="mx-auto max-w-2xl">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="mx-auto">
           {phase && (
-            <span className="mb-3 inline-block rounded-full border border-[var(--border)] bg-[var(--border)]/10 px-3 py-1 text-[10px] font-medium text-[var(--text-main)] opacity-50">
+            <div className="mb-1 uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40">
               {phase}
-            </span>
+            </div>
           )}
 
-          <h1 className="mb-2 text-xl font-bold leading-snug text-[var(--text-main)]">
+          <h1 className="mb-3 text-[15px] font-bold leading-tight text-[var(--text-main)]">
             {node.label}
           </h1>
 
-          <div className="mb-5 flex flex-wrap gap-2">
+          <div className="mb-5 flex flex-wrap gap-1.5">
             {estimatedMinutes && (
-              <span className="rounded-full bg-[var(--border)]/20 px-2.5 py-1 text-[10px] font-medium text-[var(--text-main)] opacity-60">
-                ~{estimatedMinutes} min
+              <span className="rounded bg-[var(--border)]/30 px-1.5 py-0.5 text-[9px] font-bold text-[var(--text-main)] opacity-60">
+                ~{estimatedMinutes} MIN
               </span>
             )}
             {riskLevel && (
               <span
-                className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
                   riskLevel === 'high'
                     ? 'bg-destructive/10 text-destructive'
                     : riskLevel === 'medium'
@@ -68,18 +68,18 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
                       : 'bg-[var(--primary)]/10 text-[var(--primary)]'
                 }`}
               >
-                {riskLevel} risk
+                {riskLevel} RISK
               </span>
             )}
             {assignee && (
-              <span className="rounded-full bg-[var(--border)]/20 px-2.5 py-1 text-[10px] font-medium text-[var(--text-main)] opacity-60">
-                {assignee}
+              <span className="rounded bg-[var(--border)]/30 px-1.5 py-0.5 text-[9px] font-bold text-[var(--text-main)] opacity-60">
+                {assignee.toUpperCase()}
               </span>
             )}
           </div>
 
           {goal && (
-            <p className="mb-7 text-sm leading-relaxed text-[var(--text-main)] opacity-80">
+            <p className="mb-6 text-[13px] leading-relaxed text-[var(--text-main)] opacity-70">
               {goal}
             </p>
           )}
@@ -87,11 +87,11 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
           {steps && steps.length > 0 && (
             <section className="mb-6">
               <SectionHeader
-                icon={<Code size={14} />}
+                icon={<Code size={12} />}
                 title={t('editor.codeSteps')}
                 count={steps.length}
               />
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 space-y-2">
                 {steps.map((step, i) => (
                   <StepBlock key={i} step={step} index={i} />
                 ))}
@@ -102,11 +102,11 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
           {verifications && verifications.length > 0 && (
             <section className="mb-6">
               <SectionHeader
-                icon={<Beaker size={14} />}
+                icon={<Beaker size={12} />}
                 title={t('editor.tests')}
                 count={verifications.length}
               />
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 space-y-2">
                 {verifications.map((step, i) => (
                   <StepBlock key={i} step={step} index={i} />
                 ))}
@@ -117,29 +117,29 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
           {files && files.length > 0 && (
             <section className="mb-6">
               <SectionHeader
-                icon={<FileText size={14} />}
+                icon={<FileText size={12} />}
                 title={t('editor.files')}
                 count={files.length}
               />
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-1.5">
                 {files.map((f) => (
                   <div
                     key={f.path}
-                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] px-3 py-2 text-xs"
+                    className="group flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-canvas)] px-2.5 py-2 transition-colors hover:border-[var(--primary)]/30"
                   >
                     <span
-                      className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase ${
+                      className={`shrink-0 rounded-[4px] border px-1 py-0.5 text-[8px] font-bold uppercase ${
                         FILE_TYPE_STYLES[f.type] ??
                         'border-[var(--border)] text-[var(--text-main)] opacity-50'
                       }`}
                     >
                       {f.type}
                     </span>
-                    <code className="flex-1 font-mono text-[11px] text-[var(--text-main)]">
+                    <code className="flex-1 truncate font-mono text-[10.5px] text-[var(--text-main)] opacity-90">
                       {f.path}
                     </code>
                     {f.description && (
-                      <span className="max-w-[200px] truncate text-[10px] text-[var(--text-main)] opacity-50">
+                      <span className="max-w-[120px] truncate text-[9px] text-[var(--text-main)] opacity-40">
                         {f.description}
                       </span>
                     )}
@@ -151,7 +151,7 @@ export function TaskDetail({ node, onFeedback }: TaskDetailProps) {
         </div>
       </div>
 
-      <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-10 py-3">
+      <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-6 py-4">
         <CommandInput
           onSubmit={async (text) => {
             await onFeedback({ nodeId: node.id, text, section: 'general' });
@@ -174,10 +174,10 @@ function SectionHeader({
   count: number;
 }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-[var(--text-main)] opacity-60">
+    <div className="flex items-center gap-2 uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40">
       {icon}
-      <span className="font-semibold">{title}</span>
-      <span className="opacity-40">({count})</span>
+      <span>{title}</span>
+      <span className="opacity-50">({count})</span>
     </div>
   );
 }
@@ -190,41 +190,43 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
   const hasDetails = step.code || step.command || step.expectedOutput;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-main)]">
-      <div className="flex items-center gap-3 px-4 py-2.5">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-white">
+    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] transition-colors hover:border-[var(--primary)]/30">
+      <div className="flex items-start gap-3 px-3 py-2.5">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-bold text-white mt-0.5">
           {index + 1}
         </span>
-        <span className="flex-1 text-xs leading-relaxed text-[var(--text-main)]">
-          {step.description}
-        </span>
-        {hasDetails && (
-          <button
-            type="button"
-            onClick={() => setShowCode(!showCode)}
-            className="shrink-0 text-[10px] text-[var(--text-main)] opacity-40 transition-colors hover:opacity-80"
-          >
-            {showCode ? t('editor.hideDetails') : t('editor.showDetails')}
-          </button>
-        )}
+        <div className="flex-1 flex flex-col gap-1">
+          <span className="text-[12px] leading-relaxed text-[var(--text-main)] opacity-90">
+            {step.description}
+          </span>
+          {hasDetails && (
+            <button
+              type="button"
+              onClick={() => setShowCode(!showCode)}
+              className="w-fit text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] opacity-60 transition-opacity hover:opacity-100"
+            >
+              {showCode ? t('editor.hideDetails') : t('editor.showDetails')}
+            </button>
+          )}
+        </div>
       </div>
 
       {showCode && (
-        <div className="border-t border-[var(--border)] px-4 py-3">
+        <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-3 py-3">
           {step.code && (
-            <pre className="mb-3 overflow-x-auto rounded-md bg-[var(--border)]/20 p-4 text-[11px] font-mono leading-relaxed text-[var(--text-main)]">
+            <pre className="mb-3 overflow-x-auto rounded-md bg-[var(--border)]/10 p-3 text-[10px] font-mono leading-relaxed text-[var(--text-main)] opacity-80">
               <code>{step.code}</code>
             </pre>
           )}
           {step.command && (
-            <div className="mb-2 flex items-center gap-2 text-xs">
-              <span className="font-mono text-[var(--text-main)] opacity-30">$</span>
-              <code className="font-mono text-[var(--text-main)]">{step.command}</code>
+            <div className="mb-2 flex items-center gap-2 px-2 py-1 rounded bg-[var(--border)]/10 font-mono text-[10px]">
+              <span className="text-[var(--text-main)] opacity-30">$</span>
+              <code className="text-[var(--text-main)]">{step.command}</code>
             </div>
           )}
           {step.expectedOutput && (
-            <div className="border-dashed border-t border-[var(--border)] pt-2">
-              <span className="flex items-center gap-1 text-[10px] font-medium text-[var(--primary)] opacity-60">
+            <div className="mt-2 border-t border-[var(--border)] border-dashed pt-2 px-1">
+              <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] opacity-60">
                 <ChevronRight size={10} /> {t('editor.expected')}
               </span>
               <pre className="mt-1 whitespace-pre-wrap text-[10px] font-mono text-[var(--primary)] opacity-40">
