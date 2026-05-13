@@ -24,6 +24,7 @@
   --primary-foreground: #ffffff;
   --primary-hover: #828fff;
   --primary-focus: #5e69d1;
+  --amber: #d97706;
   
   /* UI Components */
   --card: var(--surface-1);
@@ -45,7 +46,7 @@
 
   /* Legacy Compat */
   --bg-main: var(--background);
-  --bg-canvas: var(--background);
+  --bg-canvas: var(--surface-1);
   --text-main: var(--foreground);
   --success: #27a644;
 }

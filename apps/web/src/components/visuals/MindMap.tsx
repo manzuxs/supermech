@@ -39,35 +39,35 @@ const STATUS_CONFIG: Record<
   { bg: string; border: string; text: string; subtext: string; icon: any }
 > = {
   pending: {
-    bg: 'color-mix(in srgb, var(--border) 10%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--border) 25%, var(--bg-canvas))',
     border: 'var(--border)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
     icon: Circle,
   },
   active: {
-    bg: 'color-mix(in srgb, var(--accent) 15%, var(--bg-canvas))',
-    border: 'var(--accent)',
+    bg: 'color-mix(in srgb, var(--amber) 25%, var(--bg-canvas))',
+    border: 'var(--amber)',
     text: 'var(--text-main)',
     subtext: 'var(--muted-foreground)',
     icon: PlayCircle,
   },
   accepted: {
-    bg: 'color-mix(in srgb, var(--success) 15%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--success) 25%, var(--bg-canvas))',
     border: 'var(--success)',
     text: 'var(--success)',
     subtext: 'var(--success)',
     icon: CheckCircle2,
   },
   rejected: {
-    bg: 'color-mix(in srgb, var(--border) 10%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--border) 20%, var(--bg-canvas))',
     border: 'var(--border)',
     text: 'var(--muted-foreground)',
     subtext: 'var(--muted-foreground)',
     icon: XCircle,
   },
   done: {
-    bg: 'color-mix(in srgb, var(--primary) 15%, var(--bg-canvas))',
+    bg: 'color-mix(in srgb, var(--primary) 25%, var(--bg-canvas))',
     border: 'var(--primary)',
     text: 'var(--primary)',
     subtext: 'var(--primary)',

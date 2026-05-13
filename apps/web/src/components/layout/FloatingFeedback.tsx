@@ -60,13 +60,13 @@ export default function FloatingFeedback() {
       chipText: 'var(--text-main)',
     },
     active: {
-      bg: 'color-mix(in srgb, var(--accent) 15%, var(--bg-canvas))',
-      border: 'color-mix(in srgb, var(--accent) 26%, var(--border))',
-      chipBg: 'color-mix(in srgb, var(--accent) 18%, var(--bg-canvas))',
+      bg: 'color-mix(in srgb, var(--amber) 25%, var(--bg-canvas))',
+      border: 'color-mix(in srgb, var(--amber) 26%, var(--border))',
+      chipBg: 'color-mix(in srgb, var(--amber) 18%, var(--bg-canvas))',
       chipText: 'var(--text-main)',
     },
     accepted: {
-      bg: 'color-mix(in srgb, var(--success) 15%, var(--bg-canvas))',
+      bg: 'color-mix(in srgb, var(--success) 25%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--success) 26%, var(--border))',
       chipBg: 'color-mix(in srgb, var(--success) 18%, var(--bg-canvas))',
       chipText: 'var(--success)',
@@ -78,7 +78,7 @@ export default function FloatingFeedback() {
       chipText: 'var(--muted-foreground)',
     },
     done: {
-      bg: 'color-mix(in srgb, var(--primary) 15%, var(--bg-canvas))',
+      bg: 'color-mix(in srgb, var(--primary) 25%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--primary) 24%, var(--border))',
       chipBg: 'color-mix(in srgb, var(--primary) 16%, var(--bg-canvas))',
       chipText: 'var(--primary)',
