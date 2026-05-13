@@ -309,9 +309,12 @@ export default function SwimlaneCanvas() {
     const rect = el.getBoundingClientRect();
     const bounds = getBounds(lanes);
 
+    const summaryOffset = planHeader ? 320 : 0; // w-72 (288px) + padding
+    const safeWidth = Math.max(rect.width - summaryOffset, 100);
+
     let nextK = forceK;
     if (nextK === undefined) {
-      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+      const aw = Math.max(safeWidth - VIEWPORT_PAD_X * 2, 1);
       const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
       nextK = Math.min(
         MAX_ZOOM,
@@ -319,8 +322,11 @@ export default function SwimlaneCanvas() {
       );
     }
 
+    // Center within the safe area (right of the summary panel)
+    const centerX = summaryOffset + safeWidth / 2;
+
     setTransform({
-      x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
+      x: centerX - (bounds.width * nextK) / 2 - bounds.minX * nextK,
       y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
       k: nextK,
     });
