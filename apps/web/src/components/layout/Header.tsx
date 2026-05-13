@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/select';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import i18n from '../../lib/i18n.ts';
-import ThemeToggle from './ThemeToggle.tsx';
 
 export default function Header() {
   const { t } = useTranslation();
