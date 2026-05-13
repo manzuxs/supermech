@@ -31,9 +31,9 @@ export default function Header() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const statusColors: Record<string, string> = {
-    idle: '#737373',
-    thinking: '#f59e0b',
-    writing: '#3b82f6',
+    idle: '#d0d6e0',
+    thinking: '#5e6ad2',
+    writing: '#5e6ad2',
     error: '#ef4444',
   };
 
@@ -139,7 +139,6 @@ export default function Header() {
         >
           <Globe size={14} />
         </ActionButton>
-        <ThemeToggle />
       </div>
     </header>
   );
