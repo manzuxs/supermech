@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import type { CanvasNode, ImplementationStep } from 'schemas';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
-import CommandInput from '../shared/CommandInput.tsx';
 
 export const FILE_TYPE_STYLES: Record<string, string> = {
   create: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
@@ -156,14 +155,6 @@ export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
       {showRating && (
         <RatingSection nodeId={node.id} onFeedback={onFeedback} />
       )}
-
-      <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-6 py-4">
-        <CommandInput
-          onSubmit={async (text) => {
-            await onFeedback({ nodeId: node.id, text, section: 'general' });
-          }}
-        />
-      </div>
     </div>
   );
 }
