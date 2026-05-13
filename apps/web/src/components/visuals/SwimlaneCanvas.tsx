@@ -263,17 +263,22 @@ export default function SwimlaneCanvas() {
 
   const layoutSig = lanes.map((l) => `${l.name}:${l.tasks.length}`).join('|');
 
-  function fitToView() {
+  function fitToView(forceK?: number) {
     const el = containerRef.current;
     if (!el || lanes.length === 0) return;
     const rect = el.getBoundingClientRect();
     const bounds = getBounds(lanes);
-    const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
-    const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
-    const nextK = Math.min(
-      MAX_ZOOM,
-      Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
-    );
+    
+    let nextK = forceK;
+    if (nextK === undefined) {
+      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+      const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
+      nextK = Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
+      );
+    }
+
     setTransform({
       x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
       y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
@@ -300,7 +305,7 @@ export default function SwimlaneCanvas() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fitToView();
+    fitToView(1); // Default to 100%
   }, [layoutSig]);
 
   useEffect(() => {
@@ -593,7 +598,7 @@ export default function SwimlaneCanvas() {
           </button>
           <button
             type="button"
-            onClick={fitToView}
+            onClick={() => fitToView()}
             title={t('canvas.fitView')}
             className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
           >

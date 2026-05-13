@@ -201,14 +201,19 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
 
   const layoutSig = dagNodes.map((n) => `${n.id}:${n.level}`).join('|');
 
-  function fitToView() {
+  function fitToView(forceK?: number) {
     const el = containerRef.current;
     if (!el || dagNodes.length === 0) return;
     const rect = el.getBoundingClientRect();
     const bounds = getBounds(dagNodes);
-    const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
-    const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
-    const nextK = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)));
+
+    let nextK = forceK;
+    if (nextK === undefined) {
+      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+      const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
+      nextK = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)));
+    }
+
     setTransform({
       x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
       y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
@@ -234,7 +239,7 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fitToView(); }, [layoutSig]);
+  useEffect(() => { fitToView(1); }, [layoutSig]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -438,7 +443,7 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
           <button type="button" onClick={() => stepZoom('in')} title={t('canvas.zoomIn')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
             <Plus size={14} />
           </button>
-          <button type="button" onClick={fitToView} title={t('canvas.fitView')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
+          <button type="button" onClick={() => fitToView()} title={t('canvas.fitView')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
             <Crosshair size={14} />
           </button>
         </div>

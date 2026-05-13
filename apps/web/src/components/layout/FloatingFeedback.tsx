@@ -1,4 +1,4 @@
-import { Crosshair, MessageSquare, Minus, Send, Sparkles, Target, X } from 'lucide-react';
+import { Crosshair, Send, Sparkles, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
@@ -8,12 +8,10 @@ export default function FloatingFeedback() {
   const { t } = useTranslation();
   const { state, addFeedback, updateUI } = useWorkbench();
   const [text, setText] = useState('');
-  const [isExpanded, setIsExpanded] = useState(true);
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
   const isWritingPlans = state.meta.activeSkill === 'writing-plans';
   const isExecutingPlans = state.meta.activeSkill === 'executing-plans';
-  const isInspectorOpen =
-    isBrainstorming || isWritingPlans || isExecutingPlans ? state.ui.rightSidebarOpen : isExpanded;
+  const isInspectorOpen = state.ui.rightSidebarOpen;
 
   const selectedNode = state.ui.selectedNodeId
     ? (state.canvas.nodes.find((n) => n.id === state.ui.selectedNodeId) ?? null)
@@ -33,7 +31,6 @@ export default function FloatingFeedback() {
     ? state.canvas.nodes.filter((node) => node.parentId === selectedNode.id)
     : [];
 
-  const hasUnprocessedFeedback = state.feedback.some((f) => !('processedAt' in f));
   const nodeFeedback = state.feedback
     .filter((entry) =>
       selectedNode ? entry.nodeId === selectedNode.id : entry.nodeId === '__global__',
@@ -105,24 +102,6 @@ export default function FloatingFeedback() {
     }
   }
 
-  function handleCollapse() {
-    if (isBrainstorming || isWritingPlans || isExecutingPlans) {
-      updateUI({ rightSidebarOpen: false });
-      return;
-    }
-
-    setIsExpanded(false);
-  }
-
-  function handleExpand() {
-    if (isBrainstorming || isWritingPlans || isExecutingPlans) {
-      updateUI({ rightSidebarOpen: true });
-      return;
-    }
-
-    setIsExpanded(true);
-  }
-
   function fillQuickAction(value: string) {
     setText(value);
   }
@@ -131,28 +110,8 @@ export default function FloatingFeedback() {
     window.dispatchEvent(new CustomEvent('workbench:focus-node', { detail: { nodeId } }));
   }
 
-  if (isBrainstorming && !selectedNode) {
-    return null;
-  }
-
   if (!isInspectorOpen) {
-    return (
-      <button
-        type="button"
-        onClick={handleExpand}
-        className={
-          isBrainstorming
-            ? 'absolute right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-main)]/92 shadow-lg backdrop-blur transition hover:scale-105 active:scale-95'
-            : 'fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-main)] shadow-2xl transition-all hover:scale-110 active:scale-95'
-        }
-        aria-label={t('feedback.maximize')}
-      >
-        <MessageSquare className="h-6 w-6 text-[var(--text-main)]" />
-        {hasUnprocessedFeedback && (
-          <span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-red-500 border-2 border-[var(--bg-main)]" />
-        )}
-      </button>
-    );
+    return null;
   }
 
   if (isBrainstorming) {
@@ -356,103 +315,72 @@ export default function FloatingFeedback() {
     );
   }
 
-  if (isWritingPlans) {
+  if (isWritingPlans || isExecutingPlans) {
     return (
       <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
-        {selectedNode ? (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center px-6 text-center">
-            <div>
-              <div className="text-[14px] font-medium text-[var(--text-main)]">
-                {t('feedback.emptyTitle')}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {selectedNode ? (
+            <TaskDetail
+              node={selectedNode}
+              onFeedback={(params) => addFeedback(params)}
+              showRating={isExecutingPlans}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center px-6 text-center">
+              <div>
+                <div className="text-[14px] font-medium text-[var(--text-main)]">
+                  {t('feedback.emptyTitle')}
+                </div>
+                <p className="mt-2 text-[12px] leading-6 text-[var(--text-main)] opacity-45">
+                  {t('feedback.emptyHint')}
+                </p>
               </div>
-              <p className="mt-2 text-[12px] leading-6 text-[var(--text-main)] opacity-45">
-                {t('feedback.emptyHint')}
-              </p>
             </div>
-          </div>
-        )}
-      </aside>
-    );
-  }
+          )}
+        </div>
 
-  if (isExecutingPlans) {
-    return (
-      <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
-        {selectedNode ? (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} showRating />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center px-6 text-center">
-            <div>
-              <div className="text-[14px] font-medium text-[var(--text-main)]">
-                {t('feedback.emptyTitle')}
-              </div>
-              <p className="mt-2 text-[12px] leading-6 text-[var(--text-main)] opacity-45">
-                {t('feedback.emptyHint')}
-              </p>
-            </div>
-          </div>
-        )}
-      </aside>
-    );
-  }
-
-  return (
-    <div className="fixed bottom-8 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4">
-      <div className="flex flex-col gap-2">
-        {/* Targeting Indicator */}
         {selectedNode && (
-          <div className="flex items-center justify-between self-center rounded-full border border-[var(--border)] bg-[var(--bg-main)]/80 px-3 py-1.5 shadow-lg backdrop-blur-xl">
-            <div className="flex items-center gap-2 text-[12px] font-medium text-[var(--text-main)]">
-              <Target className="h-3.5 w-3.5 opacity-60" />
+          <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-4 py-4">
+            <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
+              <Sparkles className="h-3.5 w-3.5" />
               <span>{t('feedback.target', { name: selectedNode.label })}</span>
             </div>
-            <button
-              onClick={() => updateUI({ selectedNodeId: null })}
-              className="ml-2 rounded-full p-0.5 hover:bg-[var(--border)]/20"
-              title={t('feedback.clear')}
-            >
-              <X className="h-3.5 w-3.5 opacity-40" />
-            </button>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {quickActions.map((action) => (
+                <button
+                  key={action}
+                  type="button"
+                  onClick={() => fillQuickAction(action)}
+                  className="rounded-full border border-[var(--border)] bg-[var(--bg-main)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-main)] opacity-68 transition hover:bg-[var(--bg-canvas)] hover:opacity-100"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-canvas)]/35 p-2">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t('feedback.nodePlaceholder', { name: selectedNode.label })}
+                className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30"
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!text.trim()}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
+                title={t('feedback.submit')}
+              >
+                <Send className="h-4 w-4" />
+                <span>{t('feedback.submit')}</span>
+              </button>
+            </div>
           </div>
         )}
+      </aside>
+    );
+  }
 
-        {/* Input Area */}
-        <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-main)]/80 p-2 shadow-2xl backdrop-blur-xl">
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('feedback.placeholder')}
-            className="flex-1 bg-transparent px-3 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30"
-            autoFocus
-          />
-          <div className="flex items-center gap-1 border-l border-[var(--border)] pl-1">
-            <button
-              type="button"
-              onClick={handleCollapse}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-main)] opacity-40 hover:bg-[var(--border)]/20 hover:opacity-100"
-              title={t('feedback.minimize')}
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!text.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)] text-white shadow-lg transition-all hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:grayscale"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
