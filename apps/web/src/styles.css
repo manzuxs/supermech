@@ -124,14 +124,6 @@ body {
   animation: flow 1s linear infinite;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 @theme inline {
   --font-sans: "Noto Sans Variable", sans-serif;
   --font-heading: "Playfair Display Variable", serif;

@@ -100,9 +100,10 @@
     "expected": "Expected:",
     "legacyNote": "legacy note available",
     "risk": "risk",
-    "viewMode": {
-      "list": "List Mode",
-      "slide": "Slide Mode"
-    }
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "task": "task",
+    "tasks": "tasks",
+    "otherTasks": "Other"
   }
 }

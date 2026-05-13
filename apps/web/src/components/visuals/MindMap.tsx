@@ -491,8 +491,8 @@ export default function MindMap({ nodes }: MindMapProps) {
                         {(isSelected ? n.tags.slice(0, 2) : n.tags.slice(0, 1)).map((tag) => (
                           <div
                             key={tag}
-                          className="flex items-center gap-0.5 rounded-full bg-[var(--border)]/10 px-1.5 py-0.5 text-[8px] font-bold text-[var(--text-main)]"
-                          style={{ opacity: isSelected ? 0.74 : 0.58 }}
+                            className="flex items-center gap-0.5 rounded-full bg-[var(--border)]/10 px-1.5 py-0.5 text-[8px] font-bold text-[var(--text-main)]"
+                            style={{ opacity: isSelected ? 0.74 : 0.58 }}
                           >
                             <Hash size={8} />
                             <span>{tag}</span>

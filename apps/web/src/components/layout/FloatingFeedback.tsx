@@ -2,6 +2,7 @@ import { Crosshair, MessageSquare, Minus, Send, Sparkles, Target, X } from 'luci
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import { TaskDetail } from '../visuals/DetailPanel.tsx';
 
 export default function FloatingFeedback() {
   const { t } = useTranslation();
@@ -9,7 +10,9 @@ export default function FloatingFeedback() {
   const [text, setText] = useState('');
   const [isExpanded, setIsExpanded] = useState(true);
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
-  const isInspectorOpen = isBrainstorming ? state.ui.rightSidebarOpen : isExpanded;
+  const isWritingPlans = state.meta.activeSkill === 'writing-plans';
+  const isInspectorOpen =
+    isBrainstorming || isWritingPlans ? state.ui.rightSidebarOpen : isExpanded;
 
   const selectedNode = state.ui.selectedNodeId
     ? (state.canvas.nodes.find((n) => n.id === state.ui.selectedNodeId) ?? null)
@@ -31,7 +34,9 @@ export default function FloatingFeedback() {
 
   const hasUnprocessedFeedback = state.feedback.some((f) => !('processedAt' in f));
   const nodeFeedback = state.feedback
-    .filter((entry) => (selectedNode ? entry.nodeId === selectedNode.id : entry.nodeId === '__global__'))
+    .filter((entry) =>
+      selectedNode ? entry.nodeId === selectedNode.id : entry.nodeId === '__global__',
+    )
     .slice()
     .reverse();
   const quickActions = [
@@ -51,33 +56,33 @@ export default function FloatingFeedback() {
     { bg: string; border: string; chipBg: string; chipText: string }
   > = {
     pending: {
-      bg: 'color-mix(in srgb, var(--bg-canvas) 88%, white)',
+      bg: 'color-mix(in srgb, var(--bg-canvas) 88%, var(--bg-main))',
       border: 'color-mix(in srgb, var(--border) 82%, transparent)',
-      chipBg: 'color-mix(in srgb, var(--border) 36%, white)',
+      chipBg: 'color-mix(in srgb, var(--border) 36%, var(--bg-main))',
       chipText: 'var(--text-main)',
     },
     active: {
-      bg: 'color-mix(in srgb, var(--accent) 8%, white)',
+      bg: 'color-mix(in srgb, var(--accent) 8%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--accent) 26%, var(--border))',
-      chipBg: 'color-mix(in srgb, var(--accent) 18%, white)',
+      chipBg: 'color-mix(in srgb, var(--accent) 18%, var(--bg-canvas))',
       chipText: 'var(--text-main)',
     },
     accepted: {
-      bg: 'color-mix(in srgb, var(--success) 10%, white)',
+      bg: 'color-mix(in srgb, var(--success) 10%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--success) 26%, var(--border))',
-      chipBg: 'color-mix(in srgb, var(--success) 18%, white)',
+      chipBg: 'color-mix(in srgb, var(--success) 18%, var(--bg-canvas))',
       chipText: 'var(--success)',
     },
     rejected: {
-      bg: 'color-mix(in srgb, var(--border) 28%, white)',
+      bg: 'color-mix(in srgb, var(--border) 28%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--border) 72%, transparent)',
-      chipBg: 'color-mix(in srgb, var(--border) 42%, white)',
+      chipBg: 'color-mix(in srgb, var(--border) 42%, var(--bg-canvas))',
       chipText: 'var(--muted-foreground)',
     },
     done: {
-      bg: 'color-mix(in srgb, var(--primary) 8%, white)',
+      bg: 'color-mix(in srgb, var(--primary) 8%, var(--bg-canvas))',
       border: 'color-mix(in srgb, var(--primary) 24%, var(--border))',
-      chipBg: 'color-mix(in srgb, var(--primary) 16%, white)',
+      chipBg: 'color-mix(in srgb, var(--primary) 16%, var(--bg-canvas))',
       chipText: 'var(--primary)',
     },
   };
@@ -100,7 +105,7 @@ export default function FloatingFeedback() {
   }
 
   function handleCollapse() {
-    if (isBrainstorming) {
+    if (isBrainstorming || isWritingPlans) {
       updateUI({ rightSidebarOpen: false });
       return;
     }
@@ -109,7 +114,7 @@ export default function FloatingFeedback() {
   }
 
   function handleExpand() {
-    if (isBrainstorming) {
+    if (isBrainstorming || isWritingPlans) {
       updateUI({ rightSidebarOpen: true });
       return;
     }
@@ -346,6 +351,29 @@ export default function FloatingFeedback() {
             </button>
           </div>
         </div>
+      </aside>
+    );
+  }
+
+  if (isWritingPlans) {
+    return (
+      <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
+        {selectedNode ? (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <TaskDetail node={selectedNode} onFeedback={(params) => addFeedback(params)} />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <div>
+              <div className="text-[14px] font-medium text-[var(--text-main)]">
+                {t('feedback.emptyTitle')}
+              </div>
+              <p className="mt-2 text-[12px] leading-6 text-[var(--text-main)] opacity-45">
+                {t('feedback.emptyHint')}
+              </p>
+            </div>
+          </div>
+        )}
       </aside>
     );
   }

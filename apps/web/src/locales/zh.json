@@ -100,9 +100,10 @@
     "expected": "预期结果:",
     "legacyNote": "包含旧版说明",
     "risk": "风险",
-    "viewMode": {
-      "list": "列表模式",
-      "slide": "幻灯片模式"
-    }
+    "showDetails": "展开详情",
+    "hideDetails": "收起详情",
+    "task": "个任务",
+    "tasks": "个任务",
+    "otherTasks": "其他"
   }
 }

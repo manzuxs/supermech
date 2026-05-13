@@ -3,7 +3,7 @@ import type { SkillType } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import KanbanBoard from '../visuals/KanbanBoard.tsx';
 import MindMap from '../visuals/MindMap.tsx';
-import PlanEditor from '../visuals/PlanEditor.tsx';
+import SwimlaneCanvas from '../visuals/SwimlaneCanvas.tsx';
 
 export default function CenterCanvas() {
   const { t } = useTranslation();
@@ -26,7 +26,7 @@ export default function CenterCanvas() {
           {t('canvas.empty')}
         </div>
       ) : state.canvas.skillType === 'writing-plans' ? (
-        <PlanEditor />
+        <SwimlaneCanvas />
       ) : kanbanTypes.includes(state.canvas.skillType) ? (
         <KanbanBoard nodes={state.canvas.nodes} edges={state.canvas.edges} />
       ) : (
