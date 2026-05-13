@@ -1,12 +1,4 @@
-import {
-  CheckCircle2,
-  Circle,
-  Crosshair,
-  Minus,
-  PlayCircle,
-  Plus,
-  XCircle,
-} from 'lucide-react';
+import { CheckCircle2, Circle, Crosshair, Minus, PlayCircle, Plus, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasEdge, CanvasNode, NodeStatus } from 'schemas';
@@ -80,7 +72,10 @@ const STATUS_CONFIG: Record<NodeStatus, { bg: string; border: string; text: stri
 
 // ─── DAG Layout ───
 
-function buildDagLayout(nodes: CanvasNode[], edges: CanvasEdge[]): { dagNodes: DagNode[]; paths: EdgePath[] } {
+function buildDagLayout(
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
+): { dagNodes: DagNode[]; paths: EdgePath[] } {
   if (nodes.length === 0) return { dagNodes: [], paths: [] };
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -164,8 +159,12 @@ function buildDagLayout(nodes: CanvasNode[], edges: CanvasEdge[]): { dagNodes: D
 }
 
 function getBounds(dagNodes: DagNode[]) {
-  if (dagNodes.length === 0) return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  if (dagNodes.length === 0)
+    return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
   for (const n of dagNodes) {
     const l = n.x - NODE_W / 2;
     const r = n.x + NODE_W / 2;
@@ -221,7 +220,10 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
     if (nextK === undefined) {
       const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
       const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
-      nextK = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)));
+      nextK = Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
+      );
     }
 
     setTransform({
@@ -249,7 +251,9 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fitToView(1); }, [layoutSig]);
+  useEffect(() => {
+    fitToView(1);
+  }, [layoutSig]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -307,7 +311,9 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleBgClick}
-      onKeyDown={(e) => { if (e.key === 'Enter') handleBgClick(e); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') handleBgClick(e);
+      }}
       style={{
         backgroundPosition: `${transform.x}px ${transform.y}px`,
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
@@ -316,7 +322,15 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-main)_0%,transparent_44%)] opacity-28" />
       <svg width="100%" height="100%" style={{ display: 'block', overflow: 'hidden' }}>
         <defs>
-          <marker id="fc-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <marker
+            id="fc-arrowhead"
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto"
+          >
             <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border)" />
           </marker>
         </defs>
@@ -383,7 +397,9 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
                   rx={10}
                   ry={10}
                   fill={config.bg}
-                  stroke={isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border}
+                  stroke={
+                    isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border
+                  }
                   strokeWidth={isSelected || isActive ? 2 : 1}
                   className={
                     isActive
@@ -447,13 +463,28 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
           {Math.round(transform.k * 100)}%
         </div>
         <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 p-1 shadow-sm backdrop-blur">
-          <button type="button" onClick={() => stepZoom('out')} title={t('canvas.zoomOut')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => stepZoom('out')}
+            title={t('canvas.zoomOut')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+          >
             <Minus size={14} />
           </button>
-          <button type="button" onClick={() => stepZoom('in')} title={t('canvas.zoomIn')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => stepZoom('in')}
+            title={t('canvas.zoomIn')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+          >
             <Plus size={14} />
           </button>
-          <button type="button" onClick={() => fitToView()} title={t('canvas.fitView')} className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => fitToView()}
+            title={t('canvas.fitView')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+          >
             <Crosshair size={14} />
           </button>
         </div>

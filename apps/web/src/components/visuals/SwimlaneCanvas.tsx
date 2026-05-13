@@ -185,7 +185,7 @@ function arrowPath(from: { x: number; y: number }, to: { x: number; y: number })
   const y1 = from.y + CARD_H / 2;
   const x2 = to.x;
   const y2 = to.y + CARD_H / 2;
-  
+
   if (Math.abs(y2 - y1) < 10) {
     // Same lane — horizontal bezier
     const cx = (x1 + x2) / 2;
@@ -224,7 +224,7 @@ export default function SwimlaneCanvas() {
     if (!el || lanes.length === 0) return;
     const rect = el.getBoundingClientRect();
     const bounds = getBounds(lanes);
-    
+
     let nextK = forceK;
     if (nextK === undefined) {
       const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
@@ -377,26 +377,21 @@ export default function SwimlaneCanvas() {
               <text
                 x={HEADER_BAR_W + 8}
                 y={lane.y - LANE_PAD_Y + HEADER_H / 2}
-                fontSize={11}
-                fontWeight={700}
                 fill="var(--text-main)"
                 dominantBaseline="middle"
-                className="uppercase tracking-widest opacity-40"
               >
-                {lane.name === 'Other' ? t('editor.otherTasks') : lane.name}
-              </text>
-              <text
-                x={HEADER_BAR_W + 8 + (lane.name === 'Other' ? t('editor.otherTasks') : lane.name).length * 7 + 8}
-                y={lane.y - LANE_PAD_Y + HEADER_H / 2}
-                fontSize={10}
-                fontWeight={500}
-                fill="var(--text-main)"
-                dominantBaseline="middle"
-                opacity={0.2}
-              >
-                {lane.tasks.length === 1
-                  ? `${lane.tasks.length} ${t('editor.task')}`
-                  : `${lane.tasks.length} ${t('editor.tasks')}`}
+                <tspan
+                  fontSize={11}
+                  fontWeight={700}
+                  className="uppercase tracking-widest opacity-40"
+                >
+                  {lane.name === 'Other' ? t('editor.otherTasks') : lane.name}
+                </tspan>
+                <tspan dx={8} fontSize={10} fontWeight={500} opacity={0.2}>
+                  {lane.tasks.length === 1
+                    ? `${lane.tasks.length} ${t('editor.task')}`
+                    : `${lane.tasks.length} ${t('editor.tasks')}`}
+                </tspan>
               </text>
             </g>
           ))}

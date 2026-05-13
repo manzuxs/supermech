@@ -152,9 +152,7 @@ export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
         </div>
       </div>
 
-      {showRating && (
-        <RatingSection nodeId={node.id} onFeedback={onFeedback} />
-      )}
+      {showRating && <RatingSection nodeId={node.id} onFeedback={onFeedback} />}
     </div>
   );
 }

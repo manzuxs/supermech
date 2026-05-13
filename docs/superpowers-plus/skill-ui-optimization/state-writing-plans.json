@@ -392,12 +392,7 @@
       "planHeader": {
         "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
         "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板，用系统自己的写计划能力记录改造过程。",
-        "techStack": [
-          "React",
-          "TypeScript",
-          "Tailwind v4",
-          "Vite"
-        ],
+        "techStack": ["React", "TypeScript", "Tailwind v4", "Vite"],
         "phases": [
           {
             "name": "Schema & Validation",
@@ -585,12 +580,30 @@
       "stepIndex": null,
       "quickAction": null,
       "createdAt": "2026-05-13T14:29:06.763Z"
+    },
+    {
+      "id": "4e2ca401-a70f-459a-901e-92df47a90053",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T14:31:09.841Z"
+    },
+    {
+      "id": "7a8b3929-9f9d-42d8-b55d-555219198fb3",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-13T14:35:40.479Z"
     }
   ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-3"
   }
 }

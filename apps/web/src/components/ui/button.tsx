@@ -9,21 +9,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-[#828fff] focus-visible:ring-[#5e69d1]',
-        outline:
-          'border-[#23252a] bg-[#0f1011] text-[#f7f8f8] hover:bg-[#141516]',
-        secondary:
-          'bg-[#0f1011] text-[#f7f8f8] border border-[#23252a] hover:bg-[#141516]',
-        ghost:
-          'bg-transparent text-[#f7f8f8] hover:bg-[#0f1011]',
+        default:
+          'bg-primary text-primary-foreground hover:bg-[#828fff] focus-visible:ring-[#5e69d1]',
+        outline: 'border-[#23252a] bg-[#0f1011] text-[#f7f8f8] hover:bg-[#141516]',
+        secondary: 'bg-[#0f1011] text-[#f7f8f8] border border-[#23252a] hover:bg-[#141516]',
+        ghost: 'bg-transparent text-[#f7f8f8] hover:bg-[#0f1011]',
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline underline-offset-4 hover:underline',
       },
       size: {
-        default:
-          'h-[32px] px-[14px] py-[8px]',
-        xs: "h-7 px-3",
+        default: 'h-[32px] px-[14px] py-[8px]',
+        xs: 'h-7 px-3',
         sm: 'h-9 px-4',
         lg: 'h-11 px-8',
         icon: 'size-10',
