@@ -105,6 +105,9 @@
     "hideDetails": "收起详情",
     "task": "个任务",
     "tasks": "个任务",
-    "otherTasks": "其他"
+    "otherTasks": "其他",
+    "planSummary": "计划概览",
+    "primaryGoal": "核心目标",
+    "architecture": "架构思路"
   }
 }

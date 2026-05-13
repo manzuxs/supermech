@@ -1,33 +1,100 @@
-import { Clock, Crosshair, Minus, Plus } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  Code,
+  Crosshair,
+  FileText,
+  ListChecks,
+  Minus,
+  Plus,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
+// ─── Plan Summary Overlay ───
+
+function PlanSummary({ header }: { header: PlanHeader | null }) {
+  const { t } = useTranslation();
+  if (!header) return null;
+
+  return (
+    <div className="absolute top-6 left-6 z-10 w-72 rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/80 p-5 shadow-2xl backdrop-blur-xl">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
+          <Zap size={16} />
+        </div>
+        <h2 className="text-[14px] font-bold tracking-tight text-[var(--foreground)]">
+          {t('editor.planSummary')}
+        </h2>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+            <CheckCircle2 size={10} />
+            {t('editor.primaryGoal')}
+          </div>
+          <p className="text-[13px] leading-relaxed text-[var(--foreground)] opacity-90">
+            {header.goal}
+          </p>
+        </div>
+
+        {header.architecture && (
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <Code size={10} />
+              {t('editor.architecture')}
+            </div>
+            <p className="text-[12px] leading-relaxed text-[var(--muted-foreground)]">
+              {header.architecture}
+            </p>
+          </div>
+        )}
+
+        {header.techStack && header.techStack.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {header.techStack.map((tech) => (
+              <span
+                key={tech}
+                className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2 py-0.5 text-[10px] font-medium text-[var(--foreground)]"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Constants ───
 
-const CARD_W = 200;
-const CARD_H = 88;
+const CARD_W = 280;
+const CARD_H = 140;
 const H_GAP = 32;
-const LANE_MIN_W = 480;
-const HEADER_H = 32;
+const LANE_MIN_W = 640;
+const HEADER_H = 40;
 const HEADER_BAR_W = 3;
-const PAD_TOP = 24;
+const PAD_TOP = 40;
 const PAD_LEFT = 32;
 const PAD_RIGHT = 48;
-const LANE_PAD_Y = 16;
-const LANE_GAP = 12;
+const LANE_PAD_Y = 24;
+const LANE_GAP = 16;
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 2.5;
-const VIEWPORT_PAD_X = 48;
-const VIEWPORT_PAD_Y = 40;
+const VIEWPORT_PAD_X = 64;
+const VIEWPORT_PAD_Y = 64;
 
 const LANE_COLORS = [
-  'var(--primary)',
+  '#5e6ad2', // Linear Lavender
   '#8b5cf6',
-  'var(--success)',
-  'var(--accent)',
+  '#27a644', // Success Green
+  '#f59e0b', // Amber
   '#ec4899',
   '#06b6d4',
   '#f97316',
@@ -42,6 +109,9 @@ interface SwimTask {
   goal: string;
   estimatedMinutes: number | null;
   riskLevel: string | null;
+  assignee: string | null;
+  stepsCount: number;
+  filesCount: number;
   x: number;
   y: number;
 }
@@ -81,12 +151,19 @@ function buildLayout(
       const x = PAD_LEFT + i * (CARD_W + H_GAP);
       const y = currentY + HEADER_H + LANE_PAD_Y;
       bodyBottomY = y + CARD_H + LANE_PAD_Y;
+
+      const steps = (meta.implementationSteps as any[]) ?? [];
+      const files = (meta.files as any[]) ?? [];
+
       const t: SwimTask = {
         id: node.id,
         label: node.label,
-        goal: (meta.goal as string) || '',
+        goal: (meta.goal as string) || (meta.description as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
+        assignee: (meta.assignee as string) ?? null,
+        stepsCount: steps.length,
+        filesCount: files.length,
         x,
         y,
       };
@@ -114,12 +191,19 @@ function buildLayout(
       const x = PAD_LEFT + i * (CARD_W + H_GAP);
       const y = currentY + HEADER_H + LANE_PAD_Y;
       bodyBottomY = y + CARD_H + LANE_PAD_Y;
+
+      const steps = (meta.implementationSteps as any[]) ?? [];
+      const files = (meta.files as any[]) ?? [];
+
       const t: SwimTask = {
         id: node.id,
         label: node.label,
-        goal: (meta.goal as string) || '',
+        goal: (meta.goal as string) || (meta.description as string) || '',
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
+        assignee: (meta.assignee as string) ?? null,
+        stepsCount: steps.length,
+        filesCount: files.length,
         x,
         y,
       };
@@ -314,7 +398,7 @@ export default function SwimlaneCanvas() {
   return (
     <div
       ref={containerRef}
-      className={`canvas-dot-grid relative h-full w-full overflow-hidden select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      className={`canvas-dot-grid relative h-full w-full overflow-hidden select-none bg-[var(--background)] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -330,7 +414,9 @@ export default function SwimlaneCanvas() {
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
       }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-main)_0%,transparent_44%)] opacity-28" />
+      <PlanSummary header={planHeader} />
+
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--surface-1)_0%,transparent_60%)] opacity-40" />
       <svg width="100%" height="100%" style={{ display: 'block', overflow: 'hidden' }}>
         <defs>
           <marker
@@ -356,8 +442,8 @@ export default function SwimlaneCanvas() {
                 y={lane.y - LANE_PAD_Y}
                 width={lane.width}
                 height={lane.height}
-                rx={12}
-                ry={12}
+                rx={16}
+                ry={16}
                 fill="none"
                 stroke="var(--border)"
                 strokeWidth={1}
@@ -375,19 +461,19 @@ export default function SwimlaneCanvas() {
                 fill={LANE_COLORS[idx % LANE_COLORS.length]}
               />
               <text
-                x={HEADER_BAR_W + 8}
+                x={HEADER_BAR_W + 12}
                 y={lane.y - LANE_PAD_Y + HEADER_H / 2}
-                fill="var(--text-main)"
+                fill="var(--foreground)"
                 dominantBaseline="middle"
               >
                 <tspan
-                  fontSize={11}
-                  fontWeight={700}
-                  className="uppercase tracking-widest opacity-40"
+                  fontSize={12}
+                  fontWeight={600}
+                  className="uppercase tracking-[0.1em] opacity-40"
                 >
                   {lane.name === 'Other' ? t('editor.otherTasks') : lane.name}
                 </tspan>
-                <tspan dx={8} fontSize={10} fontWeight={500} opacity={0.2}>
+                <tspan dx={12} fontSize={11} fontWeight={500} opacity={0.2}>
                   {lane.tasks.length === 1
                     ? `${lane.tasks.length} ${t('editor.task')}`
                     : `${lane.tasks.length} ${t('editor.tasks')}`}
@@ -405,7 +491,7 @@ export default function SwimlaneCanvas() {
               stroke="var(--border)"
               strokeWidth={1.5}
               markerEnd="url(#swim-arrowhead)"
-              className="opacity-24"
+              className="opacity-20"
             />
           ))}
 
@@ -428,20 +514,23 @@ export default function SwimlaneCanvas() {
                       updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
                     }
                   }}
-                  className="group cursor-pointer outline-none rounded-xl"
+                  className="group cursor-pointer outline-none"
                   role="button"
                   tabIndex={0}
                 >
                   {/* Selection glow */}
                   {isSelected && (
                     <rect
-                      x={task.x - 4}
-                      y={task.y - 4}
-                      width={CARD_W + 8}
-                      height={CARD_H + 8}
-                      rx={16}
-                      ry={16}
-                      fill="color-mix(in srgb, var(--primary) 12%, transparent)"
+                      x={task.x - 2}
+                      y={task.y - 2}
+                      width={CARD_W + 4}
+                      height={CARD_H + 4}
+                      rx={14}
+                      ry={14}
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth={2}
+                      className="opacity-50"
                     />
                   )}
 
@@ -453,11 +542,10 @@ export default function SwimlaneCanvas() {
                     height={CARD_H}
                     rx={12}
                     ry={12}
-                    fill="var(--bg-canvas)"
+                    fill="var(--surface-1)"
                     stroke={isSelected ? 'var(--primary)' : 'var(--border)'}
-                    strokeWidth={isSelected ? 2 : 1}
-                    className="transition-colors duration-200 group-hover:stroke-primary/40"
-                    filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.04))"
+                    strokeWidth={isSelected ? 1.5 : 1}
+                    className="transition-all duration-200 group-hover:stroke-[var(--primary-hover)] group-hover:bg-[var(--surface-2)]"
                   />
 
                   {/* Card content */}
@@ -468,41 +556,65 @@ export default function SwimlaneCanvas() {
                     height={CARD_H}
                     style={{ pointerEvents: 'none' }}
                   >
-                    <div className="relative flex h-full w-full flex-col overflow-hidden p-3">
-                      {/* Label row */}
-                      <div className="flex min-w-0 items-start gap-2">
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-5 text-[var(--text-main)]">
-                          {task.label}
-                        </span>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          {task.estimatedMinutes && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-semibold text-[var(--text-main)] opacity-50">
-                              <Clock size={9} />
-                              {task.estimatedMinutes}m
+                    <div className="relative flex h-full w-full flex-col p-4">
+                      {/* Top row: Status & Risk */}
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`h-2 w-2 rounded-full ${
+                              task.riskLevel === 'high'
+                                ? 'bg-destructive'
+                                : task.riskLevel === 'medium'
+                                  ? 'bg-[var(--amber)]'
+                                  : 'bg-[var(--success)]'
+                            }`}
+                          />
+                          {task.riskLevel && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                              {task.riskLevel}
                             </span>
                           )}
-                          {task.riskLevel && (
-                            <span
-                              className="h-1.5 w-1.5 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  task.riskLevel === 'high'
-                                    ? 'var(--destructive)'
-                                    : task.riskLevel === 'medium'
-                                      ? 'var(--accent)'
-                                      : 'var(--success)',
-                              }}
-                            />
-                          )}
                         </div>
+                        {task.estimatedMinutes && (
+                          <div className="flex items-center gap-1 text-[10px] font-medium text-[var(--muted-foreground)]">
+                            <Clock size={10} />
+                            <span>{task.estimatedMinutes}m</span>
+                          </div>
+                        )}
                       </div>
 
+                      {/* Title */}
+                      <h3 className="mb-2 block line-clamp-1 text-[13px] font-bold leading-tight text-[var(--foreground)]">
+                        {task.label}
+                      </h3>
+
                       {/* Goal text */}
-                      {task.goal && (
-                        <div className="mt-1 text-[11px] leading-relaxed line-clamp-1 text-[var(--text-main)] opacity-62">
+                      {task.goal ? (
+                        <p className="flex-1 overflow-hidden text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-2">
                           {task.goal}
-                        </div>
+                        </p>
+                      ) : (
+                        <div className="flex-1" />
                       )}
+
+                      {/* Footer */}
+                      <div className="mt-3 flex shrink-0 items-center justify-between border-t border-[var(--border)] pt-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
+                            <FileText size={10} />
+                            <span>{task.filesCount}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
+                            <ListChecks size={10} />
+                            <span>{task.stepsCount}</span>
+                          </div>
+                        </div>
+                        {task.assignee && (
+                          <div className="rounded bg-[var(--surface-3)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                            {task.assignee}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </foreignObject>
                 </g>
@@ -513,16 +625,16 @@ export default function SwimlaneCanvas() {
       </svg>
 
       {/* Zoom HUD */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-2">
-        <div className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 px-3 py-1 text-[11px] font-medium text-[var(--text-main)] shadow-sm backdrop-blur">
+      <div className="absolute right-6 bottom-6 flex items-center gap-2">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 px-3 py-1.5 text-[11px] font-bold tracking-tight text-[var(--foreground)] shadow-xl backdrop-blur-md">
           {Math.round(transform.k * 100)}%
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 p-1 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 p-1 shadow-xl backdrop-blur-md">
           <button
             type="button"
             onClick={() => stepZoom('out')}
             title={t('canvas.zoomOut')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
           >
             <Minus size={14} />
           </button>
@@ -530,7 +642,7 @@ export default function SwimlaneCanvas() {
             type="button"
             onClick={() => stepZoom('in')}
             title={t('canvas.zoomIn')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
           >
             <Plus size={14} />
           </button>
@@ -538,7 +650,7 @@ export default function SwimlaneCanvas() {
             type="button"
             onClick={() => fitToView()}
             title={t('canvas.fitView')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
           >
             <Crosshair size={14} />
           </button>

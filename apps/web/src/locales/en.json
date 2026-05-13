@@ -105,6 +105,9 @@
     "hideDetails": "Hide details",
     "task": "task",
     "tasks": "tasks",
-    "otherTasks": "Other"
+    "otherTasks": "Other",
+    "planSummary": "Plan Summary",
+    "primaryGoal": "Primary Goal",
+    "architecture": "Architecture"
   }
 }
