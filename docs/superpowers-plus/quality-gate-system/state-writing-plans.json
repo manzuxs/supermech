@@ -631,7 +631,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-1"
   }
 }

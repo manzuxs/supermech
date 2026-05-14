@@ -1,14 +1,12 @@
-import { Globe, Settings, UserRound } from 'lucide-react';
+import { Globe, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../lib/i18n.ts';
-import SessionDialog from './SessionDialog.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
 
 export default function SettingsPopover() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [sessionOpen, setSessionOpen] = useState(false);
 
   function toggleLang() {
     const next = i18n.language === 'zh' ? 'en' : 'zh';
@@ -24,20 +22,6 @@ export default function SettingsPopover() {
             open ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
-          {/* 会话管理 */}
-          <button
-            type="button"
-            title={t('session.title')}
-            aria-label={t('session.title')}
-            onClick={() => {
-              setSessionOpen(true);
-              setOpen(false);
-            }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
-          >
-            <UserRound size={16} />
-          </button>
-
           {/* 主题切换 */}
           <ThemeToggle />
 
@@ -68,8 +52,6 @@ export default function SettingsPopover() {
           <Settings size={18} />
         </button>
       </div>
-
-      <SessionDialog open={sessionOpen} onClose={() => setSessionOpen(false)} />
     </>
   );
 }

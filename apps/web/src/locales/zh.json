@@ -92,13 +92,19 @@
     "title": "会话管理",
     "current": "当前",
     "empty": "暂无会话",
+    "count": "{{count}} 个会话",
     "newPlaceholder": "会话名称...",
     "skills": "{{count}} 个技能",
     "switch": "切换",
     "confirmDelete": "确定删除？",
     "expand": "展开会话",
     "collapse": "收起会话",
-    "nameInputLabel": "会话名称"
+    "nameInputLabel": "会话名称",
+    "switcherLabel": "切换会话",
+    "searchPlaceholder": "搜索会话…",
+    "quickCreate": "新建",
+    "manageAll": "管理全部会话",
+    "noResults": "没有匹配的会话。"
   },
   "editor": {
     "goal": "目标",

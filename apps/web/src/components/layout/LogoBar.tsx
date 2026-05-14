@@ -2,6 +2,7 @@ import { useState, type SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SkillType } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import SessionSwitcher from './SessionSwitcher.tsx';
 
 type SkillIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
 
@@ -64,6 +65,20 @@ const skills: { key: SkillType; icon: SkillIcon; labelKey: string }[] = [
   { key: 'executing-plans', icon: ExecutePlanIcon, labelKey: 'sidebar.executingPlans' },
 ];
 
+/**
+ * 呼吸灯效果动画样式
+ */
+const pulseStyle = `
+  @keyframes skill-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+  }
+  .animate-skill-pulse {
+    animation: skill-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+`;
+
 export default function LogoBar() {
   const { t } = useTranslation();
   const { currentSkill, switchSkill } = useWorkbench();
@@ -74,6 +89,7 @@ export default function LogoBar() {
 
   return (
     <div className="absolute left-4 top-4 z-50 flex items-start gap-2">
+      <style>{pulseStyle}</style>
       {/* Logo — 点击展开/收起技能 */}
       <button
         type="button"
@@ -86,32 +102,35 @@ export default function LogoBar() {
       </button>
 
       {/* 技能组：图标默认显示，hover 时在同容器内展开名称 */}
-      <div
-        className={`flex gap-1.5 overflow-hidden transition-all duration-200 ${
-          skillsOpen ? 'max-w-[300px] opacity-100' : 'max-w-0 opacity-0'
-        }`}
-      >
-        {skills.map(({ key, icon: Icon, labelKey }) => {
-          const isActive = currentSkill === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => switchSkill(key)}
-              aria-label={t(labelKey)}
-              className={`group flex items-center gap-0 rounded-full border bg-[var(--bg-main)] p-2 transition-[gap,padding,opacity,border-color,color] hover:gap-1.5 hover:pr-3 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 ${
-                isActive
-                  ? 'border-[var(--primary)]/50 text-[var(--primary)] opacity-100'
-                  : 'border-[var(--border)] text-[var(--text-main)] opacity-70 hover:border-[var(--primary)]/30 hover:opacity-100'
-              }`}
-            >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
-              <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium leading-none opacity-0 transition-all duration-200 group-hover:max-w-[120px] group-hover:opacity-100">
-                {t(labelKey)}
-              </span>
-            </button>
-          );
-        })}
+      <div className="flex items-start gap-1.5">
+        <div
+          className={`flex gap-1.5 overflow-hidden transition-all duration-200 ${
+            skillsOpen ? 'max-w-[320px] opacity-100' : 'max-w-0 opacity-0'
+          }`}
+        >
+          {skills.map(({ key, icon: Icon, labelKey }) => {
+            const isActive = currentSkill === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchSkill(key)}
+                aria-label={t(labelKey)}
+                className={`group flex items-center gap-0 rounded-full border bg-[var(--bg-main)] p-2 transition-[gap,padding,opacity,border-color,color] hover:gap-1.5 hover:pr-3 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 ${
+                  isActive
+                    ? 'border-[var(--primary)]/50 text-[var(--primary)] opacity-100 animate-skill-pulse'
+                    : 'border-[var(--border)] text-[var(--text-main)] opacity-70 hover:border-[var(--primary)]/30 hover:opacity-100'
+                }`}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium leading-none opacity-0 transition-all duration-200 group-hover:max-w-[120px] group-hover:opacity-100">
+                  {t(labelKey)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <SessionSwitcher className="shrink-0" />
       </div>
     </div>
   );

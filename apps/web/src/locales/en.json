@@ -92,13 +92,19 @@
     "title": "Session Manager",
     "current": "Current",
     "empty": "No sessions yet",
+    "count": "{{count}} sessions",
     "newPlaceholder": "Session name...",
     "skills": "{{count}} skills",
     "switch": "Switch",
     "confirmDelete": "Are you sure?",
     "expand": "Expand session",
     "collapse": "Collapse session",
-    "nameInputLabel": "Session name"
+    "nameInputLabel": "Session name",
+    "switcherLabel": "Switch session",
+    "searchPlaceholder": "Search sessions…",
+    "quickCreate": "New",
+    "manageAll": "Manage all sessions",
+    "noResults": "No matching sessions."
   },
   "editor": {
     "goal": "Goal",
