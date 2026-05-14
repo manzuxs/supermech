@@ -1,7 +1,6 @@
 {
   "name": "@supermech/schema",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -12,6 +11,7 @@
     "./brainstorm": "./src/brainstorm.ts",
     "./planner": "./src/planner.ts"
   },
+  "files": ["src", "README.md"],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
@@ -20,5 +20,16 @@
   },
   "devDependencies": {
     "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kunchenguid/supermech.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kunchenguid/supermech/issues"
   }
 }
