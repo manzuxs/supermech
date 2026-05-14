@@ -298,7 +298,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": true,
-    "selectedNodeId": "root"
+    "rightSidebarOpen": false,
+    "selectedNodeId": null
   }
 }

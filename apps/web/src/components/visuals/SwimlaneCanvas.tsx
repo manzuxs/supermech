@@ -75,7 +75,7 @@ function PlanSummary({ header }: { header: PlanHeader | null }) {
 // ─── Constants ───
 
 const CARD_W = 280;
-const CARD_H = 140;
+const CARD_H = 400;
 const H_GAP = 32;
 const LANE_MIN_W = 640;
 const HEADER_H = 40;
@@ -112,6 +112,8 @@ interface SwimTask {
   assignee: string | null;
   stepsCount: number;
   filesCount: number;
+  steps: any[];
+  files: any[];
   x: number;
   y: number;
 }
@@ -164,6 +166,8 @@ function buildLayout(
         assignee: (meta.assignee as string) ?? null,
         stepsCount: steps.length,
         filesCount: files.length,
+        steps,
+        files,
         x,
         y,
       };
@@ -204,6 +208,8 @@ function buildLayout(
         assignee: (meta.assignee as string) ?? null,
         stepsCount: steps.length,
         filesCount: files.length,
+        steps,
+        files,
         x,
         y,
       };
@@ -590,21 +596,81 @@ export default function SwimlaneCanvas() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="mb-2 block line-clamp-1 text-[13px] font-bold leading-tight text-[var(--foreground)]">
+                      <h3 className="mb-2 block line-clamp-2 text-[14px] font-bold leading-tight text-[var(--foreground)]">
                         {task.label}
                       </h3>
 
                       {/* Goal text */}
-                      {task.goal ? (
-                        <p className="flex-1 overflow-hidden text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-2">
+                      {task.goal && (
+                        <p className="mb-4 text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-3">
                           {task.goal}
                         </p>
-                      ) : (
-                        <div className="flex-1" />
                       )}
 
+                      <div className="flex-1 space-y-4 overflow-hidden">
+                        {/* Steps Preview */}
+                        {task.steps.length > 0 && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] opacity-50">
+                              <Code size={10} />
+                              <span>{t('editor.codeSteps')}</span>
+                            </div>
+                            <div className="space-y-1">
+                              {task.steps.slice(0, 3).map((step, i) => (
+                                <div
+                                  key={i}
+                                  className="flex items-start gap-2 rounded-md bg-[var(--surface-3)]/30 px-2 py-1.5"
+                                >
+                                  <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[7px] font-bold text-white">
+                                    {i + 1}
+                                  </span>
+                                  <span className="line-clamp-2 text-[10px] leading-snug text-[var(--foreground)] opacity-80">
+                                    {step.description}
+                                  </span>
+                                </div>
+                              ))}
+                              {task.steps.length > 3 && (
+                                <div className="pl-5 text-[9px] text-[var(--muted-foreground)] opacity-50">
+                                  + {task.steps.length - 3} more steps
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Files Preview */}
+                        {task.files.length > 0 && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] opacity-50">
+                              <FileText size={10} />
+                              <span>{t('editor.files')}</span>
+                            </div>
+                            <div className="space-y-1">
+                              {task.files.slice(0, 3).map((file, i) => (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)]/50 px-2 py-1"
+                                >
+                                  <span className="text-[8px] font-bold uppercase text-[var(--primary)] opacity-70">
+                                    {file.type}
+                                  </span>
+                                  <span className="truncate font-mono text-[9px] text-[var(--foreground)] opacity-70">
+                                    {file.path.split('/').pop()}
+                                  </span>
+                                </div>
+                              ))}
+                              {task.files.length > 3 && (
+                                <div className="text-[9px] text-[var(--muted-foreground)] opacity-50">
+                                  + {task.files.length - 3} more files
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Footer */}
-                      <div className="mt-3 flex shrink-0 items-center justify-between border-t border-[var(--border)] pt-3">
+                      <div className="mt-4 flex shrink-0 items-center justify-between border-t border-[var(--border)] pt-3">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
                             <FileText size={10} />
