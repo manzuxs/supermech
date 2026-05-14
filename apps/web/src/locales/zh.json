@@ -125,6 +125,16 @@
     "expected": "预期结果:",
     "legacyNote": "包含旧版说明",
     "risk": "风险",
+    "qualityGates": "质量门禁",
+    "executionProgress": "执行进度",
+    "currentPhase": "当前阶段",
+    "activeFiles": "活跃文件",
+    "recentEvents": "最近事件",
+    "gateResults": "门禁结果",
+    "specReview": "规格审查",
+    "codeQuality": "代码质量",
+    "required": "必需",
+    "replanAction": "重新规划并重新执行",
     "showDetails": "展开详情",
     "hideDetails": "收起详情",
     "task": "个任务",
@@ -134,6 +144,12 @@
     "primaryGoal": "核心目标",
     "architecture": "架构思路",
     "moreSteps": "更多步骤",
-    "moreFiles": "更多文件"
+    "moreFiles": "更多文件",
+    "executionPhaseImplementing": "实现中",
+    "executionPhaseEditingFiles": "编辑文件中",
+    "executionPhaseRunningTests": "运行测试中",
+    "executionPhaseReviewing": "评审中",
+    "executionPhaseFixing": "修复中",
+    "executionFlowMissing": "缺少执行流程元数据，请重新生成执行计划数据。"
   }
 }

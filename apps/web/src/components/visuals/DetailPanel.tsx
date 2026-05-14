@@ -62,18 +62,21 @@ function buildQualityGates(
   });
 }
 
-function formatExecutionPhase(phase: string | undefined): string | null {
+function formatExecutionPhase(
+  phase: string | undefined,
+  t: (key: string) => string,
+): string | null {
   switch (phase) {
     case 'implementing':
-      return 'Implementing';
+      return t('editor.executionPhaseImplementing');
     case 'editing-files':
-      return 'Editing Files';
+      return t('editor.executionPhaseEditingFiles');
     case 'running-tests':
-      return 'Running Tests';
+      return t('editor.executionPhaseRunningTests');
     case 'reviewing':
-      return 'Reviewing';
+      return t('editor.executionPhaseReviewing');
     case 'fixing':
-      return 'Fixing';
+      return t('editor.executionPhaseFixing');
     default:
       return null;
   }
@@ -111,7 +114,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
   const executionPhase = meta.executionPhase as string | undefined;
   const activeFiles = (meta.activeFiles as string[] | undefined) ?? [];
   const executionEvents = (meta.executionEvents as ExecutionEventItem[] | undefined) ?? [];
-  const phaseLabel = formatExecutionPhase(executionPhase);
+  const phaseLabel = formatExecutionPhase(executionPhase, t);
 
   return (
     <div className="flex h-full flex-col">
@@ -388,6 +391,7 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
 }
 
 function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[] }) {
+  const { t } = useTranslation();
   const { updateNode, state } = useWorkbench();
 
   async function toggleGate(index: number, field: 'enabled' | 'required') {
@@ -404,7 +408,7 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
     <section className="mb-6">
       <SectionHeader
         icon={<Shield size={12} />}
-        title="Quality Gates"
+        title={t('editor.qualityGates')}
         count={gates.filter((g) => g.enabled).length}
       />
       <div className="mt-3 space-y-2">
@@ -427,7 +431,9 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
                   className={`block h-3 w-3 rounded-full bg-white transition-transform ${gate.enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
                 />
               </button>
-              <span className="text-[12px] font-medium text-[var(--text-main)]">{gate.label}</span>
+              <span className="text-[12px] font-medium text-[var(--text-main)]">
+                {gate.type === 'spec-review' ? t('editor.specReview') : t('editor.codeQuality')}
+              </span>
             </div>
             {gate.enabled && (
               <label className="flex cursor-pointer items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
@@ -437,7 +443,7 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
                   onChange={() => toggleGate(i, 'required')}
                   className="accent-[var(--primary)]"
                 />
-                required
+                {t('editor.required')}
               </label>
             )}
           </div>
@@ -456,20 +462,21 @@ function ExecutionProgressSection({
   activeFiles: string[];
   executionEvents: ExecutionEventItem[];
 }) {
+  const { t } = useTranslation();
   const recentEvents = executionEvents.slice(-3).reverse();
 
   return (
     <section className="mb-6">
       <SectionHeader
         icon={<Loader2 size={12} />}
-        title="Execution Progress"
+        title={t('editor.executionProgress')}
         count={recentEvents.length}
       />
       <div className="mt-3 space-y-2">
         {executionPhase && (
           <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] px-3 py-2">
             <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
-              Current Phase
+              {t('editor.currentPhase')}
             </div>
             <div className="mt-1 text-[12px] font-semibold text-[var(--text-main)]">
               {executionPhase}
@@ -480,7 +487,7 @@ function ExecutionProgressSection({
         {activeFiles.length > 0 && (
           <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
             <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
-              Active Files
+              {t('editor.activeFiles')}
             </div>
             <div className="space-y-1.5">
               {activeFiles.slice(0, 3).map((file) => (
@@ -498,7 +505,7 @@ function ExecutionProgressSection({
         {recentEvents.length > 0 && (
           <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
             <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
-              Recent Events
+              {t('editor.recentEvents')}
             </div>
             <div className="space-y-2">
               {recentEvents.map((event, index) => (
@@ -559,9 +566,14 @@ function GateResultSection({
 }: {
   gateStates: Array<{ type: string; status: string; result?: string }>;
 }) {
+  const { t } = useTranslation();
   return (
     <section className="mb-6">
-      <SectionHeader icon={<Shield size={12} />} title="Gate Results" count={gateStates.length} />
+      <SectionHeader
+        icon={<Shield size={12} />}
+        title={t('editor.gateResults')}
+        count={gateStates.length}
+      />
       <div className="mt-3 space-y-2">
         {gateStates.map((gs) => {
           const Icon = GATE_STATUS_ICONS[gs.status] ?? Circle;
@@ -578,7 +590,7 @@ function GateResultSection({
                   className={gs.status === 'running' ? 'animate-spin' : ''}
                 />
                 <span className="text-[12px] font-bold text-[var(--text-main)]">
-                  {gs.type === 'spec-review' ? 'Spec Review' : 'Code Quality'}
+                  {gs.type === 'spec-review' ? t('editor.specReview') : t('editor.codeQuality')}
                 </span>
                 <span className="text-[10px] font-bold uppercase" style={{ color }}>
                   {gs.status}
@@ -606,6 +618,7 @@ function ReplanButton({
   nodeId: string;
   onReplan: (id: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const { state } = useWorkbench();
   const ratings = state.feedback
     .filter((f) => f.nodeId === nodeId && f.rating != null)
@@ -621,7 +634,7 @@ function ReplanButton({
         onClick={() => onReplan(nodeId)}
         className="w-full rounded-full border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-4 py-2.5 text-[12px] font-bold text-[var(--destructive)] transition-colors hover:bg-[var(--destructive)]/20"
       >
-        ↻ Re-plan & Re-execute
+        ↻ {t('editor.replanAction')}
       </button>
     </div>
   );

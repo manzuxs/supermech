@@ -77,9 +77,11 @@
   --execution-status-rejected: #8d8d8d;
   --execution-status-done: var(--foreground);
   --execution-card-fill: #ffffff;
-  --execution-card-fill-emphasis: var(--block-cream);
-  --execution-card-fill-active: color-mix(in srgb, var(--block-pink) 80%, white);
-  --execution-card-fill-hover: color-mix(in srgb, var(--block-lilac) 32%, white);
+  --execution-card-fill-emphasis: var(--surface-2);
+  --execution-card-fill-active: color-mix(in srgb, var(--surface-2) 88%, white);
+  --execution-card-fill-done: color-mix(in srgb, var(--success) 12%, white);
+  --execution-card-fill-pending: var(--surface-1);
+  --execution-card-fill-hover: color-mix(in srgb, var(--surface-2) 92%, white);
   --execution-card-stroke: #000000;
   --execution-card-stroke-muted: #d7d7d7;
   --execution-card-stroke-hover: #000000;
@@ -94,15 +96,16 @@
   --execution-chip-muted-fg: color-mix(in srgb, var(--foreground) 65%, white);
   --execution-phase-chip-fg: var(--foreground);
   --execution-panel-bg: #ffffff;
-  --execution-panel-section-bg: color-mix(in srgb, var(--block-cream) 36%, white);
-  --execution-panel-subtle-bg: color-mix(in srgb, var(--surface-1) 78%, white);
-  --execution-panel-accent-bg: color-mix(in srgb, var(--block-lilac) 30%, white);
+  --execution-panel-section-bg: color-mix(in srgb, var(--surface-1) 92%, white);
+  --execution-panel-subtle-bg: color-mix(in srgb, var(--surface-2) 72%, white);
+  --execution-panel-accent-bg: color-mix(in srgb, var(--surface-2) 80%, white);
   --execution-panel-code-bg: color-mix(in srgb, var(--surface-1) 88%, white);
   --execution-panel-action-bg: #000000;
   --execution-panel-action-fg: #ffffff;
   --execution-panel-divider: color-mix(in srgb, var(--foreground) 10%, transparent);
   --execution-panel-heading: color-mix(in srgb, var(--foreground) 46%, white);
   --execution-panel-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  --execution-stage-outline: var(--border);
 }
 
 .dark {
@@ -146,8 +149,8 @@
   --bg-canvas: var(--surface-1);
   --text-main: var(--foreground);
   --success: #27a644;
-  --font-display: "SF Pro Display", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
-  --font-body: "SF Pro Text", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-display: "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-body: "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", sans-serif;
   --execution-phase-1: #5e6ad2;
   --execution-phase-2: #828fff;
   --execution-phase-3: #7a7fad;
@@ -162,6 +165,8 @@
   --execution-card-fill: var(--surface-1);
   --execution-card-fill-emphasis: var(--surface-2);
   --execution-card-fill-active: var(--surface-2);
+  --execution-card-fill-done: color-mix(in srgb, var(--success) 12%, var(--surface-1));
+  --execution-card-fill-pending: color-mix(in srgb, var(--surface-1) 88%, var(--background));
   --execution-card-fill-hover: color-mix(in srgb, var(--surface-2) 92%, var(--surface-1));
   --execution-card-stroke: #34343a;
   --execution-card-stroke-muted: var(--border);
@@ -186,6 +191,7 @@
   --execution-panel-divider: color-mix(in srgb, var(--border) 85%, transparent);
   --execution-panel-heading: color-mix(in srgb, var(--foreground) 56%, transparent);
   --execution-panel-shadow: none;
+  --execution-stage-outline: var(--border);
 }
 
 html,
@@ -274,7 +280,7 @@ body {
 
 @theme inline {
   --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-mono: "figmaMono", "JetBrains Mono", monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

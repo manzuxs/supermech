@@ -659,7 +659,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": true,
-    "selectedNodeId": "task-1"
+    "rightSidebarOpen": false,
+    "selectedNodeId": null
   }
 }

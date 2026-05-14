@@ -137,11 +137,11 @@ const GATE_LABELS: Record<string, string> = {
 };
 
 const EXECUTION_PHASE_LABELS: Record<string, string> = {
-  implementing: 'Implementing',
-  'editing-files': 'Editing Files',
-  'running-tests': 'Running Tests',
-  reviewing: 'Reviewing',
-  fixing: 'Fixing',
+  implementing: 'editor.executionPhaseImplementing',
+  'editing-files': 'editor.executionPhaseEditingFiles',
+  'running-tests': 'editor.executionPhaseRunningTests',
+  reviewing: 'editor.executionPhaseReviewing',
+  fixing: 'editor.executionPhaseFixing',
 };
 
 const FILE_BADGE_COLORS: Record<string, string> = {
@@ -155,6 +155,15 @@ const FILE_BADGE_COLORS: Record<string, string> = {
     'border-transparent bg-[var(--execution-chip-muted-bg)] text-[var(--execution-chip-muted-fg)]',
 };
 
+const STAGE_ACCENT_COLORS = [
+  'var(--primary)',
+  'var(--execution-phase-2)',
+  'var(--success)',
+  'var(--amber)',
+  'var(--execution-phase-5)',
+  'var(--execution-phase-6)',
+] as const;
+
 function getExecutionFlow(state: ReturnType<typeof useWorkbench>['state']): ExecutionFlow | null {
   const meta = state.canvas.metadata as Record<string, unknown> | undefined;
   const flow = meta?.executionFlow;
@@ -166,24 +175,24 @@ function calculateTaskHeight(task: Pick<
   FlowTask,
   'label' | 'goal' | 'files' | 'stepCount' | 'gateStates' | 'executionPhase' | 'activeFiles' | 'latestEvent' | 'rating'
 >): number {
-  let height = 116;
+  let height = 84;
 
   const titleLines = Math.max(1, Math.ceil(task.label.length / 22));
-  height += titleLines * 20;
+  height += titleLines * 18;
 
   if (task.goal) {
     const goalLines = Math.max(1, Math.ceil(task.goal.length / 34));
-    height += Math.min(goalLines, 3) * 16;
+    height += Math.min(goalLines, 3) * 15;
   }
 
-  if (task.executionPhase && task.executionPhase !== 'idle') height += 22;
-  if (task.activeFiles.length > 0 || task.latestEvent) height += 18;
-  if (task.stepCount > 0) height += 18;
-  if (task.files.length > 0) height += 26 + Math.min(task.files.length, 2) * 16;
-  if (task.gateStates.length > 0) height += 22;
-  if (task.rating > 0) height += 18;
+  if (task.executionPhase && task.executionPhase !== 'idle') height += 20;
+  if (task.activeFiles.length > 0 || task.latestEvent) height += 16;
+  if (task.stepCount > 0) height += 16;
+  if (task.files.length > 0) height += 22 + Math.min(task.files.length, 2) * 14;
+  if (task.gateStates.length > 0) height += 18;
+  if (task.rating > 0) height += 16;
 
-  return Math.max(height, 160);
+  return Math.max(height, 116);
 }
 
 function getPrimaryStageRelations(flow: ExecutionFlow): ExecutionFlowStageRelation[] {
@@ -385,6 +394,10 @@ function stageStatus(tasks: FlowTask[]): NodeStatus {
   return 'pending';
 }
 
+function getStageAccentColor(index: number): string {
+  return STAGE_ACCENT_COLORS[index % STAGE_ACCENT_COLORS.length];
+}
+
 function FileBadge({ file }: { file: FileInfo }) {
   const colorClass =
     FILE_BADGE_COLORS[file.type] ?? 'bg-[var(--border)]/30 text-[var(--muted-foreground)]';
@@ -448,7 +461,9 @@ function GateDots({ gateStates }: { gateStates: Array<{ type: string; status: st
 }
 
 function PhaseBadge({ phase }: { phase: string }) {
-  const label = EXECUTION_PHASE_LABELS[phase];
+  const { t } = useTranslation();
+  const labelKey = EXECUTION_PHASE_LABELS[phase];
+  const label = labelKey ? t(labelKey) : null;
   if (!label) return null;
   return (
     <span className="inline-flex items-center rounded-full border border-[var(--execution-chip-border)]/15 bg-[var(--execution-chip-muted-bg)] px-2 py-[3px] text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--text-main)]">
@@ -473,6 +488,30 @@ function ActiveFileSummary({ activeFiles, latestEvent }: { activeFiles: string[]
         </div>
       )}
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: NodeStatus }) {
+  const { t } = useTranslation();
+  const config = STATUS_CONFIG[status];
+  const statusKeyMap: Record<NodeStatus, string> = {
+    pending: 'feedback.statusPending',
+    active: 'feedback.statusActive',
+    accepted: 'feedback.statusAccepted',
+    rejected: 'feedback.statusRejected',
+    done: 'feedback.statusDone',
+  };
+  return (
+    <span
+      className="inline-flex items-center rounded-full border px-2 py-[3px] text-[8px] font-bold uppercase tracking-[0.16em]"
+      style={{
+        borderColor: config.border,
+        color: config.accent,
+        background: `color-mix(in srgb, ${config.accent} 10%, var(--execution-panel-bg))`,
+      }}
+    >
+      {t(statusKeyMap[status])}
+    </span>
   );
 }
 
@@ -543,7 +582,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   }
 
   useEffect(() => {
-    fitToView(1);
+    fitToView(0.5);
   }, [layoutSig]);
 
   useEffect(() => {
@@ -569,7 +608,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   if (!flow || !layout) {
     return (
       <div className="flex h-full items-center justify-center px-6 text-center text-[13px] text-[var(--muted-foreground)]">
-        Missing `executionFlow` metadata for executing plan. Regenerate the plan data.
+        {t('editor.executionFlowMissing')}
       </div>
     );
   }
@@ -654,6 +693,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
             const status = stageStatus(stage.tasks);
             const statusConfig = STATUS_CONFIG[status];
             const stageTaskLinks = layout.taskLinks.filter((link) => link.stageId === stage.id);
+            const stageAccentColor = getStageAccentColor(stage.index);
 
             return (
               <g key={stage.id}>
@@ -665,7 +705,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                   rx={28}
                   ry={28}
                   fill="var(--execution-panel-bg)"
-                  stroke={status === 'active' ? 'var(--execution-status-active)' : 'var(--execution-panel-divider)'}
+                  stroke={status === 'active' ? 'var(--execution-status-active)' : 'var(--execution-stage-outline)'}
                   strokeWidth={status === 'active' ? 2 : 1.5}
                   style={{ filter: 'var(--execution-card-shadow)' }}
                 />
@@ -686,17 +726,26 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                   fill="var(--execution-panel-subtle-bg)"
                   stroke="none"
                 />
+                <rect
+                  x={stage.x}
+                  y={stage.y + 18}
+                  width={4}
+                  height={32}
+                  rx={2}
+                  ry={2}
+                  fill={stageAccentColor}
+                />
                 <foreignObject
-                  x={stage.x + 20}
+                  x={stage.x + 18}
                   y={stage.y + 16}
-                  width={stage.width - 40}
+                  width={stage.width - 36}
                   height={STAGE_HEADER_H - 20}
                 >
                   <div className="flex h-full flex-col justify-between">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 pl-2">
                         <div
-                          className="truncate text-[17px] font-bold text-[var(--text-main)]"
+                          className="truncate text-[15px] font-bold text-[var(--text-main)]"
                           style={{ fontFamily: 'var(--font-display), sans-serif' }}
                         >
                           {stage.name}
@@ -715,7 +764,8 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                           background: 'var(--execution-chip-muted-bg)',
                         }}
                       >
-                        {stage.tasks.length} tasks
+                        {stage.tasks.length}{' '}
+                        {stage.tasks.length === 1 ? t('editor.task') : t('editor.tasks')}
                       </span>
                     </div>
                   </div>
@@ -789,6 +839,8 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                   const isSelected = selectedId === task.id;
                   const isDone = task.status === 'done';
                   const isRejected = task.status === 'rejected';
+                  const isPending = task.status === 'pending';
+                  const isActive = task.status === 'active';
                   const StatusIcon = config.icon;
                   const isFocused = focusedTaskId === task.id && !isSelected;
 
@@ -849,20 +901,47 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                         fill={
                           isSelected
                             ? 'var(--execution-card-fill-emphasis)'
-                            : task.status === 'active'
+                            : isDone
+                              ? 'var(--execution-card-fill-done)'
+                              : isActive
                               ? 'var(--execution-card-fill-active)'
+                              : isPending
+                                ? 'var(--execution-card-fill-pending)'
                               : 'var(--execution-card-fill)'
                         }
                         stroke={
                           isSelected
                             ? 'var(--execution-card-stroke-hover)'
-                            : task.status === 'active'
+                            : isActive
                               ? 'var(--execution-status-active)'
-                              : config.border
+                            : config.border
                         }
                         strokeWidth={isSelected ? 2 : 1.5}
                         style={{ filter: 'var(--execution-card-shadow)' }}
                       />
+                      {isActive && (
+                        <>
+                          <rect
+                            x={task.x}
+                            y={task.y}
+                            width={TASK_W}
+                            height={5}
+                            rx={22}
+                            ry={22}
+                            fill="color-mix(in srgb, var(--execution-status-active) 18%, transparent)"
+                            className="animate-pulse"
+                          />
+                          <rect
+                            x={task.x}
+                            y={task.y}
+                            width={Math.max(56, TASK_W * Math.max(task.progress, 0.18))}
+                            height={5}
+                            rx={22}
+                            ry={22}
+                            fill="var(--execution-status-active)"
+                          />
+                        </>
+                      )}
                       <foreignObject
                         x={task.x + 14}
                         y={task.y + 14}
@@ -870,8 +949,11 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                         height={task.h - 20}
                         style={{ pointerEvents: 'none' }}
                       >
-                        <div className="flex h-full flex-col gap-1">
-                          <div className="flex items-center gap-2">
+                        <div
+                          className="flex h-full flex-col gap-1.5"
+                          style={{ opacity: isPending ? 0.74 : 1 }}
+                        >
+                          <div className="flex items-start gap-2">
                             <StatusIcon
                               size={14}
                               strokeWidth={2.4}
@@ -887,15 +969,17 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                             >
                               {task.label}
                             </span>
-                            {task.progress > 0 && (
-                              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">
-                                {Math.round(task.progress * 100)}%
-                              </span>
-                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2">
+                            <StatusBadge status={task.status} />
+                            <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">
+                              {Math.round(task.progress * 100)}%
+                            </span>
                           </div>
 
                           {task.goal && (
-                            <div className="line-clamp-2 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                            <div className="line-clamp-2 text-[10.5px] leading-relaxed text-[var(--muted-foreground)]">
                               {task.goal}
                             </div>
                           )}
@@ -934,13 +1018,13 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                           )}
 
                           {task.gateStates.length > 0 && (
-                            <div className="mt-auto pt-1">
+                            <div className="pt-1">
                               <GateDots gateStates={task.gateStates} />
                             </div>
                           )}
 
                           {task.rating > 0 && (
-                            <div className="mt-auto">
+                            <div className="pt-1">
                               <RatingStars rating={task.rating} size={11} />
                             </div>
                           )}

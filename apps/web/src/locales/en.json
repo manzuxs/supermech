@@ -125,6 +125,16 @@
     "expected": "Expected:",
     "legacyNote": "legacy note available",
     "risk": "risk",
+    "qualityGates": "Quality Gates",
+    "executionProgress": "Execution Progress",
+    "currentPhase": "Current Phase",
+    "activeFiles": "Active Files",
+    "recentEvents": "Recent Events",
+    "gateResults": "Gate Results",
+    "specReview": "Spec Review",
+    "codeQuality": "Code Quality",
+    "required": "required",
+    "replanAction": "Re-plan & Re-execute",
     "showDetails": "Show details",
     "hideDetails": "Hide details",
     "task": "task",
@@ -134,6 +144,12 @@
     "primaryGoal": "Primary Goal",
     "architecture": "Architecture",
     "moreSteps": "more steps",
-    "moreFiles": "more files"
+    "moreFiles": "more files",
+    "executionPhaseImplementing": "Implementing",
+    "executionPhaseEditingFiles": "Editing Files",
+    "executionPhaseRunningTests": "Running Tests",
+    "executionPhaseReviewing": "Reviewing",
+    "executionPhaseFixing": "Fixing",
+    "executionFlowMissing": "Missing execution flow metadata. Regenerate the executing plan data."
   }
 }
