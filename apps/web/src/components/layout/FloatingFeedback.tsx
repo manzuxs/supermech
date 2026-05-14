@@ -6,7 +6,7 @@ import { TaskDetail } from '../visuals/DetailPanel.tsx';
 
 export default function FloatingFeedback() {
   const { t } = useTranslation();
-  const { state, addFeedback, updateUI } = useWorkbench();
+  const { state, addFeedback, updateUI, requestReplan } = useWorkbench();
   const [text, setText] = useState('');
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
   const isWritingPlans = state.meta.activeSkill === 'writing-plans';
@@ -324,6 +324,8 @@ export default function FloatingFeedback() {
               node={selectedNode}
               onFeedback={(params) => addFeedback(params)}
               showRating={isExecutingPlans}
+              showGateConfig={isWritingPlans}
+              onReplan={requestReplan}
             />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center">

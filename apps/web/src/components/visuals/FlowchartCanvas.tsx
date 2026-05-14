@@ -48,6 +48,8 @@ interface DagNode {
   rating: number;
   phase: string;
   phaseIndex: number;
+  gateStates: Array<{ type: string; status: string }>;
+  executionPhase: string;
 }
 
 interface EdgePath {
@@ -194,6 +196,9 @@ function buildDagLayout(
     const phase = (meta.phase as string) || '';
     const phaseIndex = phase ? phaseOrder.indexOf(phase) : -1;
 
+    const gateStates = (meta.gateStates as Array<{ type: string; status: string }>) ?? [];
+    const executionPhase = (meta.executionPhase as string) || '';
+
     const levelNodes = byLevel.get(lvl);
     if (!levelNodes) continue;
     levelNodes.push({
@@ -210,6 +215,8 @@ function buildDagLayout(
       rating: ratingMap.get(n.id) ?? 0,
       phase,
       phaseIndex: phaseIndex >= 0 ? phaseIndex : phaseOrder.length,
+      gateStates,
+      executionPhase,
     });
   }
 
@@ -320,6 +327,47 @@ function RatingStars({ rating, size = 12 }: { rating: number; size?: number }) {
         />
       ))}
     </span>
+  );
+}
+
+// ─── Gate Indicator ───
+
+const GATE_DOT_COLORS: Record<string, string> = {
+  pending: 'var(--border)',
+  running: '#d97706',
+  passed: '#27a644',
+  failed: '#ef4444',
+  skipped: 'var(--muted-foreground)',
+};
+
+const GATE_LABELS: Record<string, string> = {
+  'spec-review': 'SPEC',
+  'code-quality': 'QUALITY',
+};
+
+function GateIndicator({ status }: { status: string }) {
+  const color = GATE_DOT_COLORS[status] ?? 'var(--border)';
+  return (
+    <span
+      className={`inline-block h-1.5 w-1.5 rounded-full ${status === 'running' ? 'animate-pulse' : ''}`}
+      style={{ backgroundColor: color }}
+    />
+  );
+}
+
+function GateDots({ gateStates }: { gateStates: Array<{ type: string; status: string }> }) {
+  if (gateStates.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2">
+      {gateStates.map((gs) => (
+        <div key={gs.type} className="flex items-center gap-1">
+          <GateIndicator status={gs.status} />
+          <span className="text-[8px] font-bold uppercase text-[var(--muted-foreground)] opacity-60">
+            {GATE_LABELS[gs.type] ?? gs.type}
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -681,7 +729,14 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
                       </div>
                     )}
 
-                    {/* Row 5: Rating stars (only for done/accepted with rating) */}
+                    {/* Row 5: Gate status dots */}
+                    {n.gateStates.length > 0 && (
+                      <div className="mt-auto">
+                        <GateDots gateStates={n.gateStates} />
+                      </div>
+                    )}
+
+                    {/* Row 6: Rating stars (only for done/accepted with rating) */}
                     {n.rating > 0 && (
                       <div className="mt-auto">
                         <RatingStars rating={n.rating} size={11} />

@@ -52,6 +52,9 @@ skills/
 ├── visual-brainstorming/       # Agent skill: outputs tree nodes to state.json
 ├── visual-writing-plans/       # Agent skill: outputs plan tasks as Kanban nodes
 └── visual-executing-plans/     # Agent skill: updates task status/progress in real-time
+    ├── SKILL.md                # Execution flow with quality gates
+    ├── spec-reviewer-prompt.md # Spec compliance review prompt template
+    └── code-quality-reviewer-prompt.md # Code quality review prompt template
 
 state.json                      # Single source of truth (or state-<sessionId>.json for sessions)
 ```
@@ -72,6 +75,9 @@ state.json                      # Single source of truth (or state-<sessionId>.j
 | `/__state/ui` | PATCH | Update UI prefs |
 | `/__state/feedback` | POST | Add feedback entry |
 | `/__state/node` | PATCH | Update node (status, progress, label) |
+| `/__state/node/gate-state` | PATCH | Update quality gate status (nodeId, type, status, result?) |
+| `/__state/node/execution-phase` | PATCH | Update execution phase (nodeId, phase) |
+| `/__state/replan` | POST | Reset node to pending for re-execution |
 | `/__state/sessions` | GET | List sessions + current ID |
 | `/__state/sessions` | POST | Create session `{sessionId}` |
 | `/__state/sessions/switch` | POST | Switch session `{sessionId}` |
@@ -125,7 +131,23 @@ pnpm build         # turbo run build
 Status (`pending`/`active`/`done`) and `progress` (0.0–1.0) are **exclusively managed by the Agent** during execution. The UI (both PlanEditor and KanbanBoard) does not allow user to change them. This keeps "planner" and "executor" roles cleanly separated.
 
 ### Human role: rating, not managing
-After a task is done, the user rates quality (1–5 stars) and optionally adds text feedback via the KanbanBoard detail panel. Ratings are stored in `feedback[].rating`. If rework is needed, the user asks the Agent to add a new task — no `reviewing` intermediate state.
+After a task is done, the user rates quality (1–5 stars) and optionally adds text feedback via the FlowchartCanvas detail panel. Ratings are stored in `feedback[].rating`. Low ratings (1-2 stars) show a **"Re-plan & Re-execute"** button that resets the node to `pending` and adds a feedback entry with `quickAction: "replan"` for the agent to pick up.
+
+### Quality Gate System
+Each task can have configurable quality gates that run during execution:
+
+| Gate | Type | Purpose |
+|------|------|---------|
+| Spec Compliance | `spec-review` | Verify implementation matches requirements |
+| Code Quality | `code-quality` | Verify code is clean, tested, maintainable |
+
+Gates are **preset by risk level** (`low`/`medium`/`high`) and can be **overridden in the UI** (DetailPanel) at any time:
+
+- `low`: all gates disabled
+- `medium`: spec-review enabled+required
+- `high`: both gates enabled+required
+
+During execution, the agent sets `executionPhase` (`implementing`/`reviewing`/`idle`) and `gateStates` per gate (`pending`/`running`/`passed`/`failed`/`skipped`). The FlowchartCanvas shows gate status as colored dots on each card.
 
 ### Slash command system (`lib/commands.ts`)
 The bottom input box doubles as a CLI: normal text → submitted as feedback; input starting with `/` → dispatched to the command registry. `CommandInput` is the shared component handling this. Pre-registered commands:

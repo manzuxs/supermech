@@ -23,11 +23,19 @@ interface WorkbenchContextValue {
   addFeedback: (params: FeedbackParams) => Promise<void>;
   updateNode: (
     id: string,
-    patch: { status?: NodeStatus; label?: string; progress?: number },
+    patch: { status?: NodeStatus; label?: string; progress?: number; metadata?: Record<string, unknown> },
   ) => Promise<void>;
   switchPlan: (plan: string) => Promise<void>;
   switchSkill: (skill: string) => Promise<void>;
   createPlan: (plan: string) => Promise<void>;
+  updateGateState: (
+    nodeId: string,
+    type: string,
+    status: string,
+    result?: string,
+  ) => Promise<void>;
+  updateExecutionPhase: (nodeId: string, phase: string) => Promise<void>;
+  requestReplan: (nodeId: string) => Promise<void>;
 }
 
 const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
@@ -132,6 +140,11 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     switchPlan,
     switchSkill,
     createPlan,
+    updateGateState: (nodeId, type, status, result) =>
+      callAPI('/__state/node/gate-state', 'PATCH', { nodeId, type, status, result }),
+    updateExecutionPhase: (nodeId, phase) =>
+      callAPI('/__state/node/execution-phase', 'PATCH', { nodeId, phase }),
+    requestReplan: (nodeId) => callAPI('/__state/replan', 'POST', { nodeId }),
   };
 
   return <WorkbenchCtx.Provider value={value}>{children}</WorkbenchCtx.Provider>;

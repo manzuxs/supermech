@@ -247,6 +247,67 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
               return;
             }
             Object.assign(s.canvas.nodes[idx], data);
+          } else if (url === '/node/gate-state' && req.method === 'PATCH') {
+            const { nodeId, type, status, result } = data;
+            if (!nodeId || !type || !status) {
+              sendJSON(res, 400, { ok: false, error: 'nodeId, type, status required' });
+              return;
+            }
+            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
+            if (!node) {
+              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
+              return;
+            }
+            const meta = node.metadata ?? {};
+            const gateStates: Array<Record<string, unknown>> = meta.gateStates ?? [];
+            const existing = gateStates.find((g) => g.type === type);
+            if (existing) {
+              existing.status = status;
+              if (result !== undefined) existing.result = result;
+              existing.attemptedAt = new Date().toISOString();
+            } else {
+              gateStates.push({ type, status, result, attemptedAt: new Date().toISOString() });
+            }
+            meta.gateStates = gateStates;
+          } else if (url === '/node/execution-phase' && req.method === 'PATCH') {
+            const { nodeId, phase } = data;
+            if (!nodeId || !phase) {
+              sendJSON(res, 400, { ok: false, error: 'nodeId, phase required' });
+              return;
+            }
+            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
+            if (!node) {
+              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
+              return;
+            }
+            const meta = node.metadata ?? {};
+            meta.executionPhase = phase;
+          } else if (url === '/replan' && req.method === 'POST') {
+            const { nodeId } = data;
+            if (!nodeId) {
+              sendJSON(res, 400, { ok: false, error: 'nodeId required' });
+              return;
+            }
+            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
+            if (!node) {
+              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
+              return;
+            }
+            node.status = 'pending';
+            node.progress = 0;
+            const meta = node.metadata ?? {};
+            meta.executionPhase = 'idle';
+            meta.gateStates = [];
+            s.feedback.push({
+              id: crypto.randomUUID(),
+              nodeId,
+              text: 'User requested re-plan. Please review and re-execute this task.',
+              rating: null,
+              section: null,
+              stepIndex: null,
+              quickAction: 'replan',
+              createdAt: new Date().toISOString(),
+            });
           } else {
             sendJSON(res, 404, { ok: false, error: 'not found' });
             return;

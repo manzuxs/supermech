@@ -174,6 +174,33 @@ Same rule as standard writing-plans: every field must contain real content.
 
 ---
 
+## Quality Gate Presets
+
+When creating task nodes, set `metadata.qualityGates` based on `riskLevel`:
+
+| riskLevel | spec-review | code-quality |
+|-----------|-------------|--------------|
+| `low`     | disabled    | disabled     |
+| `medium`  | enabled, required | disabled |
+| `high`    | enabled, required | enabled, required |
+
+Users can override these presets in the UI Detail Panel later.
+
+```json
+// Example: high risk task with both gates
+{
+  "riskLevel": "high",
+  "qualityGates": [
+    { "type": "spec-review", "label": "Spec Compliance Review", "enabled": true, "required": true },
+    { "type": "code-quality", "label": "Code Quality Review", "enabled": true, "required": true }
+  ]
+}
+```
+
+Low risk tasks can omit `qualityGates` entirely.
+
+---
+
 ## Execution Handoff
 
 After writing the plan, tell the user:

@@ -1,11 +1,16 @@
 export type { BrainstormNodeMetadata, BrainstormSession } from './brainstorm.ts';
 export type {
+  ExecutionPhase,
+  GateStatus,
+  GateType,
   ImplementationStep,
   PlanHeader,
   PlanPhase,
   PlanSession,
   PlanStepFile,
   PlanTaskMetadata,
+  QualityGateConfig,
+  QualityGateState,
 } from './planner.ts';
 export type {
   AgentStatus,

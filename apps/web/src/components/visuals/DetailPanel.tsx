@@ -1,4 +1,5 @@
-import { Beaker, ChevronRight, Code, FileText, Star } from 'lucide-react';
+import { Beaker, CheckCircle2, ChevronRight, Circle, Code, FileText, Loader2, Minus, Shield, Star, XCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CanvasNode, ImplementationStep } from 'schemas';
@@ -23,9 +24,11 @@ interface TaskDetailProps {
   node: CanvasNode;
   onFeedback: (params: FeedbackParams) => Promise<void>;
   showRating?: boolean;
+  showGateConfig?: boolean;
+  onReplan?: (nodeId: string) => Promise<void>;
 }
 
-export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
+export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onReplan }: TaskDetailProps) {
   const { t } = useTranslation();
   const meta = getTaskMeta(node);
   const goal = (meta.goal as string) || (meta.description as string) || undefined;
@@ -38,6 +41,12 @@ export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
   const steps = meta.implementationSteps as ImplementationStep[] | undefined;
   const verifications = meta.verificationSteps as ImplementationStep[] | undefined;
   const phase = meta.phase as string | undefined;
+  const qualityGates = meta.qualityGates as
+    | Array<{ type: string; label: string; enabled: boolean; required: boolean }>
+    | undefined;
+  const gateStates = meta.gateStates as
+    | Array<{ type: string; status: string; result?: string }>
+    | undefined;
 
   return (
     <div className="flex h-full flex-col">
@@ -83,6 +92,14 @@ export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
             <p className="mb-6 text-[13px] leading-relaxed text-[var(--text-main)] opacity-70">
               {goal}
             </p>
+          )}
+
+          {showGateConfig && qualityGates && (
+            <GateConfigSection nodeId={node.id} gates={qualityGates} />
+          )}
+
+          {showRating && gateStates && gateStates.length > 0 && (
+            <GateResultSection gateStates={gateStates} />
           )}
 
           {steps && steps.length > 0 && (
@@ -153,6 +170,7 @@ export function TaskDetail({ node, onFeedback, showRating }: TaskDetailProps) {
       </div>
 
       {showRating && <RatingSection nodeId={node.id} onFeedback={onFeedback} />}
+      {showRating && onReplan && <ReplanButton nodeId={node.id} onReplan={onReplan} />}
     </div>
   );
 }
@@ -284,6 +302,160 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Gate Config Section ───
+
+interface GateItem {
+  type: string;
+  label: string;
+  enabled: boolean;
+  required: boolean;
+}
+
+function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[] }) {
+  const { updateNode, state } = useWorkbench();
+
+  async function toggleGate(index: number, field: 'enabled' | 'required') {
+    const updated = state.canvas.nodes.find((n) => n.id === nodeId);
+    if (!updated) return;
+    const meta = updated.metadata ?? {};
+    const current = (meta.qualityGates as GateItem[]) ?? [];
+    const next = current.map((g, i) => (i === index ? { ...g, [field]: !g[field] } : g));
+    await updateNode(nodeId, {
+      metadata: { ...meta, qualityGates: next } as Record<string, unknown>,
+    });
+  }
+
+  return (
+    <section className="mb-6">
+      <SectionHeader
+        icon={<Shield size={12} />}
+        title="Quality Gates"
+        count={gates.filter((g) => g.enabled).length}
+      />
+      <div className="mt-3 space-y-2">
+        {gates.map((gate, i) => (
+          <div
+            key={gate.type}
+            className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] px-3 py-2"
+          >
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => toggleGate(i, 'enabled')}
+                className={`h-4 w-8 rounded-full transition-colors ${gate.enabled ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
+              >
+                <span
+                  className={`block h-3 w-3 rounded-full bg-white transition-transform ${gate.enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
+                />
+              </button>
+              <span className="text-[12px] font-medium text-[var(--text-main)]">{gate.label}</span>
+            </div>
+            {gate.enabled && (
+              <label className="flex cursor-pointer items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
+                <input
+                  type="checkbox"
+                  checked={gate.required}
+                  onChange={() => toggleGate(i, 'required')}
+                  className="accent-[var(--primary)]"
+                />
+                required
+              </label>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Gate Result Section ───
+
+const GATE_STATUS_ICONS: Record<string, LucideIcon> = {
+  passed: CheckCircle2,
+  failed: XCircle,
+  running: Loader2,
+  pending: Circle,
+  skipped: Minus,
+};
+
+const GATE_STATUS_COLORS: Record<string, string> = {
+  passed: '#27a644',
+  failed: '#ef4444',
+  running: '#d97706',
+  pending: 'var(--muted-foreground)',
+  skipped: 'var(--muted-foreground)',
+};
+
+function GateResultSection({
+  gateStates,
+}: {
+  gateStates: Array<{ type: string; status: string; result?: string }>;
+}) {
+  return (
+    <section className="mb-6">
+      <SectionHeader icon={<Shield size={12} />} title="Gate Results" count={gateStates.length} />
+      <div className="mt-3 space-y-2">
+        {gateStates.map((gs) => {
+          const Icon = GATE_STATUS_ICONS[gs.status] ?? Circle;
+          const color = GATE_STATUS_COLORS[gs.status] ?? 'var(--muted-foreground)';
+          return (
+            <div key={gs.type} className="rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] p-3">
+              <div className="flex items-center gap-2">
+                <Icon
+                  size={14}
+                  style={{ color }}
+                  className={gs.status === 'running' ? 'animate-spin' : ''}
+                />
+                <span className="text-[12px] font-bold text-[var(--text-main)]">
+                  {gs.type === 'spec-review' ? 'Spec Review' : 'Code Quality'}
+                </span>
+                <span className="text-[10px] font-bold uppercase" style={{ color }}>
+                  {gs.status}
+                </span>
+              </div>
+              {gs.result && (
+                <pre className="mt-2 whitespace-pre-wrap rounded bg-[var(--bg-main)] p-2 font-mono text-[10px] text-[var(--muted-foreground)]">
+                  {gs.result}
+                </pre>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Replan Button ───
+
+function ReplanButton({
+  nodeId,
+  onReplan,
+}: {
+  nodeId: string;
+  onReplan: (id: string) => Promise<void>;
+}) {
+  const { state } = useWorkbench();
+  const ratings = state.feedback
+    .filter((f) => f.nodeId === nodeId && f.rating != null)
+    .map((f) => f.rating!);
+  const lowestRating = ratings.length > 0 ? Math.min(...ratings) : 5;
+
+  if (lowestRating > 2) return null;
+
+  return (
+    <div className="border-t border-[var(--border)] px-6 py-4">
+      <button
+        type="button"
+        onClick={() => onReplan(nodeId)}
+        className="w-full rounded-lg border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-3 py-2 text-[12px] font-bold text-[var(--destructive)] transition-colors hover:bg-[var(--destructive)]/20"
+      >
+        ↻ Re-plan & Re-execute
+      </button>
     </div>
   );
 }

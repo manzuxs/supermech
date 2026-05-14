@@ -3,6 +3,9 @@ const VALID_SKILL_TYPES = new Set(['brainstorming', 'writing-plans', 'executing-
 const VALID_AGENT_STATUSES = new Set(['idle', 'thinking', 'writing', 'error']);
 const VALID_THEMES = new Set(['light', 'dark', 'system']);
 const VALID_FILE_TYPES = new Set(['create', 'modify', 'test', 'delete']);
+const VALID_GATE_TYPES = new Set(['spec-review', 'code-quality']);
+const VALID_GATE_STATUSES = new Set(['pending', 'running', 'passed', 'failed', 'skipped']);
+const VALID_EXECUTION_PHASES = new Set(['implementing', 'reviewing', 'idle']);
 
 export interface ValidationResult {
   valid: boolean;
@@ -133,6 +136,85 @@ export function validateState(data: unknown): ValidationResult {
               }
             }
           }
+        }
+
+        // qualityGates validation
+        const qualityGates = meta.qualityGates;
+        if (qualityGates !== undefined) {
+          if (!Array.isArray(qualityGates)) {
+            errors.push(errs(`${prefix}.metadata.qualityGates`, 'must be an array'));
+          } else {
+            for (let j = 0; j < qualityGates.length; j++) {
+              const g = qualityGates[j] as Record<string, unknown> | undefined;
+              if (!g || typeof g !== 'object') {
+                errors.push(errs(`${prefix}.metadata.qualityGates[${j}]`, 'must be an object'));
+                continue;
+              }
+              if (g.type && !VALID_GATE_TYPES.has(g.type as string)) {
+                errors.push(
+                  errs(
+                    `${prefix}.metadata.qualityGates[${j}].type`,
+                    `must be one of ${[...VALID_GATE_TYPES].join(', ')}`,
+                  ),
+                );
+              }
+              if (g.enabled !== undefined && typeof g.enabled !== 'boolean') {
+                errors.push(
+                  errs(`${prefix}.metadata.qualityGates[${j}].enabled`, 'must be a boolean'),
+                );
+              }
+              if (g.required !== undefined && typeof g.required !== 'boolean') {
+                errors.push(
+                  errs(`${prefix}.metadata.qualityGates[${j}].required`, 'must be a boolean'),
+                );
+              }
+            }
+          }
+        }
+
+        // gateStates validation
+        const gateStates = meta.gateStates;
+        if (gateStates !== undefined) {
+          if (!Array.isArray(gateStates)) {
+            errors.push(errs(`${prefix}.metadata.gateStates`, 'must be an array'));
+          } else {
+            for (let j = 0; j < gateStates.length; j++) {
+              const gs = gateStates[j] as Record<string, unknown> | undefined;
+              if (!gs || typeof gs !== 'object') {
+                errors.push(errs(`${prefix}.metadata.gateStates[${j}]`, 'must be an object'));
+                continue;
+              }
+              if (gs.type && !VALID_GATE_TYPES.has(gs.type as string)) {
+                errors.push(
+                  errs(
+                    `${prefix}.metadata.gateStates[${j}].type`,
+                    `must be one of ${[...VALID_GATE_TYPES].join(', ')}`,
+                  ),
+                );
+              }
+              if (gs.status && !VALID_GATE_STATUSES.has(gs.status as string)) {
+                errors.push(
+                  errs(
+                    `${prefix}.metadata.gateStates[${j}].status`,
+                    `must be one of ${[...VALID_GATE_STATUSES].join(', ')}`,
+                  ),
+                );
+              }
+            }
+          }
+        }
+
+        // executionPhase validation
+        if (
+          meta.executionPhase !== undefined &&
+          !VALID_EXECUTION_PHASES.has(meta.executionPhase as string)
+        ) {
+          errors.push(
+            errs(
+              `${prefix}.metadata.executionPhase`,
+              `must be one of ${[...VALID_EXECUTION_PHASES].join(', ')}`,
+            ),
+          );
         }
       }
     }
