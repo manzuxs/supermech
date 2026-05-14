@@ -108,6 +108,8 @@
     "otherTasks": "其他",
     "planSummary": "计划概览",
     "primaryGoal": "核心目标",
-    "architecture": "架构思路"
+    "architecture": "架构思路",
+    "moreSteps": "更多步骤",
+    "moreFiles": "更多文件"
   }
 }

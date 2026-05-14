@@ -1,32 +1,85 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@fontsource/inter/300.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 @import "@fontsource/jetbrains-mono/400.css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* High-Contrast Linear Palette */
+  /* Figma-Inspired Light Theme */
+  --background: #ffffff;
+  --foreground: #000000;
+
+  --surface-1: #f7f7f5;
+  --surface-2: #e6e6e6;
+  --surface-3: #f1f1f1;
+  --surface-4: #d4d4d4;
+
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --primary-hover: #2a2a2a;
+  --primary-focus: #000000;
+  --amber: #d97706;
+
+  --card: var(--surface-1);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-1);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-1);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-3);
+  --muted-foreground: #6b7280;
+  --accent: var(--surface-2);
+  --accent-foreground: var(--foreground);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e6e6e6;
+  --input: var(--surface-1);
+  --ring: var(--primary-focus);
+  --radius: 12px;
+
+  /* Figma Block Colors */
+  --block-lime: #dceeb1;
+  --block-lilac: #c5b0f4;
+  --block-cream: #f4ecd6;
+  --block-pink: #efd4d4;
+  --block-mint: #c8e6cd;
+  --block-coral: #f3c9b6;
+  --block-navy: #1f1d3d;
+
+  --accent-magenta: #ff3d8b;
+  --overlay-scrim: #000000;
+
+  --shadow-node: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
+
+  --bg-main: var(--background);
+  --bg-canvas: var(--surface-1);
+  --text-main: var(--foreground);
+  --success: #1ea64a;
+}
+
+.dark {
+  /* Linear-Inspired Dark Theme */
   --background: #010102;
   --foreground: #f7f8f8;
 
-  /* Surface Ladder (Linear Specs) */
   --surface-1: #0f1011;
   --surface-2: #141516;
   --surface-3: #18191a;
   --surface-4: #191a1b;
 
-  /* Accents */
   --primary: #5e6ad2;
   --primary-foreground: #ffffff;
   --primary-hover: #828fff;
   --primary-focus: #5e69d1;
   --amber: #d97706;
 
-  /* UI Components */
   --card: var(--surface-1);
   --card-foreground: var(--foreground);
   --popover: var(--surface-1);
@@ -44,10 +97,9 @@
   --ring: var(--primary-focus);
   --radius: 12px;
 
-  /* Shadows (Minimal per Linear spec) */
   --shadow-node: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
+  --shadow-filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 
-  /* Legacy Compat */
   --bg-main: var(--background);
   --bg-canvas: var(--surface-1);
   --text-main: var(--foreground);
@@ -65,15 +117,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Linear Typography & Spacing Utilities ─── */
+/* ─── Figma Typography Utilities ─── */
 @layer utilities {
-  .text-display-xl { font-size: 80px; font-weight: 600; line-height: 1.05; letter-spacing: -0.04em; }
-  .text-headline { font-size: 28px; font-weight: 600; line-height: 1.20; letter-spacing: -0.02em; }
-  .text-card-title { font-size: 22px; font-weight: 500; line-height: 1.25; letter-spacing: -0.02em; }
-  .text-body { font-size: 16px; font-weight: 400; line-height: 1.50; letter-spacing: -0.01em; }
-  .text-body-sm { font-size: 14px; font-weight: 400; line-height: 1.50; }
-  .text-caption { font-size: 12px; font-weight: 400; line-height: 1.40; }
-  .text-eyebrow { font-size: 13px; font-weight: 500; line-height: 1.30; letter-spacing: 0.03em; }
+  .text-display-xl { font-size: 86px; font-weight: 300; line-height: 1.00; letter-spacing: -0.04em; }
+  .text-display-lg { font-size: 64px; font-weight: 300; line-height: 1.10; letter-spacing: -0.03em; }
+  .text-headline { font-size: 26px; font-weight: 500; line-height: 1.35; letter-spacing: -0.02em; }
+  .text-subhead { font-size: 26px; font-weight: 300; line-height: 1.35; letter-spacing: -0.02em; }
+  .text-card-title { font-size: 24px; font-weight: 700; line-height: 1.45; letter-spacing: 0; }
+  .text-body-lg { font-size: 20px; font-weight: 300; line-height: 1.40; letter-spacing: -0.01em; }
+  .text-body { font-size: 18px; font-weight: 300; line-height: 1.45; letter-spacing: -0.01em; }
+  .text-body-sm { font-size: 16px; font-weight: 300; line-height: 1.45; }
+  .text-link { font-size: 20px; font-weight: 500; line-height: 1.40; letter-spacing: -0.01em; }
+  .text-button { font-size: 20px; font-weight: 500; line-height: 1.40; letter-spacing: -0.01em; }
+  .text-eyebrow { font-size: 18px; font-weight: 400; line-height: 1.30; letter-spacing: 0.03em; font-family: var(--font-mono); text-transform: uppercase; }
+  .text-caption { font-size: 12px; font-weight: 400; line-height: 1.00; letter-spacing: 0.04em; font-family: var(--font-mono); text-transform: uppercase; }
 }
 
 @keyframes mindmap-breathe {
@@ -152,10 +209,20 @@ body {
   --color-ring: var(--ring);
   --color-success: var(--success);
 
-  --radius-sm: 4px;
+  --color-block-lime: var(--block-lime);
+  --color-block-lilac: var(--block-lilac);
+  --color-block-cream: var(--block-cream);
+  --color-block-pink: var(--block-pink);
+  --color-block-mint: var(--block-mint);
+  --color-block-coral: var(--block-coral);
+  --color-block-navy: var(--block-navy);
+  --color-accent-magenta: var(--accent-magenta);
+
+  --radius-sm: 2px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 50px;
 }
 
 @layer base {

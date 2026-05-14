@@ -108,6 +108,8 @@
     "otherTasks": "Other",
     "planSummary": "Plan Summary",
     "primaryGoal": "Primary Goal",
-    "architecture": "Architecture"
+    "architecture": "Architecture",
+    "moreSteps": "more steps",
+    "moreFiles": "more files"
   }
 }

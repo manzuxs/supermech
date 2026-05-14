@@ -464,7 +464,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                       : 'transition-all duration-200 group-hover:stroke-primary/60 group-hover:fill-[var(--surface-2)]'
                   }
                   style={{
-                    filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))'
+                    filter: 'var(--shadow-filter)'
                   }}
                 />
 

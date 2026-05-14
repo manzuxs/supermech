@@ -22,7 +22,7 @@ function PlanSummary({ header }: { header: PlanHeader | null }) {
   if (!header) return null;
 
   return (
-    <div className="absolute top-6 left-6 z-10 w-72 rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/80 p-5 shadow-2xl backdrop-blur-xl">
+    <div className="absolute top-6 left-6 z-10 w-72 rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/80 p-5 backdrop-blur-xl" style={{ boxShadow: 'var(--shadow-node)' }}>
       <div className="mb-4 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
           <Zap size={16} />
@@ -75,7 +75,6 @@ function PlanSummary({ header }: { header: PlanHeader | null }) {
 // ─── Constants ───
 
 const CARD_W = 280;
-const CARD_H = 400;
 const H_GAP = 32;
 const LANE_MIN_W = 640;
 const HEADER_H = 40;
@@ -116,6 +115,7 @@ interface SwimTask {
   files: any[];
   x: number;
   y: number;
+  h: number;
 }
 
 interface SwimLane {
@@ -127,8 +127,52 @@ interface SwimLane {
 }
 
 interface Arrow {
-  from: { x: number; y: number };
-  to: { x: number; y: number };
+  from: { x: number; y: number; h: number };
+  to: { x: number; y: number; h: number };
+}
+
+// ─── Helpers ───
+
+function calculateTaskHeight(task: {
+  label: string;
+  goal: string;
+  stepsCount: number;
+  filesCount: number;
+}): number {
+  // Base padding + top row + footer + internal gaps
+  let height = 110;
+
+  // Title height (approx 14px font, 1.5 line height = 21px per line)
+  // Assuming 22 chars per line for bold 14px text
+  const titleLines = Math.max(1, Math.ceil(task.label.length / 22));
+  height += titleLines * 22;
+
+  // Goal height (approx 11px font, 1.5 line height = 16.5px per line)
+  // Assuming 35 chars per line
+  if (task.goal) {
+    const goalLines = Math.max(1, Math.ceil(task.goal.length / 35));
+    height += goalLines * 18 + 16; // 16 for margin-bottom
+  }
+
+  // Steps
+  if (task.stepsCount > 0) {
+    height += 20; // Header
+    const shownSteps = Math.min(task.stepsCount, 3);
+    height += shownSteps * 44; // Approx 44px per step item
+    if (task.stepsCount > 3) height += 18; // "+ X more" text
+    height += 16; // space-y gap
+  }
+
+  // Files
+  if (task.filesCount > 0) {
+    height += 20; // Header
+    const shownFiles = Math.min(task.filesCount, 3);
+    height += shownFiles * 34; // Approx 34px per file item
+    if (task.filesCount > 3) height += 18; // "+ X more" text
+    height += 16; // space-y gap
+  }
+
+  return Math.max(height, 300); // Ensure a minimum height
 }
 
 // ─── Layout ───
@@ -136,31 +180,43 @@ interface Arrow {
 function buildLayout(
   phases: PlanPhase[],
   nodes: CanvasNode[],
-): { lanes: SwimLane[]; arrows: Arrow[]; taskPos: Map<string, { x: number; y: number }> } {
+): {
+  lanes: SwimLane[];
+  arrows: Arrow[];
+  taskPos: Map<string, { x: number; y: number; h: number }>;
+} {
   const lanes: SwimLane[] = [];
-  const taskPos = new Map<string, { x: number; y: number }>();
+  const taskPos = new Map<string, { x: number; y: number; h: number }>();
   let currentY = PAD_TOP;
 
-  for (const phase of phases) {
-    const phaseNodes = nodes.filter((n) => (getTaskMeta(n).phase as string) === phase.name);
-    if (phaseNodes.length === 0) continue;
+  const processNodes = (phaseName: string, phaseNodes: CanvasNode[]) => {
+    if (phaseNodes.length === 0) return;
 
     const tasks: SwimTask[] = [];
-    let bodyBottomY = currentY + HEADER_H + LANE_PAD_Y;
+    let maxTaskH = 0;
 
     phaseNodes.forEach((node, i) => {
       const meta = getTaskMeta(node);
-      const x = PAD_LEFT + i * (CARD_W + H_GAP);
-      const y = currentY + HEADER_H + LANE_PAD_Y;
-      bodyBottomY = y + CARD_H + LANE_PAD_Y;
-
       const steps = (meta.implementationSteps as any[]) ?? [];
       const files = (meta.files as any[]) ?? [];
+      const goal = (meta.goal as string) || (meta.description as string) || '';
+
+      const taskH = calculateTaskHeight({
+        label: node.label,
+        goal,
+        stepsCount: steps.length,
+        filesCount: files.length,
+      });
+
+      if (taskH > maxTaskH) maxTaskH = taskH;
+
+      const x = PAD_LEFT + i * (CARD_W + H_GAP);
+      const y = currentY + HEADER_H + LANE_PAD_Y;
 
       const t: SwimTask = {
         id: node.id,
         label: node.label,
-        goal: (meta.goal as string) || (meta.description as string) || '',
+        goal,
         estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
         riskLevel: (meta.riskLevel as string) ?? null,
         assignee: (meta.assignee as string) ?? null,
@@ -170,66 +226,36 @@ function buildLayout(
         files,
         x,
         y,
+        h: taskH,
       };
       tasks.push(t);
-      taskPos.set(node.id, { x, y });
+      taskPos.set(node.id, { x, y, h: taskH });
     });
 
     const laneW = Math.max(
       tasks.length * (CARD_W + H_GAP) - H_GAP + PAD_LEFT + PAD_RIGHT,
       LANE_MIN_W,
     );
-    const laneH = bodyBottomY - currentY;
+    const laneH = HEADER_H + LANE_PAD_Y + maxTaskH + LANE_PAD_Y;
 
-    lanes.push({ name: phase.name, y: currentY, height: laneH + LANE_PAD_Y, width: laneW, tasks });
-    currentY += laneH + LANE_GAP;
-  }
-
-  // no-phase nodes → "Other" lane
-  const noPhaseNodes = nodes.filter((n) => !(getTaskMeta(n).phase as string));
-  if (noPhaseNodes.length > 0) {
-    const tasks: SwimTask[] = [];
-    let bodyBottomY = currentY + HEADER_H + LANE_PAD_Y;
-    noPhaseNodes.forEach((node, i) => {
-      const meta = getTaskMeta(node);
-      const x = PAD_LEFT + i * (CARD_W + H_GAP);
-      const y = currentY + HEADER_H + LANE_PAD_Y;
-      bodyBottomY = y + CARD_H + LANE_PAD_Y;
-
-      const steps = (meta.implementationSteps as any[]) ?? [];
-      const files = (meta.files as any[]) ?? [];
-
-      const t: SwimTask = {
-        id: node.id,
-        label: node.label,
-        goal: (meta.goal as string) || (meta.description as string) || '',
-        estimatedMinutes: (meta.estimatedMinutes as number) ?? null,
-        riskLevel: (meta.riskLevel as string) ?? null,
-        assignee: (meta.assignee as string) ?? null,
-        stepsCount: steps.length,
-        filesCount: files.length,
-        steps,
-        files,
-        x,
-        y,
-      };
-      tasks.push(t);
-      taskPos.set(node.id, { x, y });
-    });
-    const laneW = Math.max(
-      tasks.length * (CARD_W + H_GAP) - H_GAP + PAD_LEFT + PAD_RIGHT,
-      LANE_MIN_W,
-    );
-    const laneH = bodyBottomY - currentY;
     lanes.push({
-      name: 'Other',
+      name: phaseName,
       y: currentY,
-      height: laneH + LANE_PAD_Y,
+      height: laneH,
       width: laneW,
       tasks,
     });
     currentY += laneH + LANE_GAP;
+  };
+
+  for (const phase of phases) {
+    const phaseNodes = nodes.filter((n) => (getTaskMeta(n).phase as string) === phase.name);
+    processNodes(phase.name, phaseNodes);
   }
+
+  // no-phase nodes → "Other" lane
+  const noPhaseNodes = nodes.filter((n) => !(getTaskMeta(n).phase as string));
+  processNodes('Other', noPhaseNodes);
 
   // Build dependency arrows
   const arrows: Arrow[] = [];
@@ -270,11 +296,14 @@ function getBounds(lanes: SwimLane[]) {
   return { minX, minY: 0, maxX, maxY, width: maxX - minX, height: maxY };
 }
 
-function arrowPath(from: { x: number; y: number }, to: { x: number; y: number }): string {
+function arrowPath(
+  from: { x: number; y: number; h: number },
+  to: { x: number; y: number; h: number },
+): string {
   const x1 = from.x + CARD_W;
-  const y1 = from.y + CARD_H / 2;
+  const y1 = from.y + from.h / 2;
   const x2 = to.x;
-  const y2 = to.y + CARD_H / 2;
+  const y2 = to.y + to.h / 2;
 
   if (Math.abs(y2 - y1) < 10) {
     // Same lane — horizontal bezier
@@ -549,7 +578,7 @@ export default function SwimlaneCanvas() {
                       x={task.x - 2}
                       y={task.y - 2}
                       width={CARD_W + 4}
-                      height={CARD_H + 4}
+                      height={task.h + 4}
                       rx={14}
                       ry={14}
                       fill="none"
@@ -564,7 +593,7 @@ export default function SwimlaneCanvas() {
                     x={task.x}
                     y={task.y}
                     width={CARD_W}
-                    height={CARD_H}
+                    height={task.h}
                     rx={12}
                     ry={12}
                     fill={isSelected ? 'var(--surface-2)' : 'var(--surface-1)'}
@@ -572,7 +601,7 @@ export default function SwimlaneCanvas() {
                     strokeWidth={isSelected ? 2 : 1.5}
                     className="transition-all duration-200 group-hover:stroke-[var(--primary-hover)] group-hover:fill-[var(--surface-2)]"
                     style={{
-                      filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))'
+                      filter: 'var(--shadow-filter)',
                     }}
                   />
 
@@ -581,7 +610,7 @@ export default function SwimlaneCanvas() {
                     x={task.x}
                     y={task.y}
                     width={CARD_W}
-                    height={CARD_H}
+                    height={task.h}
                     style={{ pointerEvents: 'none' }}
                   >
                     <div className="relative flex h-full w-full flex-col p-4">
@@ -612,18 +641,24 @@ export default function SwimlaneCanvas() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="mb-2 block line-clamp-2 text-[14px] font-extrabold leading-tight text-[var(--foreground)]" style={{ lineHeight: '1.5' }}>
+                      <h3
+                        className="mb-2 block line-clamp-3 text-[14px] font-extrabold leading-tight text-[var(--foreground)]"
+                        style={{ lineHeight: '1.5' }}
+                      >
                         {task.label}
                       </h3>
 
                       {/* Goal text */}
                       {task.goal && (
-                        <p className="mb-4 text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-3" style={{ fontWeight: 500 }}>
+                        <p
+                          className="mb-4 text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-6"
+                          style={{ fontWeight: 500 }}
+                        >
                           {task.goal}
                         </p>
                       )}
 
-                      <div className="flex-1 space-y-4 overflow-hidden">
+                      <div className="flex-1 space-y-4">
                         {/* Steps Preview */}
                         {task.steps.length > 0 && (
                           <div className="space-y-1.5">
@@ -647,7 +682,7 @@ export default function SwimlaneCanvas() {
                               ))}
                               {task.steps.length > 3 && (
                                 <div className="pl-5 text-[9px] text-[var(--muted-foreground)] opacity-50">
-                                  + {task.steps.length - 3} more steps
+                                  + {task.steps.length - 3} {t('editor.moreSteps')}
                                 </div>
                               )}
                             </div>
@@ -677,7 +712,7 @@ export default function SwimlaneCanvas() {
                               ))}
                               {task.files.length > 3 && (
                                 <div className="text-[9px] text-[var(--muted-foreground)] opacity-50">
-                                  + {task.files.length - 3} more files
+                                  + {task.files.length - 3} {t('editor.moreFiles')}
                                 </div>
                               )}
                             </div>
@@ -714,10 +749,10 @@ export default function SwimlaneCanvas() {
 
       {/* Zoom HUD */}
       <div className="absolute right-6 bottom-6 flex items-center gap-2">
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 px-3 py-1.5 text-[11px] font-bold tracking-tight text-[var(--foreground)] shadow-xl backdrop-blur-md">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 px-3 py-1.5 text-[11px] font-bold tracking-tight text-[var(--foreground)] backdrop-blur-md" style={{ boxShadow: 'var(--shadow-node)' }}>
           {Math.round(transform.k * 100)}%
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 p-1 shadow-xl backdrop-blur-md">
+        <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 p-1 backdrop-blur-md" style={{ boxShadow: 'var(--shadow-node)' }}>
           <button
             type="button"
             onClick={() => stepZoom('out')}
