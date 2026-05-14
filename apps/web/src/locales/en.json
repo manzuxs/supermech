@@ -21,7 +21,7 @@
     "feedback": "Feedback"
   },
   "canvas": {
-    "empty": "Select a skill from the left sidebar to begin",
+    "empty": "No content yet — waiting for the agent…",
     "brainstormEmpty": "No ideas yet — the agent will populate the map during brainstorming.",
     "noSelection": "No node selected",
     "zoomIn": "Zoom in",

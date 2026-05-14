@@ -21,7 +21,7 @@
     "feedback": "反馈建议"
   },
   "canvas": {
-    "empty": "请从左侧选择一个技能开始",
+    "empty": "暂无内容，等待智能体创建…",
     "brainstormEmpty": "暂无想法 — 智能体将在头脑风暴阶段填充内容。",
     "noSelection": "未选中节点",
     "zoomIn": "放大",
