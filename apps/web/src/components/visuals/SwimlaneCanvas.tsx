@@ -15,14 +15,17 @@ import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from 'schemas'
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
-// ─── Plan Summary Overlay ───
+// ─── Plan Summary Card ───
 
 function PlanSummary({ header }: { header: PlanHeader | null }) {
   const { t } = useTranslation();
   if (!header) return null;
 
   return (
-    <div className="absolute top-6 left-6 z-10 w-72 rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/80 p-5 backdrop-blur-xl" style={{ boxShadow: 'var(--shadow-node)' }}>
+    <div
+      className="w-[280px] rounded-[12px] border border-[var(--border)] bg-[var(--surface-1)] p-5"
+      style={{ boxShadow: 'var(--shadow-node)' }}
+    >
       <div className="mb-4 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
           <Zap size={16} />
@@ -88,6 +91,11 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 2.5;
 const VIEWPORT_PAD_X = 64;
 const VIEWPORT_PAD_Y = 64;
+const VIEWPORT_TOP_PAD = 32;
+const SUMMARY_CARD_W = CARD_W;
+const SUMMARY_CARD_GAP = 56;
+const SUMMARY_CARD_X = PAD_LEFT;
+const SUMMARY_CARD_Y = PAD_TOP + HEADER_H + LANE_PAD_Y;
 
 const LANE_COLORS = [
   '#5e6ad2', // Linear Lavender
@@ -119,6 +127,7 @@ interface SwimTask {
 }
 
 interface SwimLane {
+  x: number;
   name: string;
   y: number;
   height: number;
@@ -180,6 +189,7 @@ function calculateTaskHeight(task: {
 function buildLayout(
   phases: PlanPhase[],
   nodes: CanvasNode[],
+  leftOffset = 0,
 ): {
   lanes: SwimLane[];
   arrows: Arrow[];
@@ -194,6 +204,7 @@ function buildLayout(
 
     const tasks: SwimTask[] = [];
     let maxTaskH = 0;
+    const laneX = leftOffset;
 
     phaseNodes.forEach((node, i) => {
       const meta = getTaskMeta(node);
@@ -210,7 +221,7 @@ function buildLayout(
 
       if (taskH > maxTaskH) maxTaskH = taskH;
 
-      const x = PAD_LEFT + i * (CARD_W + H_GAP);
+      const x = laneX + PAD_LEFT + i * (CARD_W + H_GAP);
       const y = currentY + HEADER_H + LANE_PAD_Y;
 
       const t: SwimTask = {
@@ -239,6 +250,7 @@ function buildLayout(
     const laneH = HEADER_H + LANE_PAD_Y + maxTaskH + LANE_PAD_Y;
 
     lanes.push({
+      x: laneX,
       name: phaseName,
       y: currentY,
       height: laneH,
@@ -273,7 +285,7 @@ function buildLayout(
   return { lanes, arrows, taskPos };
 }
 
-function getBounds(lanes: SwimLane[]) {
+function getBounds(lanes: SwimLane[], includeSummary: boolean) {
   if (lanes.length === 0)
     return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
 
@@ -290,6 +302,11 @@ function getBounds(lanes: SwimLane[]) {
   }
   // Fallback if no tasks
   if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
+
+  if (includeSummary) {
+    minX = Math.min(minX, SUMMARY_CARD_X);
+    maxX = Math.max(maxX, SUMMARY_CARD_X + SUMMARY_CARD_W);
+  }
 
   const last = lanes[lanes.length - 1];
   const maxY = last.y + last.height;
@@ -328,7 +345,8 @@ export default function SwimlaneCanvas() {
   const { nodes } = state.canvas;
   const planHeader = getPlanHeader(state);
   const phases = planHeader?.phases ?? [];
-  const { lanes, arrows } = buildLayout(phases, nodes);
+  const leftOffset = planHeader ? SUMMARY_CARD_W + SUMMARY_CARD_GAP : 0;
+  const { lanes, arrows } = buildLayout(phases, nodes, leftOffset);
   const containerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
@@ -343,14 +361,11 @@ export default function SwimlaneCanvas() {
     const el = containerRef.current;
     if (!el || lanes.length === 0) return;
     const rect = el.getBoundingClientRect();
-    const bounds = getBounds(lanes);
-
-    const summaryOffset = planHeader ? 320 : 0; // w-72 (288px) + padding
-    const safeWidth = Math.max(rect.width - summaryOffset, 100);
+    const bounds = getBounds(lanes, Boolean(planHeader));
 
     let nextK = forceK;
     if (nextK === undefined) {
-      const aw = Math.max(safeWidth - VIEWPORT_PAD_X * 2, 1);
+      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
       const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
       nextK = Math.min(
         MAX_ZOOM,
@@ -358,12 +373,9 @@ export default function SwimlaneCanvas() {
       );
     }
 
-    // Center within the safe area (right of the summary panel)
-    const centerX = summaryOffset + safeWidth / 2;
-
     setTransform({
-      x: centerX - (bounds.width * nextK) / 2 - bounds.minX * nextK,
-      y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
+      x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
+      y: VIEWPORT_TOP_PAD - bounds.minY * nextK,
       k: nextK,
     });
   }
@@ -456,9 +468,20 @@ export default function SwimlaneCanvas() {
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
       }}
     >
-      <PlanSummary header={planHeader} />
-
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--surface-1)_0%,transparent_60%)] opacity-40" />
+      {planHeader && (
+        <div
+          data-card
+          className="absolute left-0 top-0 z-10"
+          style={{
+            width: SUMMARY_CARD_W,
+            transform: `translate(${transform.x + SUMMARY_CARD_X * transform.k}px, ${transform.y + SUMMARY_CARD_Y * transform.k}px) scale(${transform.k})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <PlanSummary header={planHeader} />
+        </div>
+      )}
       <svg width="100%" height="100%" style={{ display: 'block', overflow: 'hidden' }}>
         <defs>
           <marker
@@ -480,7 +503,7 @@ export default function SwimlaneCanvas() {
             <g key={lane.name}>
               {/* Lane background */}
               <rect
-                x={0}
+                x={lane.x}
                 y={lane.y - LANE_PAD_Y}
                 width={lane.width}
                 height={lane.height}
@@ -494,7 +517,7 @@ export default function SwimlaneCanvas() {
               />
               {/* Header bar */}
               <rect
-                x={0}
+                x={lane.x}
                 y={lane.y - LANE_PAD_Y}
                 width={HEADER_BAR_W}
                 height={HEADER_H}
@@ -503,7 +526,7 @@ export default function SwimlaneCanvas() {
                 fill={LANE_COLORS[idx % LANE_COLORS.length]}
               />
               <text
-                x={HEADER_BAR_W + 12}
+                x={lane.x + HEADER_BAR_W + 12}
                 y={lane.y - LANE_PAD_Y + HEADER_H / 2}
                 fill="var(--foreground)"
                 dominantBaseline="middle"
