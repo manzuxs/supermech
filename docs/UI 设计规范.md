@@ -1,4 +1,4 @@
-# Visual Superpowers UI 设计规范 (v1.0)
+# Supermech UI 设计规范 (v1.0)
 
 ## 1. 设计哲学 (Design Philosophy)
 

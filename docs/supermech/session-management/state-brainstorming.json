@@ -1,6 +1,6 @@
 {
   "meta": {
-    "projectName": "Superpowers+",
+    "projectName": "Supermech",
     "sessionId": "brainstorming",
     "activeSkill": "brainstorming",
     "agentStatus": "idle"
@@ -55,7 +55,7 @@
         "parentId": "q-scope",
         "children": [],
         "metadata": {
-          "description": "每个会话保存为 docs/superpowers-plus/{plan}/state-{skill}.json。文件系统即会话存储，无需数据库。",
+          "description": "每个会话保存为 docs/supermech/{plan}/state-{skill}.json。文件系统即会话存储，无需数据库。",
           "tags": [
             "implementation"
           ]
@@ -298,7 +298,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "switch-dropdown"
   }
 }

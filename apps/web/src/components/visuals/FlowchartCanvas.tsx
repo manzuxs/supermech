@@ -966,31 +966,6 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                         strokeWidth={isSelected ? 2 : 1.5}
                         style={{ filter: 'var(--execution-card-shadow)' }}
                       />
-                      {isActive && (
-                        <>
-                          <rect
-                            x={task.x + 1.5}
-                            y={task.y + 1.5}
-                            width={TASK_W - 3}
-                            height={8}
-                            rx={22}
-                            ry={22}
-                            fill="color-mix(in srgb, var(--execution-status-active) 18%, transparent)"
-                            className="animate-pulse"
-                            style={{ clipPath: 'inset(0 round 22px 22px 0 0)' }}
-                          />
-                          <rect
-                            x={task.x + 1.5}
-                            y={task.y + 1.5}
-                            width={Math.max(56, (TASK_W - 3) * Math.max(task.progress, 0.18))}
-                            height={8}
-                            rx={22}
-                            ry={22}
-                            fill="var(--execution-status-active)"
-                            style={{ clipPath: 'inset(0 round 22px 22px 0 0)' }}
-                          />
-                        </>
-                      )}
                       <foreignObject
                         x={task.x + 14}
                         y={task.y + 14}

@@ -1,6 +1,6 @@
-# Superpowers+ (Visual Workbench) 项目上下文与 Agent 规则
+# Supermech (Visual Workbench) 项目上下文与 Agent 规则
 
-Superpowers+ 是一个将终端驱动的 AI Agent 工作流升级为“数据驱动 + 视觉交互”的可视化工作台。它通过结构化 JSON 桥接 Agent 的逻辑输出与前端的实时渲染，实现思维导图、任务看板等可视化协作体验。
+Supermech 是一个将终端驱动的 AI Agent 工作流升级为”数据驱动 + 视觉交互”的可视化工作台。它通过结构化 JSON 桥接 Agent 的逻辑输出与前端的实时渲染，实现思维导图、任务看板等可视化协作体验。
 
 ## 1. 架构与技术栈
 
@@ -73,7 +73,7 @@ Superpowers+ 是一个将终端驱动的 AI Agent 工作流升级为“数据驱
 * **全局样式、主题和布局文件**: `apps/*/src/styles/**`, `apps/*/src/assets/styles/**`, `apps/*/src/assets/css/**`, `apps/*/src/theme/**`, `apps/*/src/themes/**`, `apps/*/src/layout/**`, `apps/*/src/layouts/**`, `apps/*/src/components/layout/**`, `apps/*/src/index.css`, `apps/*/src/main.css`, `apps/*/src/global.css`, `apps/*/src/reset.css`, `apps/*/src/variables.*`, `apps/*/src/assets/variables.*`, `apps/*/src/assets/reset.*`, `apps/*/src/assets/global.*`, `apps/*/src/assets/theme.*`
 * **共享包**: `packages/*/package.json`, `packages/*/src/index.*`, `packages/*/src/schema/**`, `packages/*/src/schemas/**`, `packages/*/src/types/**`, `packages/*/src/config/**`, `packages/*/tsconfig*.json`
 * **技能和代理能力文件**: `skills/**`
-* **文档权威来源**: `docs/项目需求文档.md`, `docs/UI 设计规范.md`, `docs/superpowers-plus/**`
+* **文档权威来源**: `docs/项目需求文档.md`, `docs/UI 设计规范.md`, `docs/supermech/**`
 * **代理指令文件**: `GEMINI.md`, `CLAUDE.md`, `AGENTS.md` (修改前需绝对确认)
 
 ### 5.3 前端 UI 规则

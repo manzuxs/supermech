@@ -6,11 +6,11 @@ import { validateState } from './validate.ts';
 
 export interface WatcherPluginOptions {
   statePath?: string;
-  /** Base directory containing plan directories. Defaults to `<root>/docs/superpowers-plus/`. */
+  /** Base directory containing plan directories. Defaults to `<root>/docs/supermech/`. */
   basePlanDir?: string;
 }
 
-const VIRTUAL_MODULE_ID = 'virtual:superpowers/state';
+const VIRTUAL_MODULE_ID = 'virtual:supermech/state';
 const RESOLVED_VIRTUAL_MODULE_ID = `\0${VIRTUAL_MODULE_ID}`;
 
 function readJSON(path: string): string {
@@ -18,8 +18,8 @@ function readJSON(path: string): string {
   return readFileSync(path, 'utf-8');
 }
 
-export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin {
-  let baseDir: string; // docs/superpowers-plus/
+export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
+  let baseDir: string; // docs/supermech/
   let currentPlan = 'default';
   let currentSkill = 'brainstorming';
   let statePath: string;
@@ -50,7 +50,7 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
       const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);
       if (mod) {
         server.moduleGraph.invalidateModule(mod);
-        server.ws.send({ type: 'custom', event: 'superpowers:state-update', data: {} });
+        server.ws.send({ type: 'custom', event: 'supermech:state-update', data: {} });
       }
     }, 150);
   }
@@ -75,7 +75,7 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
     const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);
     if (mod) {
       server.moduleGraph.invalidateModule(mod);
-      server.ws.send({ type: 'custom', event: 'superpowers:state-update', data: {} });
+      server.ws.send({ type: 'custom', event: 'supermech:state-update', data: {} });
     }
   }
 
@@ -90,7 +90,7 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
     const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);
     if (mod) {
       server.moduleGraph.invalidateModule(mod);
-      server.ws.send({ type: 'custom', event: 'superpowers:state-update', data: {} });
+      server.ws.send({ type: 'custom', event: 'supermech:state-update', data: {} });
     }
   }
 
@@ -114,12 +114,12 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
   }
 
   return {
-    name: 'superpowers-watcher',
+    name: 'supermech-watcher',
     enforce: 'pre',
 
     configResolved(config) {
       statePath = options?.statePath ?? resolve(config.root, 'state.json');
-      baseDir = options?.basePlanDir ?? resolve(config.root, 'docs/superpowers-plus');
+      baseDir = options?.basePlanDir ?? resolve(config.root, 'docs/supermech');
       updatePaths();
     },
 
@@ -315,7 +315,7 @@ export function superpowersWatcherPlugin(options?: WatcherPluginOptions): Plugin
 
           const { valid, errors: validationErrors } = validateState(s);
           if (!valid) {
-            console.error('[superpowers] state validation failed:', validationErrors.join('; '));
+            console.error('[supermech] state validation failed:', validationErrors.join('; '));
             s.meta.agentStatus = 'error' as const;
             s.feedback.push({
               id: crypto.randomUUID(),

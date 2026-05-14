@@ -1,6 +1,6 @@
 {
   "meta": {
-    "projectName": "Superpowers+",
+    "projectName": "Supermech",
     "sessionId": "brainstorming",
     "activeSkill": "brainstorming",
     "agentStatus": "thinking"
@@ -306,7 +306,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "root"
   }
 }

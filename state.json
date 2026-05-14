@@ -1,6 +1,6 @@
 {
   "meta": {
-    "projectName": "Superpowers+",
+    "projectName": "Supermech",
     "sessionId": "brainstorming",
     "activeSkill": "brainstorming",
     "agentStatus": "idle"
@@ -16,7 +16,7 @@
         "parentId": null,
         "children": ["q-scope", "q-persist", "q-switch", "approach-auth"],
         "metadata": {
-          "description": "探讨 Superpowers+ 的会话管理方案，涉及会话的作用域、持久化方式、切换交互和权限模型。目标是设计一套可扩展、易用且安全的会话管理架构。",
+          "description": "探讨 Supermech 的会话管理方案，涉及会话的作用域、持久化方式、切换交互和权限模型。目标是设计一套可扩展、易用且安全的会话管理架构。",
           "tags": ["architecture", "session", "design"]
         }
       },
@@ -40,7 +40,7 @@
         "parentId": "q-scope",
         "children": [],
         "metadata": {
-          "description": "每个会话保存为 docs/superpowers-plus/{plan}/state-{skill}.json。文件系统即会话存储，无需数据库。",
+          "description": "每个会话保存为 docs/supermech/{plan}/state-{skill}.json。文件系统即会话存储，无需数据库。",
           "tags": ["implementation"]
         }
       },

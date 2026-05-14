@@ -1,6 +1,6 @@
-# Superpowers+ — Visual Workbench
+# Supermech — Visual Workbench
 
-Monorepo: terminal/Markdown-driven agent workfloW upgraded to a data-driven visual platform. Agent outputs structured JSON → React frontend renders real-time visualizations → user feedback writes back to JSON.
+Monorepo: terminal/Markdown-driven agent workflow upgraded to a data-driven visual platform. Agent outputs structured JSON → React frontend renders real-time visualizations → user feedback writes back to JSON.
 
 ## Architecture
 
@@ -34,9 +34,9 @@ apps/web/                       # React frontend (Vite + React 18 + Tailwind v4)
 │   ├── lib/commands.ts         # Slash command registry (/execute, etc.)
 │   ├── lib/i18n.ts             # i18next init
 │   ├── locales/                # en.json, zh.json
-│   └── env.d.ts                # virtual:superpowers/state declaration
+│   └── env.d.ts                # virtual:supermech/state declaration
 ├── index.html
-├── vite.config.ts              # React + Tailwind + superpowersWatcherPlugin
+├── vite.config.ts              # React + Tailwind + supermechWatcherPlugin
 └── tsconfig.json
 
 packages/

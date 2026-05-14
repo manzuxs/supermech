@@ -1,6 +1,6 @@
 ---
 name: visual-brainstorming
-description: "Brainstorming with real-time visual tree rendering. Same Socratic questioning process as the standard brainstorming skill, but all structured output is written to state.json for the Superpowers+ MindMap to render. ALL brainstorming goes through this skill — it is self-contained."
+description: "Brainstorming with real-time visual tree rendering. Same Socratic questioning process as the standard brainstorming skill, but all structured output is written to state.json for the Supermech MindMap to render. ALL brainstorming goes through this skill — it is self-contained."
 ---
 
 # Visual Brainstorming

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-declare module 'virtual:superpowers/state' {
+declare module 'virtual:supermech/state' {
   import type { WorkbenchState } from 'schemas';
 
   const state: WorkbenchState;

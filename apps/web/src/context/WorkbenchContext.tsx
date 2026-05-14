@@ -1,4 +1,4 @@
-import rawState from 'virtual:superpowers/state';
+import rawState from 'virtual:supermech/state';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import type { NodeStatus, UIPreferences, WorkbenchState } from 'schemas';
 import { registerCommand } from '../lib/commands.ts';
@@ -69,7 +69,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
       run: () => switchSkill('executing-plans'),
     });
     if (import.meta.hot) {
-      import.meta.hot.on('superpowers:state-update', async () => {
+      import.meta.hot.on('supermech:state-update', async () => {
         const res = await fetch('/__state');
         const updated = await res.json();
         setState(updated);

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "projectName": "Superpowers+",
+    "projectName": "Supermech",
     "sessionId": "executing-plans",
     "activeSkill": "executing-plans",
     "agentStatus": "idle"
@@ -279,7 +279,7 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "goal": "将本次功能改造记录为系统自己的计划文件，存储在 docs/superpowers-plus/skill-ui-optimization/ 中。",
+          "goal": "将本次功能改造记录为系统自己的计划文件，存储在 docs/supermech/skill-ui-optimization/ 中。",
           "phase": "Agent Skills 更新",
           "riskLevel": "low",
           "estimatedMinutes": 10,

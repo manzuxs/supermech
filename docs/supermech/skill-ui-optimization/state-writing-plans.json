@@ -1,6 +1,6 @@
 {
   "meta": {
-    "projectName": "Superpowers+",
+    "projectName": "Supermech",
     "sessionId": "writing-plans",
     "activeSkill": "writing-plans",
     "agentStatus": "error"
@@ -310,13 +310,13 @@
         "parentId": null,
         "children": [],
         "metadata": {
-          "goal": "将本次功能改造记录为系统自己的计划文件，存储在 docs/superpowers-plus/skill-ui-optimization/ 中。使用写计划的 JSON 格式描述：包含 PlanHeader、7 个任务节点、阶段分组、依赖边。",
+          "goal": "将本次功能改造记录为系统自己的计划文件，存储在 docs/supermech/skill-ui-optimization/ 中。使用写计划的 JSON 格式描述：包含 PlanHeader、7 个任务节点、阶段分组、依赖边。",
           "phase": "Agent Skills 更新",
           "riskLevel": "low",
           "estimatedMinutes": 10,
           "files": [
             {
-              "path": "docs/superpowers-plus/skill-ui-optimization/state-writing-plans.json",
+              "path": "docs/supermech/skill-ui-optimization/state-writing-plans.json",
               "type": "create",
               "description": "本计划文件"
             }
@@ -981,12 +981,30 @@
       "stepIndex": null,
       "quickAction": null,
       "createdAt": "2026-05-14T06:51:41.258Z"
+    },
+    {
+      "id": "94776a43-176e-4808-9be9-ade1f1466c19",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:59:32.050Z"
+    },
+    {
+      "id": "1c5153f0-62d5-4da0-bf68-02beace700f5",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[0].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[0].progress: must be a number between 0 and 1; canvas.nodes[1].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[1].progress: must be a number between 0 and 1; canvas.nodes[2].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[2].progress: must be a number between 0 and 1; canvas.nodes[3].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[3].progress: must be a number between 0 and 1; canvas.nodes[4].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[4].progress: must be a number between 0 and 1; canvas.nodes[5].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[5].progress: must be a number between 0 and 1; canvas.nodes[6].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[6].progress: must be a number between 0 and 1; canvas.nodes[7].status: must be one of pending, active, accepted, rejected, done; canvas.nodes[7].progress: must be a number between 0 and 1",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T10:00:26.225Z"
     }
   ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": false,
-    "selectedNodeId": null
+    "rightSidebarOpen": true,
+    "selectedNodeId": "task-1"
   }
 }
