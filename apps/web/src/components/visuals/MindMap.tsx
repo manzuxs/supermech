@@ -14,9 +14,9 @@ import type { CanvasNode, NodeStatus } from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 const NODE_W = 200;
-const NODE_H = 88;
+const NODE_H = 112;
 const H_GAP = 32;
-const V_GAP = 160;
+const V_GAP = 176;
 const PAD = 40;
 const VIEWPORT_PAD_X = 56;
 const VIEWPORT_PAD_Y = 44;
@@ -519,7 +519,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                     </div>
 
                     <div
-                      className="mb-auto text-[11px] leading-relaxed line-clamp-1"
+                      className="mb-auto text-[11px] leading-relaxed line-clamp-2"
                       style={{ color: config.text, opacity: contentOpacity * 0.75, fontWeight: 500 }}
                     >
                       {n.description}

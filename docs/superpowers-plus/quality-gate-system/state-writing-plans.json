@@ -141,6 +141,20 @@
               "command": "pnpm typecheck",
               "expectedOutput": "3 successful, 0 errors"
             }
+          ],
+          "qualityGates": [
+            {
+              "type": "spec-review",
+              "label": "Spec Compliance Review",
+              "enabled": false,
+              "required": false
+            },
+            {
+              "type": "code-quality",
+              "label": "Code Quality Review",
+              "enabled": false,
+              "required": false
+            }
           ]
         }
       },
@@ -232,6 +246,20 @@
               "description": "通过 curl 测试 PATCH gate-state 端点能够正确更新门禁状态",
               "command": "pnpm dev:web && curl -X PATCH http://localhost:5173/__state/node/gate-state \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"nodeId\":\"task-1\",\"type\":\"spec-review\",\"status\":\"passed\"}'",
               "expectedOutput": "返回 { ok: true, state: {...} } 且节点 metadata.gateStates 中包含更新后的状态"
+            }
+          ],
+          "qualityGates": [
+            {
+              "type": "spec-review",
+              "label": "Spec Compliance Review",
+              "enabled": false,
+              "required": true
+            },
+            {
+              "type": "code-quality",
+              "label": "Code Quality Review",
+              "enabled": false,
+              "required": false
             }
           ]
         }

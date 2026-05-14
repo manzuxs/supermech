@@ -186,18 +186,20 @@ When creating task nodes, set `metadata.qualityGates` based on `riskLevel`:
 
 Users can override these presets in the UI Detail Panel later.
 
+Important: write an explicit `qualityGates` array for every task, including `low` risk tasks.
+Do not omit the field. The UI uses the array order as the visible review flow, so every task
+should materialize both gates and let `enabled` decide whether the step runs.
+
 ```json
-// Example: high risk task with both gates
+// Example: explicit flow definition
 {
-  "riskLevel": "high",
+  "riskLevel": "medium",
   "qualityGates": [
     { "type": "spec-review", "label": "Spec Compliance Review", "enabled": true, "required": true },
-    { "type": "code-quality", "label": "Code Quality Review", "enabled": true, "required": true }
+    { "type": "code-quality", "label": "Code Quality Review", "enabled": false, "required": false }
   ]
 }
 ```
-
-Low risk tasks can omit `qualityGates` entirely.
 
 ---
 
