@@ -66,9 +66,9 @@ const LINEAR_COLORS = {
   amber: '#d97706',
   success: '#27a644',
   destructive: '#ef4444',
-  surface1: '#0f1011',
-  surface2: '#141516',
-  hairline: '#23252a',
+  surface1: '#111111',
+  surface2: '#222222',
+  hairline: '#333333',
   muted: '#8a8f98',
   foreground: '#f7f8f8',
 } as const;
@@ -531,17 +531,30 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
 
         <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
           {/* Edges */}
-          {paths.map((p) => (
-            <path
-              key={`${p.from.x}-${p.from.y}-${p.to.x}-${p.to.y}`}
-              d={arrowPath(p.from, p.to)}
-              fill="none"
-              stroke="var(--border)"
-              strokeWidth={1.5}
-              markerEnd="url(#fc-arrowhead)"
-              opacity={0.5}
-            />
-          ))}
+          {paths.map((p) => {
+            const pathStr = arrowPath(p.from, p.to);
+            return (
+              <g key={`${p.from.x}-${p.from.y}-${p.to.x}-${p.to.y}`}>
+                {/* Glow layer */}
+                <path
+                  d={pathStr}
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth={3}
+                  className="opacity-10"
+                  style={{ filter: 'blur(3px)' }}
+                />
+                <path
+                  d={pathStr}
+                  fill="none"
+                  stroke="var(--border)"
+                  strokeWidth={1.5}
+                  markerEnd="url(#fc-arrowhead)"
+                  opacity={0.8}
+                />
+              </g>
+            );
+          })}
 
           {/* Edges: label (only show when zoomed in enough) */}
           {paths
@@ -619,15 +632,17 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
                   height={NODE_H}
                   rx={10}
                   ry={10}
-                  fill={isActive ? 'var(--surface-2)' : 'var(--surface-1)'}
+                  fill={isSelected || isActive ? 'var(--surface-2)' : 'var(--surface-1)'}
                   stroke={isSelected ? '#5e6ad2' : isActive ? '#d97706' : config.border}
-                  strokeWidth={isSelected ? 2 : isActive ? 1.5 : 1}
+                  strokeWidth={isSelected ? 2 : isActive ? 1.5 : 1.5}
                   className={
                     isActive
                       ? 'processing-node'
-                      : 'transition-colors duration-200 group-hover:stroke-[#5e6ad2]/40'
+                      : 'transition-all duration-200 group-hover:stroke-[#5e6ad2]/60 group-hover:fill-[var(--surface-2)]'
                   }
-                  filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.06))"
+                  style={{
+                    filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))'
+                  }}
                   opacity={opacityVal}
                 />
 
@@ -684,9 +699,10 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
                         style={{ color: isActive ? '#d97706' : isDone ? '#5e6ad2' : config.accent }}
                       />
                       <span
-                        className={`min-w-0 flex-1 truncate text-[13px] font-bold leading-5 ${isRejected ? 'line-through' : ''}`}
+                        className={`min-w-0 flex-1 truncate text-[13px] font-extrabold leading-tight ${isRejected ? 'line-through' : ''}`}
                         style={{
                           color: isActive ? '#f7f8f8' : isDone ? '#5e6ad2' : 'var(--text-main)',
+                          lineHeight: '1.5'
                         }}
                       >
                         {n.label}
@@ -703,7 +719,7 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
 
                     {/* Row 2: Goal (1 line) */}
                     {n.goal && (
-                      <div className="mt-0.5 text-[11px] leading-relaxed line-clamp-1 text-[var(--muted-foreground)]">
+                      <div className="mt-0.5 text-[11px] leading-relaxed line-clamp-1 text-[var(--muted-foreground)]" style={{ fontWeight: 500 }}>
                         {n.goal}
                       </div>
                     )}

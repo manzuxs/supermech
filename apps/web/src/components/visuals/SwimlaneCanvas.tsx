@@ -458,9 +458,9 @@ export default function SwimlaneCanvas() {
                 ry={16}
                 fill="none"
                 stroke="var(--border)"
-                strokeWidth={1}
+                strokeWidth={1.5}
                 strokeDasharray="4 4"
-                opacity={0.3}
+                opacity={0.5}
               />
               {/* Header bar */}
               <rect
@@ -480,12 +480,12 @@ export default function SwimlaneCanvas() {
               >
                 <tspan
                   fontSize={12}
-                  fontWeight={600}
-                  className="uppercase tracking-[0.1em] opacity-40"
+                  fontWeight={700}
+                  className="uppercase tracking-[0.1em] opacity-60"
                 >
                   {lane.name === 'Other' ? t('editor.otherTasks') : lane.name}
                 </tspan>
-                <tspan dx={12} fontSize={11} fontWeight={500} opacity={0.2}>
+                <tspan dx={12} fontSize={11} fontWeight={600} opacity={0.3}>
                   {lane.tasks.length === 1
                     ? `${lane.tasks.length} ${t('editor.task')}`
                     : `${lane.tasks.length} ${t('editor.tasks')}`}
@@ -495,17 +495,30 @@ export default function SwimlaneCanvas() {
           ))}
 
           {/* Arrows */}
-          {arrows.map((a, i) => (
-            <path
-              key={i}
-              d={arrowPath(a.from, a.to)}
-              fill="none"
-              stroke="var(--border)"
-              strokeWidth={1.5}
-              markerEnd="url(#swim-arrowhead)"
-              className="opacity-20"
-            />
-          ))}
+          {arrows.map((a, i) => {
+            const pathStr = arrowPath(a.from, a.to);
+            return (
+              <g key={i}>
+                {/* Glow layer */}
+                <path
+                  d={pathStr}
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth={3}
+                  className="opacity-10"
+                  style={{ filter: 'blur(3px)' }}
+                />
+                <path
+                  d={pathStr}
+                  fill="none"
+                  stroke="var(--border)"
+                  strokeWidth={1.5}
+                  markerEnd="url(#swim-arrowhead)"
+                  opacity={0.8}
+                />
+              </g>
+            );
+          })}
 
           {/* Task Cards */}
           {lanes.map((lane) =>
@@ -554,10 +567,13 @@ export default function SwimlaneCanvas() {
                     height={CARD_H}
                     rx={12}
                     ry={12}
-                    fill="var(--surface-1)"
+                    fill={isSelected ? 'var(--surface-2)' : 'var(--surface-1)'}
                     stroke={isSelected ? 'var(--primary)' : 'var(--border)'}
-                    strokeWidth={isSelected ? 1.5 : 1}
-                    className="transition-all duration-200 group-hover:stroke-[var(--primary-hover)] group-hover:bg-[var(--surface-2)]"
+                    strokeWidth={isSelected ? 2 : 1.5}
+                    className="transition-all duration-200 group-hover:stroke-[var(--primary-hover)] group-hover:fill-[var(--surface-2)]"
+                    style={{
+                      filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))'
+                    }}
                   />
 
                   {/* Card content */}
@@ -596,13 +612,13 @@ export default function SwimlaneCanvas() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="mb-2 block line-clamp-2 text-[14px] font-bold leading-tight text-[var(--foreground)]">
+                      <h3 className="mb-2 block line-clamp-2 text-[14px] font-extrabold leading-tight text-[var(--foreground)]" style={{ lineHeight: '1.5' }}>
                         {task.label}
                       </h3>
 
                       {/* Goal text */}
                       {task.goal && (
-                        <p className="mb-4 text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-3">
+                        <p className="mb-4 text-[11px] leading-relaxed text-[var(--muted-foreground)] line-clamp-3" style={{ fontWeight: 500 }}>
                           {task.goal}
                         </p>
                       )}

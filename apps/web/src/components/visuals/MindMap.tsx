@@ -349,6 +349,10 @@ export default function MindMap({ nodes }: MindMapProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-main)_0%,transparent_44%)] opacity-28" />
       <svg width="100%" height="100%" style={{ display: 'block' }} role="img" aria-label="Mind map">
         <defs>
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
           <marker
             id="arrowhead"
             viewBox="0 0 10 10"
@@ -369,16 +373,27 @@ export default function MindMap({ nodes }: MindMapProps) {
             const to = layoutNodes.find((n) => n.id === e.to);
             if (!from || !to) return null;
             const isFocused = !selectedId || (focusIds.has(e.from) && focusIds.has(e.to));
+            const path = edgePath(from, to);
             return (
-              <path
-                key={`${e.from}-${e.to}`}
-                d={edgePath(from, to)}
-                fill="none"
-                stroke="#94a3b8"
-                strokeWidth={1.5}
-                markerEnd="url(#arrowhead)"
-                className={isFocused ? 'opacity-62' : 'opacity-24'}
-              />
+              <g key={`${e.from}-${e.to}`}>
+                {/* Glow layer */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={isFocused ? "var(--primary)" : "#94a3b8"}
+                  strokeWidth={isFocused ? 3 : 2}
+                  className={isFocused ? 'opacity-10' : 'opacity-0'}
+                  style={{ filter: 'blur(3px)' }}
+                />
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="#94a3b8"
+                  strokeWidth={1.5}
+                  markerEnd="url(#arrowhead)"
+                  className={isFocused ? 'opacity-80' : 'opacity-40'}
+                />
+              </g>
             );
           })}
 
@@ -438,17 +453,19 @@ export default function MindMap({ nodes }: MindMapProps) {
                   height={NODE_H}
                   rx={12}
                   ry={12}
-                  fill={config.bg}
+                  fill={isSelected ? 'var(--surface-2)' : 'var(--surface-1)'}
                   stroke={
-                    isSelected ? 'var(--primary)' : isActive ? 'var(--accent)' : config.border
+                    isSelected ? 'var(--primary)' : isActive ? 'var(--amber)' : 'var(--border)'
                   }
-                  strokeWidth={isSelected || isActive ? 2 : 1}
+                  strokeWidth={isSelected || isActive ? 2 : 1.5}
                   className={
                     isActive
                       ? 'processing-node'
-                      : 'transition-colors duration-200 group-hover:stroke-primary/40'
+                      : 'transition-all duration-200 group-hover:stroke-primary/60 group-hover:fill-[var(--surface-2)]'
                   }
-                  filter="drop-shadow(0 2px 4px rgb(0 0 0 / 0.04))"
+                  style={{
+                    filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))'
+                  }}
                 />
 
                 <foreignObject
@@ -470,8 +487,8 @@ export default function MindMap({ nodes }: MindMapProps) {
                         style={{
                           color: config.text,
                           fontSize: '13px',
-                          fontWeight: 700,
-                          lineHeight: '1.2',
+                          fontWeight: 800,
+                          lineHeight: '1.5',
                         }}
                         className={`min-w-0 truncate ${isRejected ? 'line-through' : ''}`}
                       >
@@ -481,7 +498,7 @@ export default function MindMap({ nodes }: MindMapProps) {
 
                     <div
                       className="mb-auto text-[11px] leading-relaxed line-clamp-1"
-                      style={{ color: config.text, opacity: contentOpacity * 0.66 }}
+                      style={{ color: config.text, opacity: contentOpacity * 0.75, fontWeight: 500 }}
                     >
                       {n.description}
                     </div>

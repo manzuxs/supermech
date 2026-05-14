@@ -9,15 +9,15 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Linear Palette */
-  --background: #010102;
+  /* High-Contrast Linear Palette */
+  --background: #000000;
   --foreground: #f7f8f8;
 
-  /* Surface Ladder */
-  --surface-1: #0f1011;
-  --surface-2: #141516;
-  --surface-3: #18191a;
-  --surface-4: #191a1b;
+  /* Surface Ladder (Increased Contrast) */
+  --surface-1: #111111;
+  --surface-2: #222222;
+  --surface-3: #2a2a2a;
+  --surface-4: #333333;
 
   /* Accents */
   --primary: #5e6ad2;
@@ -39,10 +39,13 @@
   --accent-foreground: var(--foreground);
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #23252a;
+  --border: #333333;
   --input: var(--surface-1);
   --ring: var(--primary-focus);
   --radius: 8px;
+
+  /* Shadows */
+  --shadow-node: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
 
   /* Legacy Compat */
   --bg-main: var(--background);
