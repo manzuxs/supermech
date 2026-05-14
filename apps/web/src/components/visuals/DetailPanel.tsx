@@ -7,15 +7,76 @@ import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 export const FILE_TYPE_STYLES: Record<string, string> = {
-  create: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
-  modify: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  test: 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20',
+  create:
+    'bg-[var(--execution-panel-accent-bg)] text-[var(--text-main)] border-[var(--execution-chip-border)]/20',
+  modify:
+    'bg-[color-mix(in_srgb,var(--execution-phase-3)_78%,transparent)] text-[var(--text-main)] border-transparent',
+  test:
+    'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] border-transparent',
   delete:
     'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
 };
 
 export function getTaskMeta(node: CanvasNode): Record<string, unknown> {
   return node.metadata ?? {};
+}
+
+interface GateItem {
+  type: string;
+  label: string;
+  enabled: boolean;
+  required: boolean;
+}
+
+interface ExecutionEventItem {
+  kind: string;
+  message: string;
+  timestamp: string;
+  status?: string;
+  files?: string[];
+}
+
+const QUALITY_GATE_CATALOG: GateItem[] = [
+  { type: 'spec-review', label: 'Spec Compliance Review', enabled: false, required: false },
+  { type: 'code-quality', label: 'Code Quality Review', enabled: false, required: false },
+];
+
+function buildQualityGates(
+  riskLevel: string | undefined,
+  qualityGates: GateItem[] | undefined,
+): GateItem[] {
+  const gateMap = new Map((qualityGates ?? []).map((gate) => [gate.type, gate]));
+
+  return QUALITY_GATE_CATALOG.map((gate) => {
+    const preset =
+      riskLevel === 'high'
+        ? { enabled: true, required: true }
+        : riskLevel === 'medium' && gate.type === 'spec-review'
+          ? { enabled: true, required: true }
+          : { enabled: false, required: false };
+    return {
+      ...gate,
+      ...preset,
+      ...(gateMap.get(gate.type) ?? {}),
+    };
+  });
+}
+
+function formatExecutionPhase(phase: string | undefined): string | null {
+  switch (phase) {
+    case 'implementing':
+      return 'Implementing';
+    case 'editing-files':
+      return 'Editing Files';
+    case 'running-tests':
+      return 'Running Tests';
+    case 'reviewing':
+      return 'Reviewing';
+    case 'fixing':
+      return 'Fixing';
+    default:
+      return null;
+  }
 }
 
 // ─── Task Detail ───
@@ -41,61 +102,76 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
   const steps = meta.implementationSteps as ImplementationStep[] | undefined;
   const verifications = meta.verificationSteps as ImplementationStep[] | undefined;
   const phase = meta.phase as string | undefined;
-  const qualityGates = meta.qualityGates as
+  const qualityGates = buildQualityGates(riskLevel, meta.qualityGates as
     | Array<{ type: string; label: string; enabled: boolean; required: boolean }>
-    | undefined;
+    | undefined);
   const gateStates = meta.gateStates as
     | Array<{ type: string; status: string; result?: string }>
     | undefined;
+  const executionPhase = meta.executionPhase as string | undefined;
+  const activeFiles = (meta.activeFiles as string[] | undefined) ?? [];
+  const executionEvents = (meta.executionEvents as ExecutionEventItem[] | undefined) ?? [];
+  const phaseLabel = formatExecutionPhase(executionPhase);
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="mx-auto">
           {phase && (
-            <div className="mb-1 uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40">
+            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--execution-panel-heading)]">
               {phase}
             </div>
           )}
 
-          <h1 className="mb-3 text-[15px] font-bold leading-tight text-[var(--text-main)]">
+          <h1
+            className="mb-3 text-[18px] font-bold leading-tight text-[var(--text-main)]"
+            style={{ fontFamily: 'var(--font-display), sans-serif' }}
+          >
             {node.label}
           </h1>
 
           <div className="mb-5 flex flex-wrap gap-1.5">
             {estimatedMinutes && (
-              <span className="rounded bg-[var(--border)]/30 px-1.5 py-0.5 text-[9px] font-bold text-[var(--text-main)] opacity-60">
+              <span className="rounded-full border border-[var(--execution-chip-border)]/12 bg-[var(--execution-chip-muted-bg)] px-2 py-1 text-[9px] font-bold text-[var(--execution-chip-muted-fg)]">
                 ~{estimatedMinutes} MIN
               </span>
             )}
             {riskLevel && (
               <span
-                className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase ${
                   riskLevel === 'high'
                     ? 'bg-destructive/10 text-destructive'
                     : riskLevel === 'medium'
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                      : 'bg-[var(--primary)]/10 text-[var(--primary)]'
+                      ? 'bg-[var(--execution-panel-accent-bg)] text-[var(--text-main)]'
+                      : 'bg-[var(--execution-chip-muted-bg)] text-[var(--execution-chip-muted-fg)]'
                 }`}
               >
                 {riskLevel} RISK
               </span>
             )}
             {assignee && (
-              <span className="rounded bg-[var(--border)]/30 px-1.5 py-0.5 text-[9px] font-bold text-[var(--text-main)] opacity-60">
+              <span className="rounded-full border border-[var(--execution-chip-border)]/12 bg-[var(--execution-chip-muted-bg)] px-2 py-1 text-[9px] font-bold text-[var(--execution-chip-muted-fg)]">
                 {assignee.toUpperCase()}
               </span>
             )}
           </div>
 
           {goal && (
-            <p className="mb-6 text-[13px] leading-relaxed text-[var(--text-main)] opacity-70">
+            <p className="mb-6 text-[13px] leading-7 text-[var(--text-main)] opacity-78">
               {goal}
             </p>
           )}
 
-          {showGateConfig && qualityGates && (
+          {showGateConfig && (
             <GateConfigSection nodeId={node.id} gates={qualityGates} />
+          )}
+
+          {showRating && (phaseLabel || activeFiles.length > 0 || executionEvents.length > 0) && (
+            <ExecutionProgressSection
+              executionPhase={phaseLabel}
+              activeFiles={activeFiles}
+              executionEvents={executionEvents}
+            />
           )}
 
           {showRating && gateStates && gateStates.length > 0 && (
@@ -143,10 +219,10 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
                 {files.map((f) => (
                   <div
                     key={f.path}
-                    className="group flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--bg-canvas)] px-2.5 py-2 transition-colors hover:border-[var(--primary)]/30"
+                    className="group flex items-center gap-2 rounded-2xl border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-subtle-bg)] px-2.5 py-2 transition-colors hover:border-[var(--execution-chip-border)]/22"
                   >
                     <span
-                      className={`shrink-0 rounded-[4px] border px-1 py-0.5 text-[8px] font-bold uppercase ${
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase ${
                         FILE_TYPE_STYLES[f.type] ??
                         'border-[var(--border)] text-[var(--text-main)] opacity-50'
                       }`}
@@ -197,8 +273,8 @@ function RatingSection({
   }
 
   return (
-    <div className="border-t border-[var(--border)] px-6 py-4">
-      <div className="uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40 mb-3">
+    <div className="border-t border-[var(--execution-panel-divider)] px-6 py-4">
+      <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--execution-panel-heading)]">
         {t('feedback.rating') || 'Quality'}
       </div>
       <div className="flex items-center gap-1">
@@ -213,8 +289,12 @@ function RatingSection({
           >
             <Star
               size={18}
-              fill={star <= currentRating ? 'var(--accent)' : 'none'}
-              stroke={star <= currentRating ? 'var(--accent)' : 'var(--border)'}
+              fill={star <= currentRating ? 'var(--execution-status-active)' : 'none'}
+              stroke={
+                star <= currentRating
+                  ? 'var(--execution-status-active)'
+                  : 'var(--execution-card-stroke-muted)'
+              }
               className="transition-colors"
             />
           </button>
@@ -241,7 +321,7 @@ function SectionHeader({
   count: number;
 }) {
   return (
-    <div className="flex items-center gap-2 uppercase tracking-widest text-[10px] font-bold text-[var(--text-main)] opacity-40">
+    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--execution-panel-heading)]">
       {icon}
       <span>{title}</span>
       <span className="opacity-50">({count})</span>
@@ -257,9 +337,9 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
   const hasDetails = step.code || step.command || step.expectedOutput;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] transition-colors hover:border-[var(--primary)]/30">
+    <div className="overflow-hidden rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] transition-colors hover:border-[var(--execution-chip-border)]/20">
       <div className="flex items-start gap-3 px-3 py-2.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-bold text-white mt-0.5">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--execution-panel-action-bg)] text-[9px] font-bold text-[var(--execution-panel-action-fg)]">
           {index + 1}
         </span>
         <div className="flex-1 flex flex-col gap-1">
@@ -270,7 +350,7 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
             <button
               type="button"
               onClick={() => setShowCode(!showCode)}
-              className="w-fit text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] opacity-60 transition-opacity hover:opacity-100"
+              className="w-fit text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--text-main)] opacity-60 transition-opacity hover:opacity-100"
             >
               {showCode ? t('editor.hideDetails') : t('editor.showDetails')}
             </button>
@@ -279,24 +359,24 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
       </div>
 
       {showCode && (
-        <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-3 py-3">
+        <div className="border-t border-[var(--execution-panel-divider)] bg-[var(--execution-panel-code-bg)] px-3 py-3">
           {step.code && (
-            <pre className="mb-3 overflow-x-auto rounded-md bg-[var(--border)]/10 p-3 text-[10px] font-mono leading-relaxed text-[var(--text-main)] opacity-80">
+            <pre className="mb-3 overflow-x-auto rounded-2xl bg-[var(--bg-main)]/72 p-3 text-[10px] font-mono leading-relaxed text-[var(--text-main)] opacity-80">
               <code>{step.code}</code>
             </pre>
           )}
           {step.command && (
-            <div className="mb-2 flex items-center gap-2 px-2 py-1 rounded bg-[var(--border)]/10 font-mono text-[10px]">
+            <div className="mb-2 flex items-center gap-2 rounded-full bg-[var(--bg-main)]/72 px-2 py-1 font-mono text-[10px]">
               <span className="text-[var(--text-main)] opacity-30">$</span>
               <code className="text-[var(--text-main)]">{step.command}</code>
             </div>
           )}
           {step.expectedOutput && (
-            <div className="mt-2 border-t border-[var(--border)] border-dashed pt-2 px-1">
-              <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] opacity-60">
+            <div className="mt-2 border-t border-[var(--execution-panel-divider)] border-dashed px-1 pt-2">
+              <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--text-main)] opacity-60">
                 <ChevronRight size={10} /> {t('editor.expected')}
               </span>
-              <pre className="mt-1 whitespace-pre-wrap text-[10px] font-mono text-[var(--primary)] opacity-40">
+              <pre className="mt-1 whitespace-pre-wrap text-[10px] font-mono text-[var(--text-main)] opacity-45">
                 {step.expectedOutput}
               </pre>
             </div>
@@ -307,15 +387,6 @@ function StepBlock({ step, index }: { step: ImplementationStep; index: number })
   );
 }
 
-// ─── Gate Config Section ───
-
-interface GateItem {
-  type: string;
-  label: string;
-  enabled: boolean;
-  required: boolean;
-}
-
 function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[] }) {
   const { updateNode, state } = useWorkbench();
 
@@ -323,8 +394,7 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
     const updated = state.canvas.nodes.find((n) => n.id === nodeId);
     if (!updated) return;
     const meta = updated.metadata ?? {};
-    const current = (meta.qualityGates as GateItem[]) ?? [];
-    const next = current.map((g, i) => (i === index ? { ...g, [field]: !g[field] } : g));
+    const next = gates.map((g, i) => (i === index ? { ...g, [field]: !g[field] } : g));
     await updateNode(nodeId, {
       metadata: { ...meta, qualityGates: next } as Record<string, unknown>,
     });
@@ -341,14 +411,17 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
         {gates.map((gate, i) => (
           <div
             key={gate.type}
-            className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] px-3 py-2"
+            className="flex items-center justify-between rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] px-3 py-2"
           >
             <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--execution-chip-muted-bg)] text-[9px] font-bold text-[var(--text-main)] opacity-70">
+                {i + 1}
+              </span>
               <button
                 type="button"
                 onClick={() => toggleGate(i, 'enabled')}
                 aria-label={gate.label}
-                className={`h-4 w-8 rounded-full transition-colors ${gate.enabled ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
+                className={`h-4 w-8 rounded-full transition-colors ${gate.enabled ? 'bg-[var(--execution-panel-action-bg)]' : 'bg-[var(--border)]'}`}
               >
                 <span
                   className={`block h-3 w-3 rounded-full bg-white transition-transform ${gate.enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -374,6 +447,95 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
   );
 }
 
+function ExecutionProgressSection({
+  executionPhase,
+  activeFiles,
+  executionEvents,
+}: {
+  executionPhase: string | null;
+  activeFiles: string[];
+  executionEvents: ExecutionEventItem[];
+}) {
+  const recentEvents = executionEvents.slice(-3).reverse();
+
+  return (
+    <section className="mb-6">
+      <SectionHeader
+        icon={<Loader2 size={12} />}
+        title="Execution Progress"
+        count={recentEvents.length}
+      />
+      <div className="mt-3 space-y-2">
+        {executionPhase && (
+          <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] px-3 py-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
+              Current Phase
+            </div>
+            <div className="mt-1 text-[12px] font-semibold text-[var(--text-main)]">
+              {executionPhase}
+            </div>
+          </div>
+        )}
+
+        {activeFiles.length > 0 && (
+          <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
+              Active Files
+            </div>
+            <div className="space-y-1.5">
+              {activeFiles.slice(0, 3).map((file) => (
+                <code
+                  key={file}
+                  className="block truncate rounded-full bg-[var(--bg-main)] px-2 py-1 text-[10px] text-[var(--text-main)]"
+                >
+                  {file}
+                </code>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recentEvents.length > 0 && (
+          <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
+              Recent Events
+            </div>
+            <div className="space-y-2">
+              {recentEvents.map((event, index) => (
+                <div key={`${event.timestamp}-${index}`} className="rounded-[18px] bg-[var(--bg-main)] px-2 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
+                      {event.kind}
+                    </span>
+                    <span className="text-[9px] text-[var(--muted-foreground)] opacity-70">
+                      {event.timestamp}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-[11px] leading-relaxed text-[var(--text-main)]">
+                    {event.message}
+                  </div>
+                  {event.files && event.files.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {event.files.slice(0, 2).map((file) => (
+                        <code
+                          key={file}
+                          className="rounded-full bg-[var(--border)]/15 px-1.5 py-0.5 text-[9px] text-[var(--text-main)]"
+                        >
+                          {file}
+                        </code>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ─── Gate Result Section ───
 
 const GATE_STATUS_ICONS: Record<string, LucideIcon> = {
@@ -385,9 +547,9 @@ const GATE_STATUS_ICONS: Record<string, LucideIcon> = {
 };
 
 const GATE_STATUS_COLORS: Record<string, string> = {
-  passed: '#27a644',
+  passed: 'var(--execution-status-accepted)',
   failed: '#ef4444',
-  running: '#d97706',
+  running: 'var(--execution-status-active)',
   pending: 'var(--muted-foreground)',
   skipped: 'var(--muted-foreground)',
 };
@@ -405,7 +567,10 @@ function GateResultSection({
           const Icon = GATE_STATUS_ICONS[gs.status] ?? Circle;
           const color = GATE_STATUS_COLORS[gs.status] ?? 'var(--muted-foreground)';
           return (
-            <div key={gs.type} className="rounded-lg border border-[var(--border)] bg-[var(--bg-canvas)] p-3">
+            <div
+              key={gs.type}
+              className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3"
+            >
               <div className="flex items-center gap-2">
                 <Icon
                   size={14}
@@ -450,11 +615,11 @@ function ReplanButton({
   if (lowestRating > 2) return null;
 
   return (
-    <div className="border-t border-[var(--border)] px-6 py-4">
+    <div className="border-t border-[var(--execution-panel-divider)] px-6 py-4">
       <button
         type="button"
         onClick={() => onReplan(nodeId)}
-        className="w-full rounded-lg border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-3 py-2 text-[12px] font-bold text-[var(--destructive)] transition-colors hover:bg-[var(--destructive)]/20"
+        className="w-full rounded-full border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-4 py-2.5 text-[12px] font-bold text-[var(--destructive)] transition-colors hover:bg-[var(--destructive)]/20"
       >
         ↻ Re-plan & Re-execute
       </button>

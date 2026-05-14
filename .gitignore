@@ -8,3 +8,6 @@ superpowers/
 node_modules/
 dist/
 **/dist/
+
+# Local inspection artifacts
+.playwright-mcp/

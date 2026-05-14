@@ -5,7 +5,17 @@ const VALID_THEMES = new Set(['light', 'dark', 'system']);
 const VALID_FILE_TYPES = new Set(['create', 'modify', 'test', 'delete']);
 const VALID_GATE_TYPES = new Set(['spec-review', 'code-quality']);
 const VALID_GATE_STATUSES = new Set(['pending', 'running', 'passed', 'failed', 'skipped']);
-const VALID_EXECUTION_PHASES = new Set(['implementing', 'reviewing', 'idle']);
+const VALID_EXECUTION_PHASES = new Set([
+  'implementing',
+  'editing-files',
+  'running-tests',
+  'reviewing',
+  'fixing',
+  'idle',
+]);
+const VALID_EXECUTION_EVENT_KINDS = new Set(['phase', 'file', 'command', 'review', 'note']);
+const VALID_EXECUTION_EVENT_STATUSES = new Set(['info', 'success', 'warning', 'error']);
+const VALID_EXECUTION_FLOW_ORIENTATIONS = new Set(['horizontal']);
 
 export interface ValidationResult {
   valid: boolean;
@@ -216,6 +226,85 @@ export function validateState(data: unknown): ValidationResult {
             ),
           );
         }
+
+        const activeFiles = meta.activeFiles;
+        if (activeFiles !== undefined) {
+          if (!Array.isArray(activeFiles)) {
+            errors.push(errs(`${prefix}.metadata.activeFiles`, 'must be an array'));
+          } else {
+            for (let j = 0; j < activeFiles.length; j++) {
+              if (typeof activeFiles[j] !== 'string' || !activeFiles[j]) {
+                errors.push(errs(`${prefix}.metadata.activeFiles[${j}]`, 'required string'));
+              }
+            }
+          }
+        }
+
+        const executionEvents = meta.executionEvents;
+        if (executionEvents !== undefined) {
+          if (!Array.isArray(executionEvents)) {
+            errors.push(errs(`${prefix}.metadata.executionEvents`, 'must be an array'));
+          } else {
+            for (let j = 0; j < executionEvents.length; j++) {
+              const event = executionEvents[j] as Record<string, unknown> | undefined;
+              if (!event || typeof event !== 'object') {
+                errors.push(errs(`${prefix}.metadata.executionEvents[${j}]`, 'must be an object'));
+                continue;
+              }
+              if (
+                typeof event.kind !== 'string' ||
+                !VALID_EXECUTION_EVENT_KINDS.has(event.kind as string)
+              ) {
+                errors.push(
+                  errs(
+                    `${prefix}.metadata.executionEvents[${j}].kind`,
+                    `must be one of ${[...VALID_EXECUTION_EVENT_KINDS].join(', ')}`,
+                  ),
+                );
+              }
+              if (typeof event.message !== 'string' || !event.message) {
+                errors.push(
+                  errs(`${prefix}.metadata.executionEvents[${j}].message`, 'required string'),
+                );
+              }
+              if (typeof event.timestamp !== 'string' || !event.timestamp) {
+                errors.push(
+                  errs(`${prefix}.metadata.executionEvents[${j}].timestamp`, 'required string'),
+                );
+              }
+              if (
+                event.status !== undefined &&
+                (typeof event.status !== 'string' ||
+                  !VALID_EXECUTION_EVENT_STATUSES.has(event.status as string))
+              ) {
+                errors.push(
+                  errs(
+                    `${prefix}.metadata.executionEvents[${j}].status`,
+                    `must be one of ${[...VALID_EXECUTION_EVENT_STATUSES].join(', ')}`,
+                  ),
+                );
+              }
+              if (event.files !== undefined) {
+                if (!Array.isArray(event.files)) {
+                  errors.push(
+                    errs(`${prefix}.metadata.executionEvents[${j}].files`, 'must be an array'),
+                  );
+                } else {
+                  for (let k = 0; k < event.files.length; k++) {
+                    if (typeof event.files[k] !== 'string' || !event.files[k]) {
+                      errors.push(
+                        errs(
+                          `${prefix}.metadata.executionEvents[${j}].files[${k}]`,
+                          'required string',
+                        ),
+                      );
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -273,6 +362,13 @@ export function validateState(data: unknown): ValidationResult {
 
   // ── PlanHeader phase consistency ──
   const canvasMeta = canvas.metadata as Record<string, unknown> | undefined;
+  const nodeIds = Array.isArray(nodes)
+    ? new Set(
+        nodes
+          .map((n) => (n as Record<string, unknown> | undefined)?.id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      )
+    : new Set<string>();
   const planHeader = canvasMeta?.planHeader as Record<string, unknown> | undefined;
   if (planHeader && typeof planHeader === 'object') {
     if (typeof planHeader.goal !== 'string' || !planHeader.goal) {
@@ -305,6 +401,114 @@ export function validateState(data: unknown): ValidationResult {
                 `task references phase "${p}" not defined in PlanHeader`,
               ),
             );
+          }
+        }
+      }
+    }
+  }
+
+  const executionFlow = canvasMeta?.executionFlow as Record<string, unknown> | undefined;
+  if (executionFlow && typeof executionFlow === 'object') {
+    if (!VALID_EXECUTION_FLOW_ORIENTATIONS.has(executionFlow.orientation as string)) {
+      errors.push(
+        errs(
+          'canvas.metadata.executionFlow.orientation',
+          `must be one of ${[...VALID_EXECUTION_FLOW_ORIENTATIONS].join(', ')}`,
+        ),
+      );
+    }
+
+    const stages = executionFlow.stages as Array<Record<string, unknown>> | undefined;
+    const stageIds = new Set<string>();
+
+    if (!Array.isArray(stages) || stages.length === 0) {
+      errors.push(errs('canvas.metadata.executionFlow.stages', 'required non-empty array'));
+    } else {
+      for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        const prefix = `canvas.metadata.executionFlow.stages[${i}]`;
+        if (!stage || typeof stage !== 'object') {
+          errors.push(errs(prefix, 'must be an object'));
+          continue;
+        }
+        if (typeof stage.id !== 'string' || !stage.id) {
+          errors.push(errs(`${prefix}.id`, 'required string'));
+        } else if (stageIds.has(stage.id)) {
+          errors.push(errs(`${prefix}.id`, `duplicate id "${stage.id}"`));
+        } else {
+          stageIds.add(stage.id);
+        }
+
+        if (typeof stage.name !== 'string' || !stage.name) {
+          errors.push(errs(`${prefix}.name`, 'required string'));
+        }
+
+        if (!Array.isArray(stage.taskIds)) {
+          errors.push(errs(`${prefix}.taskIds`, 'must be an array'));
+        } else {
+          for (let j = 0; j < stage.taskIds.length; j++) {
+            const taskId = stage.taskIds[j];
+            if (typeof taskId !== 'string' || !taskId) {
+              errors.push(errs(`${prefix}.taskIds[${j}]`, 'required string'));
+              continue;
+            }
+            if (!nodeIds.has(taskId)) {
+              errors.push(errs(`${prefix}.taskIds[${j}]`, `references unknown node "${taskId}"`));
+            }
+          }
+        }
+      }
+    }
+
+    const stageRelations = executionFlow.stageRelations as Array<Record<string, unknown>> | undefined;
+    if (stageRelations !== undefined) {
+      if (!Array.isArray(stageRelations)) {
+        errors.push(errs('canvas.metadata.executionFlow.stageRelations', 'must be an array'));
+      } else {
+        for (let i = 0; i < stageRelations.length; i++) {
+          const rel = stageRelations[i];
+          const prefix = `canvas.metadata.executionFlow.stageRelations[${i}]`;
+          if (!rel || typeof rel !== 'object') {
+            errors.push(errs(prefix, 'must be an object'));
+            continue;
+          }
+          if (typeof rel.fromStageId !== 'string' || !rel.fromStageId) {
+            errors.push(errs(`${prefix}.fromStageId`, 'required string'));
+          } else if (!stageIds.has(rel.fromStageId)) {
+            errors.push(
+              errs(`${prefix}.fromStageId`, `references unknown stage "${rel.fromStageId}"`),
+            );
+          }
+          if (typeof rel.toStageId !== 'string' || !rel.toStageId) {
+            errors.push(errs(`${prefix}.toStageId`, 'required string'));
+          } else if (!stageIds.has(rel.toStageId)) {
+            errors.push(errs(`${prefix}.toStageId`, `references unknown stage "${rel.toStageId}"`));
+          }
+        }
+      }
+    }
+
+    const taskRelations = executionFlow.taskRelations as Array<Record<string, unknown>> | undefined;
+    if (taskRelations !== undefined) {
+      if (!Array.isArray(taskRelations)) {
+        errors.push(errs('canvas.metadata.executionFlow.taskRelations', 'must be an array'));
+      } else {
+        for (let i = 0; i < taskRelations.length; i++) {
+          const rel = taskRelations[i];
+          const prefix = `canvas.metadata.executionFlow.taskRelations[${i}]`;
+          if (!rel || typeof rel !== 'object') {
+            errors.push(errs(prefix, 'must be an object'));
+            continue;
+          }
+          if (typeof rel.fromTaskId !== 'string' || !rel.fromTaskId) {
+            errors.push(errs(`${prefix}.fromTaskId`, 'required string'));
+          } else if (!nodeIds.has(rel.fromTaskId)) {
+            errors.push(errs(`${prefix}.fromTaskId`, `references unknown node "${rel.fromTaskId}"`));
+          }
+          if (typeof rel.toTaskId !== 'string' || !rel.toTaskId) {
+            errors.push(errs(`${prefix}.toTaskId`, 'required string'));
+          } else if (!nodeIds.has(rel.toTaskId)) {
+            errors.push(errs(`${prefix}.toTaskId`, `references unknown node "${rel.toTaskId}"`));
           }
         }
       }

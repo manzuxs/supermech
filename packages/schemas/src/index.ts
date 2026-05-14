@@ -1,5 +1,13 @@
 export type { BrainstormNodeMetadata, BrainstormSession } from './brainstorm.ts';
 export type {
+  ExecutionEvent,
+  ExecutionEventKind,
+  ExecutionEventStatus,
+  ExecutionFlow,
+  ExecutionFlowOrientation,
+  ExecutionFlowStage,
+  ExecutionFlowStageRelation,
+  ExecutionFlowTaskRelation,
   ExecutionPhase,
   GateStatus,
   GateType,

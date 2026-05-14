@@ -14,6 +14,7 @@
   /* Figma-Inspired Light Theme */
   --background: #ffffff;
   --foreground: #000000;
+  color-scheme: light;
 
   --surface-1: #f7f7f5;
   --surface-2: #e6e6e6;
@@ -62,12 +63,53 @@
   --bg-canvas: var(--surface-1);
   --text-main: var(--foreground);
   --success: #1ea64a;
+  --font-display: "Inter", "Avenir Next", "Helvetica Neue", sans-serif;
+  --font-body: "Inter", "Avenir Next", "Helvetica Neue", sans-serif;
+  --execution-phase-1: var(--block-lilac);
+  --execution-phase-2: var(--block-lime);
+  --execution-phase-3: var(--block-cream);
+  --execution-phase-4: var(--block-mint);
+  --execution-phase-5: var(--block-pink);
+  --execution-phase-6: var(--block-coral);
+  --execution-status-pending: #858585;
+  --execution-status-active: var(--accent-magenta);
+  --execution-status-accepted: var(--success);
+  --execution-status-rejected: #8d8d8d;
+  --execution-status-done: var(--foreground);
+  --execution-card-fill: #ffffff;
+  --execution-card-fill-emphasis: var(--block-cream);
+  --execution-card-fill-active: color-mix(in srgb, var(--block-pink) 80%, white);
+  --execution-card-fill-hover: color-mix(in srgb, var(--block-lilac) 32%, white);
+  --execution-card-stroke: #000000;
+  --execution-card-stroke-muted: #d7d7d7;
+  --execution-card-stroke-hover: #000000;
+  --execution-card-shadow: drop-shadow(0 16px 36px rgba(0, 0, 0, 0.08));
+  --execution-link-glow: color-mix(in srgb, var(--accent-magenta) 24%, transparent);
+  --execution-link-stroke: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --execution-grid-dot: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --execution-overlay: radial-gradient(circle at top, color-mix(in srgb, var(--block-cream) 82%, white) 0%, transparent 48%);
+  --execution-node-radius: 24px;
+  --execution-chip-border: #000000;
+  --execution-chip-muted-bg: color-mix(in srgb, var(--surface-1) 88%, white);
+  --execution-chip-muted-fg: color-mix(in srgb, var(--foreground) 65%, white);
+  --execution-phase-chip-fg: var(--foreground);
+  --execution-panel-bg: #ffffff;
+  --execution-panel-section-bg: color-mix(in srgb, var(--block-cream) 36%, white);
+  --execution-panel-subtle-bg: color-mix(in srgb, var(--surface-1) 78%, white);
+  --execution-panel-accent-bg: color-mix(in srgb, var(--block-lilac) 30%, white);
+  --execution-panel-code-bg: color-mix(in srgb, var(--surface-1) 88%, white);
+  --execution-panel-action-bg: #000000;
+  --execution-panel-action-fg: #ffffff;
+  --execution-panel-divider: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --execution-panel-heading: color-mix(in srgb, var(--foreground) 46%, white);
+  --execution-panel-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 }
 
 .dark {
   /* Linear-Inspired Dark Theme */
   --background: #010102;
   --foreground: #f7f8f8;
+  color-scheme: dark;
 
   --surface-1: #0f1011;
   --surface-2: #141516;
@@ -104,6 +146,46 @@
   --bg-canvas: var(--surface-1);
   --text-main: var(--foreground);
   --success: #27a644;
+  --font-display: "SF Pro Display", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-body: "SF Pro Text", "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  --execution-phase-1: #5e6ad2;
+  --execution-phase-2: #828fff;
+  --execution-phase-3: #7a7fad;
+  --execution-phase-4: #d97706;
+  --execution-phase-5: #27a644;
+  --execution-phase-6: #8a8f98;
+  --execution-status-pending: #8a8f98;
+  --execution-status-active: #d97706;
+  --execution-status-accepted: #27a644;
+  --execution-status-rejected: #8a8f98;
+  --execution-status-done: #5e6ad2;
+  --execution-card-fill: var(--surface-1);
+  --execution-card-fill-emphasis: var(--surface-2);
+  --execution-card-fill-active: var(--surface-2);
+  --execution-card-fill-hover: color-mix(in srgb, var(--surface-2) 92%, var(--surface-1));
+  --execution-card-stroke: #34343a;
+  --execution-card-stroke-muted: var(--border);
+  --execution-card-stroke-hover: #5e6ad2;
+  --execution-card-shadow: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.48));
+  --execution-link-glow: color-mix(in srgb, var(--primary) 22%, transparent);
+  --execution-link-stroke: color-mix(in srgb, var(--border) 88%, white 2%);
+  --execution-grid-dot: color-mix(in srgb, white 12%, transparent);
+  --execution-overlay: radial-gradient(circle at top, color-mix(in srgb, var(--surface-2) 74%, transparent) 0%, transparent 44%);
+  --execution-node-radius: 12px;
+  --execution-chip-border: var(--border);
+  --execution-chip-muted-bg: color-mix(in srgb, var(--surface-2) 90%, transparent);
+  --execution-chip-muted-fg: var(--muted-foreground);
+  --execution-phase-chip-fg: #ffffff;
+  --execution-panel-bg: var(--background);
+  --execution-panel-section-bg: color-mix(in srgb, var(--surface-1) 95%, transparent);
+  --execution-panel-subtle-bg: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  --execution-panel-accent-bg: color-mix(in srgb, var(--primary) 12%, var(--surface-1));
+  --execution-panel-code-bg: color-mix(in srgb, var(--surface-2) 90%, transparent);
+  --execution-panel-action-bg: var(--primary);
+  --execution-panel-action-fg: #ffffff;
+  --execution-panel-divider: color-mix(in srgb, var(--border) 85%, transparent);
+  --execution-panel-heading: color-mix(in srgb, var(--foreground) 56%, transparent);
+  --execution-panel-shadow: none;
 }
 
 html,
@@ -112,7 +194,7 @@ body {
   overflow: hidden;
   background: var(--bg-main);
   color: var(--text-main);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -146,7 +228,7 @@ body {
 }
 
 .canvas-dot-grid {
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--execution-grid-dot) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -162,6 +244,12 @@ body {
 .processing-node {
   stroke-dasharray: 5, 5;
   animation: flow 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .processing-node {
+    animation: none;
+  }
 }
 
 /* ─── Custom Scrollbar ─── */
@@ -249,5 +337,6 @@ body {
   h3,
   .font-heading {
     letter-spacing: -0.04em;
+    font-family: var(--font-display), var(--font-body), sans-serif;
   }
 }

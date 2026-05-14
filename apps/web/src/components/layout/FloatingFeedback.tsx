@@ -321,7 +321,10 @@ export default function FloatingFeedback() {
 
   if (isWritingPlans || isExecutingPlans) {
     return (
-      <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
+      <aside
+        className="relative flex h-full min-h-0 flex-col border-l border-[var(--execution-panel-divider)] bg-[var(--execution-panel-bg)]"
+        style={{ boxShadow: 'var(--execution-panel-shadow)' }}
+      >
         <div className="min-h-0 flex-1 overflow-y-auto">
           {selectedNode ? (
             <TaskDetail
@@ -346,8 +349,8 @@ export default function FloatingFeedback() {
         </div>
 
         {selectedNode && (
-          <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-4 py-4">
-            <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
+          <div className="border-t border-[var(--execution-panel-divider)] bg-[var(--execution-panel-bg)] px-4 py-4">
+            <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[var(--execution-panel-heading)]">
               <Sparkles className="h-3.5 w-3.5" />
               <span>{t('feedback.target', { name: selectedNode.label })}</span>
             </div>
@@ -357,13 +360,13 @@ export default function FloatingFeedback() {
                   key={action}
                   type="button"
                   onClick={() => fillQuickAction(action)}
-                  className="rounded-full border border-[var(--border)] bg-[var(--bg-main)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-main)] opacity-68 transition hover:bg-[var(--bg-canvas)] hover:opacity-100"
+                  className="rounded-full border border-[var(--execution-chip-border)]/18 bg-[var(--execution-panel-subtle-bg)] px-3 py-1 text-[11px] font-medium text-[var(--text-main)] opacity-78 transition hover:border-[var(--execution-chip-border)]/40 hover:bg-[var(--execution-panel-accent-bg)] hover:opacity-100"
                 >
                   {action}
                 </button>
               ))}
             </div>
-            <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-canvas)]/35 p-2">
+            <div className="flex items-end gap-2 rounded-[28px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-2">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -372,14 +375,14 @@ export default function FloatingFeedback() {
                 autoComplete="off"
                 onKeyDown={handleKeyDown}
                 placeholder={t('feedback.nodePlaceholder', { name: selectedNode.label })}
-                className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
+                className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--execution-panel-action-bg)] focus-visible:outline-offset-2"
               />
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={!text.trim()}
                 aria-label={t('feedback.submit')}
-                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--execution-panel-action-bg)] px-4 text-[12px] font-medium text-[var(--execution-panel-action-fg)] shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
                 title={t('feedback.submit')}
               >
                 <Send className="h-4 w-4" />

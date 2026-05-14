@@ -11,22 +11,34 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasEdge, CanvasNode, NodeStatus } from 'schemas';
+import type {
+  CanvasEdge,
+  CanvasNode,
+  ExecutionFlow,
+  ExecutionFlowStage,
+  ExecutionFlowStageRelation,
+  ExecutionFlowTaskRelation,
+  NodeStatus,
+} from 'schemas';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import { getTaskMeta } from './DetailPanel.tsx';
 
-// ─── Constants ───
-
-const NODE_W = 260;
-const NODE_H = 150;
-const H_GAP = 56;
-const V_GAP = 160;
-const PAD = 60;
+const STAGE_W = 368;
+const STAGE_MIN_H = 220;
+const STAGE_GAP = 96;
+const STAGE_HEADER_H = 82;
+const STAGE_PAD_Y = 20;
+const FLOW_RAIL_TOP_GAP = 18;
+const FLOW_RAIL_BOTTOM_GAP = 18;
+const FLOW_NODE_RADIUS = 9;
+const TASK_W = 296;
+const TASK_GAP = 22;
+const PAD_X = 84;
+const PAD_Y = 112;
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 2.5;
-const VIEWPORT_PAD_X = 48;
-const VIEWPORT_PAD_Y = 40;
-
-// ─── Types ───
+const VIEWPORT_PAD_X = 72;
+const VIEWPORT_PAD_Y = 64;
 
 interface FileInfo {
   path: string;
@@ -34,308 +46,87 @@ interface FileInfo {
   description?: string;
 }
 
-interface DagNode {
+interface FlowTask {
   id: string;
   label: string;
   status: NodeStatus;
   goal: string;
   progress: number;
-  level: number;
-  x: number;
-  y: number;
   files: FileInfo[];
   stepCount: number;
   rating: number;
-  phase: string;
-  phaseIndex: number;
   gateStates: Array<{ type: string; status: string }>;
   executionPhase: string;
+  activeFiles: string[];
+  latestEvent: string;
+  x: number;
+  y: number;
+  h: number;
 }
 
-interface EdgePath {
+interface StageLayout {
+  id: string;
+  name: string;
+  description?: string;
+  index: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  tasks: FlowTask[];
+  flowStartY: number;
+  flowEndY: number;
+}
+
+interface TaskLink {
+  stageId: string;
   from: { x: number; y: number };
   to: { x: number; y: number };
   label?: string;
 }
 
-// ─── Linear Status Config ───
+interface StageLink {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
 
-const LINEAR_COLORS = {
-  primary: '#5e6ad2',
-  primaryHover: '#828fff',
-  amber: '#d97706',
-  success: '#27a644',
-  destructive: '#ef4444',
-  surface1: '#111111',
-  surface2: '#222222',
-  hairline: '#333333',
-  muted: '#8a8f98',
-  foreground: '#f7f8f8',
-} as const;
+function shouldRenderLinkLabel(label?: string): boolean {
+  if (!label) return false;
+  return label.trim().toLowerCase() !== 'blocks';
+}
 
 const STATUS_CONFIG: Record<NodeStatus, { border: string; accent: string; icon: LucideIcon }> = {
-  pending: { border: LINEAR_COLORS.hairline, accent: LINEAR_COLORS.muted, icon: Circle },
-  active: { border: LINEAR_COLORS.amber, accent: LINEAR_COLORS.amber, icon: PlayCircle },
-  accepted: { border: LINEAR_COLORS.success, accent: LINEAR_COLORS.success, icon: CheckCircle2 },
-  rejected: { border: LINEAR_COLORS.hairline, accent: LINEAR_COLORS.muted, icon: XCircle },
-  done: { border: LINEAR_COLORS.primary, accent: LINEAR_COLORS.primary, icon: CheckCircle2 },
+  pending: {
+    border: 'var(--execution-card-stroke-muted)',
+    accent: 'var(--execution-status-pending)',
+    icon: Circle,
+  },
+  active: {
+    border: 'var(--execution-status-active)',
+    accent: 'var(--execution-status-active)',
+    icon: PlayCircle,
+  },
+  accepted: {
+    border: 'var(--execution-status-accepted)',
+    accent: 'var(--execution-status-accepted)',
+    icon: CheckCircle2,
+  },
+  rejected: {
+    border: 'var(--execution-card-stroke-muted)',
+    accent: 'var(--execution-status-rejected)',
+    icon: XCircle,
+  },
+  done: {
+    border: 'var(--execution-status-done)',
+    accent: 'var(--execution-status-done)',
+    icon: CheckCircle2,
+  },
 };
-
-// ─── Phase Color Palette (for left strip) ───
-
-const PHASE_COLORS = [
-  '#5e6ad2', // primary lavender
-  '#828fff', // primary hover
-  '#7a7fad', // brand secure
-  '#d97706', // amber
-  '#27a644', // success
-  '#8a8f98', // muted
-] as const;
-
-// ─── DAG Layout ───
-
-function getPlanPhases(nodes: CanvasNode[], edges: CanvasEdge[]): string[] {
-  // Extract unique phases from nodes in dependency order
-  const phaseOrder: string[] = [];
-  const seen = new Set<string>();
-  // Topological-ish: collect phases in order of first appearance by DAG level
-  const inEdges = new Map<string, string[]>();
-  for (const n of nodes) inEdges.set(n.id, []);
-  for (const e of edges) {
-    inEdges.get(e.to)?.push(e.from);
-  }
-  // Sort by dependency depth
-  const depth = new Map<string, number>();
-  function dfs(id: string): number {
-    if (depth.has(id)) return depth.get(id) ?? 0;
-    const deps = inEdges.get(id) ?? [];
-    const d = deps.length === 0 ? 0 : Math.max(...deps.map(dfs)) + 1;
-    depth.set(id, d);
-    return d;
-  }
-  for (const n of nodes) dfs(n.id);
-  const sorted = [...nodes].sort((a, b) => (depth.get(a.id) ?? 0) - (depth.get(b.id) ?? 0));
-  for (const n of sorted) {
-    const phase = typeof n.metadata?.phase === 'string' ? n.metadata.phase : '';
-    if (phase && !seen.has(phase)) {
-      seen.add(phase);
-      phaseOrder.push(phase);
-    }
-  }
-  return phaseOrder;
-}
-
-function buildDagLayout(
-  nodes: CanvasNode[],
-  edges: CanvasEdge[],
-  feedback: { nodeId: string; rating: number }[],
-): { dagNodes: DagNode[]; paths: EdgePath[]; phaseOrder: string[]; activePhase: string } {
-  if (nodes.length === 0) return { dagNodes: [], paths: [], phaseOrder: [], activePhase: '' };
-
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-  const inEdges = new Map<string, string[]>();
-  const outEdges = new Map<string, string[]>();
-  for (const n of nodes) {
-    inEdges.set(n.id, []);
-    outEdges.set(n.id, []);
-  }
-  for (const e of edges) {
-    if (!nodeMap.has(e.from) || !nodeMap.has(e.to)) continue;
-    inEdges.get(e.to)?.push(e.from);
-    outEdges.get(e.from)?.push(e.to);
-  }
-
-  // Topological sort — longest-path layering
-  const level = new Map<string, number>();
-  const visited = new Set<string>();
-  function dfs(id: string): number {
-    if (visited.has(id)) return level.get(id) ?? 0;
-    visited.add(id);
-    const inE = inEdges.get(id) ?? [];
-    const lvl = inE.length === 0 ? 0 : Math.max(...inE.map(dfs)) + 1;
-    level.set(id, lvl);
-    return lvl;
-  }
-  for (const n of nodes) dfs(n.id);
-
-  // Phase ordering
-  const phaseOrder = getPlanPhases(nodes, edges);
-
-  // Determine active phase: the phase containing the first non-done task
-  let activePhase = phaseOrder[phaseOrder.length - 1] || '';
-  for (const p of phaseOrder) {
-    const phaseTasks = nodes.filter((n) => {
-      const phase = typeof n.metadata?.phase === 'string' ? n.metadata.phase : '';
-      return phase === p;
-    });
-    const allDone = phaseTasks.length > 0 && phaseTasks.every((n) => n.status === 'done');
-    if (!allDone) {
-      activePhase = p;
-      break;
-    }
-  }
-
-  // Build rating map
-  const ratingMap = new Map<string, number>();
-  for (const fb of feedback) {
-    if (fb.rating != null) {
-      const existing = ratingMap.get(fb.nodeId) ?? 0;
-      ratingMap.set(fb.nodeId, Math.max(existing, fb.rating));
-    }
-  }
-
-  const byLevel = new Map<number, DagNode[]>();
-  for (const n of nodes) {
-    const lvl = level.get(n.id) ?? 0;
-    if (!byLevel.has(lvl)) byLevel.set(lvl, []);
-    const meta = n.metadata ?? {};
-    const files = (meta.files as FileInfo[]) || [];
-    const steps = (meta.implementationSteps as Array<unknown>) || [];
-
-    // Try to get files from implementationSteps if not present (some agents put file paths in steps)
-    const phase = (meta.phase as string) || '';
-    const phaseIndex = phase ? phaseOrder.indexOf(phase) : -1;
-
-    const gateStates = (meta.gateStates as Array<{ type: string; status: string }>) ?? [];
-    const executionPhase = (meta.executionPhase as string) || '';
-
-    const levelNodes = byLevel.get(lvl);
-    if (!levelNodes) continue;
-    levelNodes.push({
-      id: n.id,
-      label: n.label,
-      status: n.status,
-      goal: (meta.goal as string) || '',
-      progress: n.progress,
-      level: lvl,
-      x: 0,
-      y: 0,
-      files,
-      stepCount: steps.length,
-      rating: ratingMap.get(n.id) ?? 0,
-      phase,
-      phaseIndex: phaseIndex >= 0 ? phaseIndex : phaseOrder.length,
-      gateStates,
-      executionPhase,
-    });
-  }
-
-  // Position nodes
-  const sortedLevels = [...byLevel.entries()].sort(([a], [b]) => a - b);
-  let maxLevelW = 0;
-  for (const [, items] of sortedLevels) {
-    const totalW = items.length * NODE_W + (items.length - 1) * H_GAP;
-    if (totalW > maxLevelW) maxLevelW = totalW;
-  }
-  maxLevelW = Math.max(maxLevelW, 400);
-
-  const dagNodes: DagNode[] = [];
-  for (const [lvl, items] of sortedLevels) {
-    const totalW = items.length * NODE_W + (items.length - 1) * H_GAP;
-    let startX = PAD + (maxLevelW - totalW) / 2;
-    for (const item of items) {
-      item.x = startX + NODE_W / 2;
-      item.y = PAD + lvl * V_GAP;
-      dagNodes.push(item);
-      startX += NODE_W + H_GAP;
-    }
-  }
-
-  // Edge paths
-  const dagPos = new Map(dagNodes.map((n) => [n.id, { x: n.x, y: n.y }]));
-  const paths: EdgePath[] = [];
-  for (const e of edges) {
-    const from = dagPos.get(e.from);
-    const to = dagPos.get(e.to);
-    if (!from || !to) continue;
-    paths.push({ from, to, label: e.label });
-  }
-
-  return { dagNodes, paths, phaseOrder, activePhase };
-}
-
-function getBounds(dagNodes: DagNode[]) {
-  if (dagNodes.length === 0)
-    return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
-  let minX = Infinity,
-    maxX = -Infinity,
-    minY = Infinity,
-    maxY = -Infinity;
-  for (const n of dagNodes) {
-    const l = n.x - NODE_W / 2;
-    const r = n.x + NODE_W / 2;
-    const t = n.y - NODE_H / 2;
-    const b = n.y + NODE_H / 2;
-    if (l < minX) minX = l;
-    if (r > maxX) maxX = r;
-    if (t < minY) minY = t;
-    if (b > maxY) maxY = b;
-  }
-  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
-}
-
-function arrowPath(from: { x: number; y: number }, to: { x: number; y: number }): string {
-  const x1 = from.x;
-  const y1 = from.y + NODE_H / 2;
-  const x2 = to.x;
-  const y2 = to.y - NODE_H / 2;
-  if (Math.abs(y2 - y1) < 10) {
-    const cx = (x1 + x2) / 2;
-    return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`;
-  }
-  const cy = (y1 + y2) / 2;
-  return `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`;
-}
-
-// ─── File Badge ───
-
-const FILE_BADGE_COLORS: Record<string, string> = {
-  create: 'bg-[#5e6ad2]/10 text-[#5e6ad2]',
-  modify: 'bg-[#d97706]/10 text-[#d97706]',
-  test: 'bg-[#27a644]/10 text-[#27a644]',
-  delete: 'bg-[#8a8f98]/10 text-[#8a8f98]',
-};
-
-function FileBadge({ file }: { file: FileInfo }) {
-  const colorClass =
-    FILE_BADGE_COLORS[file.type] ?? 'bg-[var(--border)]/30 text-[var(--muted-foreground)]';
-  const shortPath = file.path.length > 22 ? `${file.path.slice(0, 20)}…` : file.path;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded px-1.5 py-[2px] text-[9px] font-mono leading-tight ${colorClass}`}
-      title={file.path}
-    >
-      <span className="font-bold uppercase opacity-70">{file.type}</span>
-      <span className="opacity-80">{shortPath}</span>
-    </span>
-  );
-}
-
-// ─── Rating Stars ───
-
-function RatingStars({ rating, size = 12 }: { rating: number; size?: number }) {
-  if (rating === 0) return null;
-  return (
-    <span className="inline-flex items-center gap-[1px]">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          size={size}
-          fill={star <= rating ? '#d97706' : 'none'}
-          stroke={star <= rating ? '#d97706' : '#23252a'}
-          strokeWidth={1.5}
-        />
-      ))}
-    </span>
-  );
-}
-
-// ─── Gate Indicator ───
 
 const GATE_DOT_COLORS: Record<string, string> = {
-  pending: 'var(--border)',
-  running: '#d97706',
-  passed: '#27a644',
+  pending: 'var(--execution-card-stroke-muted)',
+  running: 'var(--execution-status-active)',
+  passed: 'var(--execution-status-accepted)',
   failed: '#ef4444',
   skipped: 'var(--muted-foreground)',
 };
@@ -345,8 +136,293 @@ const GATE_LABELS: Record<string, string> = {
   'code-quality': 'QUALITY',
 };
 
+const EXECUTION_PHASE_LABELS: Record<string, string> = {
+  implementing: 'Implementing',
+  'editing-files': 'Editing Files',
+  'running-tests': 'Running Tests',
+  reviewing: 'Reviewing',
+  fixing: 'Fixing',
+};
+
+const FILE_BADGE_COLORS: Record<string, string> = {
+  create:
+    'border-[var(--execution-chip-border)] bg-[var(--execution-panel-accent-bg)] text-[var(--text-main)]',
+  modify:
+    'border-transparent bg-[color-mix(in_srgb,var(--execution-phase-3)_78%,transparent)] text-[var(--text-main)]',
+  test:
+    'border-transparent bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-[var(--success)]',
+  delete:
+    'border-transparent bg-[var(--execution-chip-muted-bg)] text-[var(--execution-chip-muted-fg)]',
+};
+
+function getExecutionFlow(state: ReturnType<typeof useWorkbench>['state']): ExecutionFlow | null {
+  const meta = state.canvas.metadata as Record<string, unknown> | undefined;
+  const flow = meta?.executionFlow;
+  if (!flow || typeof flow !== 'object') return null;
+  return flow as ExecutionFlow;
+}
+
+function calculateTaskHeight(task: Pick<
+  FlowTask,
+  'label' | 'goal' | 'files' | 'stepCount' | 'gateStates' | 'executionPhase' | 'activeFiles' | 'latestEvent' | 'rating'
+>): number {
+  let height = 116;
+
+  const titleLines = Math.max(1, Math.ceil(task.label.length / 22));
+  height += titleLines * 20;
+
+  if (task.goal) {
+    const goalLines = Math.max(1, Math.ceil(task.goal.length / 34));
+    height += Math.min(goalLines, 3) * 16;
+  }
+
+  if (task.executionPhase && task.executionPhase !== 'idle') height += 22;
+  if (task.activeFiles.length > 0 || task.latestEvent) height += 18;
+  if (task.stepCount > 0) height += 18;
+  if (task.files.length > 0) height += 26 + Math.min(task.files.length, 2) * 16;
+  if (task.gateStates.length > 0) height += 22;
+  if (task.rating > 0) height += 18;
+
+  return Math.max(height, 160);
+}
+
+function getPrimaryStageRelations(flow: ExecutionFlow): ExecutionFlowStageRelation[] {
+  const sequential: ExecutionFlowStageRelation[] = [];
+  for (let i = 0; i < flow.stages.length - 1; i++) {
+    sequential.push({
+      fromStageId: flow.stages[i].id,
+      toStageId: flow.stages[i + 1].id,
+    });
+  }
+  return sequential;
+}
+
+function getTaskRelations(flow: ExecutionFlow, stage: ExecutionFlowStage): ExecutionFlowTaskRelation[] {
+  const relations = (flow.taskRelations ?? []).filter((relation) =>
+    stage.taskIds.includes(relation.fromTaskId) && stage.taskIds.includes(relation.toTaskId)
+  );
+
+  if (relations.length > 0) return relations;
+
+  const sequential: ExecutionFlowTaskRelation[] = [];
+  for (let i = 0; i < stage.taskIds.length - 1; i++) {
+    sequential.push({
+      fromTaskId: stage.taskIds[i],
+      toTaskId: stage.taskIds[i + 1],
+    });
+  }
+  return sequential;
+}
+
+function buildLayout(
+  flow: ExecutionFlow,
+  nodes: CanvasNode[],
+  feedback: { nodeId: string; rating: number }[],
+): {
+  stages: StageLayout[];
+  taskLinks: TaskLink[];
+  stageLinks: StageLink[];
+} {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const ratingMap = new Map<string, number>();
+  for (const fb of feedback) {
+    ratingMap.set(fb.nodeId, Math.max(ratingMap.get(fb.nodeId) ?? 0, fb.rating));
+  }
+
+  const stageDrafts = flow.stages.map((stage, index) => {
+    const tasks: FlowTask[] = [];
+    const stageX = PAD_X + index * (STAGE_W + STAGE_GAP);
+    const taskX = stageX + (STAGE_W - TASK_W) / 2;
+    const flowStartY = PAD_Y + STAGE_HEADER_H + STAGE_PAD_Y + FLOW_RAIL_TOP_GAP;
+    let currentY = flowStartY + FLOW_NODE_RADIUS + 18;
+
+    for (const taskId of stage.taskIds) {
+      const node = nodeMap.get(taskId);
+      if (!node) continue;
+      const meta = getTaskMeta(node);
+      const files = (meta.files as FileInfo[] | undefined) ?? [];
+      const steps = (meta.implementationSteps as Array<unknown> | undefined) ?? [];
+      const gateStates = (meta.gateStates as Array<{ type: string; status: string }> | undefined) ?? [];
+      const executionPhase = (meta.executionPhase as string | undefined) ?? '';
+      const activeFiles = (meta.activeFiles as string[] | undefined) ?? [];
+      const executionEvents =
+        (meta.executionEvents as Array<{ message?: string }> | undefined) ?? [];
+      const latestEvent =
+        executionEvents.length > 0
+          ? (executionEvents[executionEvents.length - 1]?.message ?? '')
+          : '';
+      const goal = ((meta.goal as string | undefined) ?? (meta.description as string | undefined) ?? '').trim();
+
+      const task: FlowTask = {
+        id: node.id,
+        label: node.label,
+        status: node.status,
+        goal,
+        progress: node.progress,
+        files,
+        stepCount: steps.length,
+        rating: ratingMap.get(node.id) ?? 0,
+        gateStates,
+        executionPhase,
+        activeFiles,
+        latestEvent,
+        x: taskX,
+        y: currentY,
+        h: 0,
+      };
+      task.h = calculateTaskHeight(task);
+      tasks.push(task);
+      currentY += task.h + TASK_GAP;
+    }
+
+    const flowEndY = tasks.length > 0
+      ? tasks[tasks.length - 1].y + tasks[tasks.length - 1].h + FLOW_RAIL_BOTTOM_GAP
+      : flowStartY + 110;
+
+    return {
+      stage,
+      x: stageX,
+      naturalHeight: Math.max(
+        STAGE_MIN_H,
+        flowEndY - PAD_Y + STAGE_PAD_Y,
+      ),
+      tasks,
+      flowStartY,
+      flowEndY,
+    };
+  });
+
+  const stages: StageLayout[] = stageDrafts.map(({ stage, x, naturalHeight, tasks, flowStartY, flowEndY }, index) => ({
+    id: stage.id,
+    name: stage.name,
+    description: stage.description,
+    index,
+    x,
+    y: PAD_Y,
+    width: STAGE_W,
+    height: naturalHeight,
+    tasks,
+    flowStartY,
+    flowEndY,
+  }));
+
+  const taskCenterMap = new Map<string, { x: number; y: number; topY: number; bottomY: number }>();
+  for (const stage of stages) {
+    for (const task of stage.tasks) {
+      taskCenterMap.set(task.id, {
+        x: task.x + TASK_W / 2,
+        y: task.y + task.h / 2,
+        topY: task.y,
+        bottomY: task.y + task.h,
+      });
+    }
+  }
+
+  const taskLinks: TaskLink[] = [];
+  for (const stage of flow.stages) {
+    const relations = getTaskRelations(flow, stage);
+    for (const relation of relations) {
+      const from = taskCenterMap.get(relation.fromTaskId);
+      const to = taskCenterMap.get(relation.toTaskId);
+      if (!from || !to) continue;
+      taskLinks.push({
+        stageId: stage.id,
+        from: { x: from.x, y: from.bottomY },
+        to: { x: to.x, y: to.topY },
+        label: relation.label,
+      });
+    }
+  }
+
+  const stageMap = new Map(stages.map((stage) => [stage.id, stage]));
+  const stageLinks: StageLink[] = [];
+  for (const relation of getPrimaryStageRelations(flow)) {
+    const fromStage = stageMap.get(relation.fromStageId);
+    const toStage = stageMap.get(relation.toStageId);
+    if (!fromStage || !toStage) continue;
+    stageLinks.push({
+      from: {
+        x: fromStage.x + fromStage.width,
+        y: fromStage.y + STAGE_HEADER_H / 2,
+      },
+      to: {
+        x: toStage.x,
+        y: toStage.y + STAGE_HEADER_H / 2,
+      },
+    });
+  }
+
+  return { stages, taskLinks, stageLinks };
+}
+
+function getBounds(stages: StageLayout[]) {
+  if (stages.length === 0) {
+    return { minX: 0, minY: 0, maxX: 1200, maxY: 600, width: 1200, height: 600 };
+  }
+
+  const minX = stages[0].x;
+  const minY = stages[0].y;
+  const lastStage = stages[stages.length - 1];
+  const maxX = lastStage.x + lastStage.width;
+  const maxY = Math.max(...stages.map((stage) => stage.y + stage.height));
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+}
+
+function stageRelationPath(from: { x: number; y: number }, to: { x: number; y: number }): string {
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+}
+
+function verticalFlowPath(from: { x: number; y: number }, to: { x: number; y: number }): string {
+  return `M ${from.x} ${from.y} L ${from.x} ${to.y - 14} L ${to.x} ${to.y - 14} L ${to.x} ${to.y}`;
+}
+
+function stageStatus(tasks: FlowTask[]): NodeStatus {
+  if (tasks.some((task) => task.status === 'active')) return 'active';
+  if (tasks.length > 0 && tasks.every((task) => task.status === 'done' || task.status === 'accepted')) {
+    return 'done';
+  }
+  if (tasks.some((task) => task.status === 'rejected')) return 'rejected';
+  return 'pending';
+}
+
+function FileBadge({ file }: { file: FileInfo }) {
+  const colorClass =
+    FILE_BADGE_COLORS[file.type] ?? 'bg-[var(--border)]/30 text-[var(--muted-foreground)]';
+  const shortPath = file.path.length > 26 ? `${file.path.slice(0, 24)}…` : file.path;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-[2px] text-[9px] font-mono leading-tight ${colorClass}`}
+      title={file.path}
+    >
+      <span className="font-bold uppercase opacity-70">{file.type}</span>
+      <span className="opacity-80">{shortPath}</span>
+    </span>
+  );
+}
+
+function RatingStars({ rating, size = 12 }: { rating: number; size?: number }) {
+  if (rating === 0) return null;
+  return (
+    <span className="inline-flex items-center gap-[1px]">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={size}
+          fill={star <= rating ? 'var(--execution-status-active)' : 'none'}
+          stroke={
+            star <= rating
+              ? 'var(--execution-status-active)'
+              : 'var(--execution-card-stroke-muted)'
+          }
+          strokeWidth={1.5}
+        />
+      ))}
+    </span>
+  );
+}
+
 function GateIndicator({ status }: { status: string }) {
-  const color = GATE_DOT_COLORS[status] ?? 'var(--border)';
+  const color = GATE_DOT_COLORS[status] ?? 'var(--execution-card-stroke-muted)';
   return (
     <span
       className={`inline-block h-1.5 w-1.5 rounded-full ${status === 'running' ? 'animate-pulse' : ''}`}
@@ -359,11 +435,11 @@ function GateDots({ gateStates }: { gateStates: Array<{ type: string; status: st
   if (gateStates.length === 0) return null;
   return (
     <div className="flex items-center gap-2">
-      {gateStates.map((gs) => (
-        <div key={gs.type} className="flex items-center gap-1">
-          <GateIndicator status={gs.status} />
+      {gateStates.map((gateState) => (
+        <div key={gateState.type} className="flex items-center gap-1">
+          <GateIndicator status={gateState.status} />
           <span className="text-[8px] font-bold uppercase text-[var(--muted-foreground)] opacity-60">
-            {GATE_LABELS[gs.type] ?? gs.type}
+            {GATE_LABELS[gateState.type] ?? gateState.type}
           </span>
         </div>
       ))}
@@ -371,48 +447,74 @@ function GateDots({ gateStates }: { gateStates: Array<{ type: string; status: st
   );
 }
 
-// ─── Component ───
+function PhaseBadge({ phase }: { phase: string }) {
+  const label = EXECUTION_PHASE_LABELS[phase];
+  if (!label) return null;
+  return (
+    <span className="inline-flex items-center rounded-full border border-[var(--execution-chip-border)]/15 bg-[var(--execution-chip-muted-bg)] px-2 py-[3px] text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--text-main)]">
+      {label}
+    </span>
+  );
+}
+
+function ActiveFileSummary({ activeFiles, latestEvent }: { activeFiles: string[]; latestEvent: string }) {
+  if (activeFiles.length === 0 && !latestEvent) return null;
+  return (
+    <div className="mt-1 space-y-1">
+      {activeFiles.length > 0 && (
+        <code className="block truncate text-[9px] text-[var(--execution-status-active)] opacity-75">
+          {activeFiles[0]}
+          {activeFiles.length > 1 ? ` +${activeFiles.length - 1}` : ''}
+        </code>
+      )}
+      {!activeFiles.length && latestEvent && (
+        <div className="line-clamp-1 text-[9px] text-[var(--muted-foreground)] opacity-75">
+          {latestEvent}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface FlowchartCanvasProps {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
 }
 
-export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) {
+export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   const { t } = useTranslation();
   const { state, updateUI } = useWorkbench();
+  const flow = getExecutionFlow(state);
 
   const feedbackRatings = state.feedback
-    .filter((f): f is typeof f & { rating: number } => f.rating != null)
-    .map((f) => ({ nodeId: f.nodeId, rating: f.rating }));
+    .filter((entry): entry is typeof entry & { rating: number } => entry.rating != null)
+    .map((entry) => ({ nodeId: entry.nodeId, rating: entry.rating }));
 
-  const { dagNodes, paths, phaseOrder, activePhase } = buildDagLayout(
-    nodes,
-    edges,
-    feedbackRatings,
-  );
+  const layout = flow ? buildLayout(flow, nodes, feedbackRatings) : null;
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
-  const layoutSig = dagNodes.map((n) => `${n.id}:${n.level}`).join('|');
+  const layoutSig = layout
+    ? layout.stages.map((stage) => `${stage.id}:${stage.tasks.length}`).join('|')
+    : 'empty';
 
   function fitToView(forceK?: number) {
-    const el = containerRef.current;
-    if (!el || dagNodes.length === 0) return;
-    const rect = el.getBoundingClientRect();
-    const bounds = getBounds(dagNodes);
+    const element = containerRef.current;
+    if (!element || !layout) return;
+    const rect = element.getBoundingClientRect();
+    const bounds = getBounds(layout.stages);
 
     let nextK = forceK;
     if (nextK === undefined) {
-      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
-      const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
+      const availableWidth = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+      const availableHeight = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
       nextK = Math.min(
         MAX_ZOOM,
-        Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
+        Math.max(MIN_ZOOM, Math.min(availableWidth / bounds.width, availableHeight / bounds.height)),
       );
     }
 
@@ -433,68 +535,63 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
   }
 
   function stepZoom(dir: 'in' | 'out') {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
+    const element = containerRef.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
     const factor = dir === 'in' ? 1.15 : 1 / 1.15;
     scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fitToView(1);
   }, [layoutSig]);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const handleWheelRaw = (e: WheelEvent) => {
-      e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        const delta = -e.deltaY;
+    const element = containerRef.current;
+    if (!element) return;
+    const handleWheelRaw = (event: WheelEvent) => {
+      event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        const delta = -event.deltaY;
         const factor = 1.1 ** (delta / 100);
-        const rect = el.getBoundingClientRect();
-        scaleAtPoint(e.clientX - rect.left, e.clientY - rect.top, transform.k * factor);
+        const rect = element.getBoundingClientRect();
+        scaleAtPoint(event.clientX - rect.left, event.clientY - rect.top, transform.k * factor);
       } else {
-        setTransform((prev) => ({ ...prev, x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
+        setTransform((prev) => ({ ...prev, x: prev.x - event.deltaX, y: prev.y - event.deltaY }));
       }
     };
-    el.addEventListener('wheel', handleWheelRaw, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheelRaw);
+    element.addEventListener('wheel', handleWheelRaw, { passive: false });
+    return () => element.removeEventListener('wheel', handleWheelRaw);
   }, [transform.k]);
 
   const selectedId = state.ui.selectedNodeId;
 
-  if (dagNodes.length === 0) {
+  if (!flow || !layout) {
     return (
-      <div className="flex h-full items-center justify-center text-[13px] text-[var(--text-main)] opacity-50">
-        {t('editor.emptyTasks')}
+      <div className="flex h-full items-center justify-center px-6 text-center text-[13px] text-[var(--muted-foreground)]">
+        Missing `executionFlow` metadata for executing plan. Regenerate the plan data.
       </div>
     );
   }
 
-  // ── Mouse handling ──
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('[data-card]')) return;
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if (event.button !== 0) return;
+    if ((event.target as HTMLElement).closest('[data-card]')) return;
     setIsDragging(true);
-    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+    setDragStart({ x: event.clientX - transform.x, y: event.clientY - transform.y });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (event: React.MouseEvent) => {
     if (!isDragging) return;
-    setTransform((prev) => ({ ...prev, x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }));
+    setTransform((prev) => ({ ...prev, x: event.clientX - dragStart.x, y: event.clientY - dragStart.y }));
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const handleBgClick = (e: React.MouseEvent | React.KeyboardEvent) => {
-    if ((e.target as HTMLElement).closest('[data-card]')) return;
+  const handleBgClick = (event: React.MouseEvent | React.KeyboardEvent) => {
+    if ((event.target as HTMLElement).closest('[data-card]')) return;
     updateUI({ selectedNodeId: null, rightSidebarOpen: false });
   };
-
-  // ── Render ──
 
   return (
     <div
@@ -505,20 +602,18 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleBgClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') handleBgClick(e);
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') handleBgClick(event);
       }}
       style={{
         backgroundPosition: `${transform.x}px ${transform.y}px`,
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
       }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-main)_0%,transparent_44%)] opacity-28" />
-
       <svg width="100%" height="100%" style={{ display: 'block', overflow: 'hidden' }}>
         <defs>
           <marker
-            id="fc-arrowhead"
+            id="flow-arrowhead"
             viewBox="0 0 10 10"
             refX="8"
             refY="5"
@@ -526,272 +621,345 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
             markerHeight="5"
             orient="auto"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border)" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--execution-link-stroke)" />
           </marker>
         </defs>
 
         <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
-          {/* Edges */}
-          {paths.map((p) => {
-            const pathStr = arrowPath(p.from, p.to);
+          {layout.stageLinks.map((link, index) => {
+            const pathStr = stageRelationPath(link.from, link.to);
             return (
-              <g key={`${p.from.x}-${p.from.y}-${p.to.x}-${p.to.y}`}>
-                {/* Glow layer */}
+              <g key={`stage-link-${index}`}>
                 <path
                   d={pathStr}
                   fill="none"
-                  stroke="var(--primary)"
+                  stroke="var(--execution-link-glow)"
                   strokeWidth={3}
-                  className="opacity-10"
+                  className="opacity-60"
                   style={{ filter: 'blur(3px)' }}
                 />
                 <path
                   d={pathStr}
                   fill="none"
-                  stroke="var(--border)"
+                  stroke="var(--execution-link-stroke)"
                   strokeWidth={1.5}
-                  markerEnd="url(#fc-arrowhead)"
-                  opacity={0.8}
+                  markerEnd="url(#flow-arrowhead)"
+                  opacity={0.9}
                 />
               </g>
             );
           })}
 
-          {/* Edges: label (only show when zoomed in enough) */}
-          {paths
-            .filter((p) => p.label && transform.k > 0.6)
-            .map((p) => (
-              <text
-                key={`elbl-${p.from.x}-${p.from.y}-${p.to.x}-${p.to.y}`}
-                x={(p.from.x + p.to.x) / 2}
-                y={(p.from.y + p.to.y) / 2 - 8}
-                textAnchor="middle"
-                fill="var(--muted-foreground)"
-                fontSize={9}
-                fontFamily="Inter, sans-serif"
-                opacity={0.6}
-              >
-                {p.label}
-              </text>
-            ))}
-
-          {/* Nodes */}
-          {dagNodes.map((n) => {
-            const config = STATUS_CONFIG[n.status];
-            const isSelected = n.id === selectedId;
-            const isActive = n.status === 'active';
-            const isRejected = n.status === 'rejected';
-            const isDone = n.status === 'done';
-            const StatusIcon = config.icon;
-            const phaseColor =
-              n.phaseIndex >= 0 && n.phaseIndex < PHASE_COLORS.length
-                ? PHASE_COLORS[n.phaseIndex]
-                : LINEAR_COLORS.muted;
-            const isFuturePhase =
-              n.phase &&
-              activePhase &&
-              n.phase !== activePhase &&
-              phaseOrder.indexOf(n.phase) > phaseOrder.indexOf(activePhase);
-            const opacityVal = isFuturePhase && !isActive ? 0.4 : 1;
-            const isFocused = focusedNodeId === n.id && !isSelected;
+          {layout.stages.map((stage) => {
+            const status = stageStatus(stage.tasks);
+            const statusConfig = STATUS_CONFIG[status];
+            const stageTaskLinks = layout.taskLinks.filter((link) => link.stageId === stage.id);
 
             return (
-              <g
-                key={n.id}
-                data-card
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
-                  }
-                }}
-                onFocus={() => setFocusedNodeId(n.id)}
-                onBlur={() => setFocusedNodeId((current) => (current === n.id ? null : current))}
-                aria-label={n.label}
-                className="group cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 rounded-lg"
-                role="button"
-                tabIndex={0}
-              >
-                {isFocused && (
-                  <rect
-                    x={n.x - NODE_W / 2 - 5}
-                    y={n.y - NODE_H / 2 - 5}
-                    width={NODE_W + 10}
-                    height={NODE_H + 10}
-                    rx={14}
-                    ry={14}
-                    fill="none"
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    opacity={0.65}
-                  />
-                )}
-                {/* Selection glow */}
-                {isSelected && (
-                  <rect
-                    x={n.x - NODE_W / 2 - 5}
-                    y={n.y - NODE_H / 2 - 5}
-                    width={NODE_W + 10}
-                    height={NODE_H + 10}
-                    rx={14}
-                    ry={14}
-                    fill="color-mix(in srgb, var(--primary) 10%, transparent)"
-                  />
-                )}
-
-                {/* Card body */}
+              <g key={stage.id}>
                 <rect
-                  x={n.x - NODE_W / 2}
-                  y={n.y - NODE_H / 2}
-                  width={NODE_W}
-                  height={NODE_H}
-                  rx={10}
-                  ry={10}
-                  fill={isSelected || isActive ? 'var(--surface-2)' : 'var(--surface-1)'}
-                  stroke={isSelected ? '#5e6ad2' : isActive ? '#d97706' : config.border}
-                  strokeWidth={isSelected ? 2 : isActive ? 1.5 : 1.5}
-                  className={
-                    isActive
-                      ? 'processing-node'
-                      : 'transition-all duration-200 group-hover:stroke-[#5e6ad2]/60 group-hover:fill-[var(--surface-2)]'
-                  }
-                  style={{
-                    filter: 'var(--shadow-filter)'
-                  }}
-                  opacity={opacityVal}
+                  x={stage.x}
+                  y={stage.y}
+                  width={stage.width}
+                  height={stage.height}
+                  rx={28}
+                  ry={28}
+                  fill="var(--execution-panel-bg)"
+                  stroke={status === 'active' ? 'var(--execution-status-active)' : 'var(--execution-panel-divider)'}
+                  strokeWidth={status === 'active' ? 2 : 1.5}
+                  style={{ filter: 'var(--execution-card-shadow)' }}
                 />
-
-                {/* Phase color strip (left edge) */}
-                {n.phase && (
-                  <rect
-                    x={n.x - NODE_W / 2 + 0}
-                    y={n.y - NODE_H / 2 + 0}
-                    width={4}
-                    height={NODE_H}
-                    rx={0}
-                    ry={0}
-                    fill={n.phase === activePhase ? phaseColor : 'var(--border)'}
-                    opacity={n.phase === activePhase ? 0.8 : 0.3}
-                    style={{ clipPath: 'inset(0 round 10px 0 0 10px)' }}
-                  />
-                )}
-
-                {/* Phase label chip */}
-                {n.phase && n.phase === activePhase && (
-                  <foreignObject
-                    x={n.x - NODE_W / 2 + 12}
-                    y={n.y - NODE_H / 2 + 8}
-                    width={120}
-                    height={18}
-                  >
-                    <span
-                      className="inline-flex items-center rounded px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-wider"
-                      style={{ backgroundColor: '#5e6ad2', color: '#ffffff', opacity: 0.85 }}
-                    >
-                      {n.phase}
-                    </span>
-                  </foreignObject>
-                )}
-
-                {/* ── Content ── */}
+                <rect
+                  x={stage.x}
+                  y={stage.y}
+                  width={stage.width}
+                  height={STAGE_HEADER_H}
+                  rx={28}
+                  ry={28}
+                  fill="var(--execution-panel-subtle-bg)"
+                />
+                <rect
+                  x={stage.x}
+                  y={stage.y + STAGE_HEADER_H - 28}
+                  width={stage.width}
+                  height={28}
+                  fill="var(--execution-panel-subtle-bg)"
+                  stroke="none"
+                />
                 <foreignObject
-                  x={n.x - NODE_W / 2 + 12}
-                  y={n.y - NODE_H / 2 + 30}
-                  width={NODE_W - 24}
-                  height={NODE_H - 38}
-                  style={{ pointerEvents: 'none' }}
+                  x={stage.x + 20}
+                  y={stage.y + 16}
+                  width={stage.width - 40}
+                  height={STAGE_HEADER_H - 20}
                 >
-                  <div
-                    className="flex h-full w-full flex-col gap-0.5"
-                    style={{ opacity: opacityVal }}
-                  >
-                    {/* Row 1: Icon + Label + Progress */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <StatusIcon
-                        size={14}
-                        strokeWidth={2.5}
-                        className="shrink-0"
-                        style={{ color: isActive ? '#d97706' : isDone ? '#5e6ad2' : config.accent }}
-                      />
-                      <span
-                        className={`min-w-0 flex-1 truncate text-[13px] font-extrabold leading-tight ${isRejected ? 'line-through' : ''}`}
-                        style={{
-                          color: isActive ? '#f7f8f8' : isDone ? '#5e6ad2' : 'var(--text-main)',
-                          lineHeight: '1.5'
-                        }}
-                      >
-                        {n.label}
-                      </span>
-                      {n.progress > 0 && (
-                        <span
-                          className="shrink-0 text-[10px] font-semibold tabular-nums"
-                          style={{ color: isActive ? '#d97706' : 'var(--muted-foreground)' }}
+                  <div className="flex h-full flex-col justify-between">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div
+                          className="truncate text-[17px] font-bold text-[var(--text-main)]"
+                          style={{ fontFamily: 'var(--font-display), sans-serif' }}
                         >
-                          {Math.round(n.progress * 100)}%
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Row 2: Goal (1 line) */}
-                    {n.goal && (
-                      <div className="mt-0.5 text-[11px] leading-relaxed line-clamp-1 text-[var(--muted-foreground)]" style={{ fontWeight: 500 }}>
-                        {n.goal}
-                      </div>
-                    )}
-
-                    {/* Row 3: Step count */}
-                    {n.stepCount > 0 && (
-                      <div className="text-[10px] text-[var(--muted-foreground)] opacity-60">
-                        {n.stepCount} {n.stepCount === 1 ? 'step' : 'steps'}
-                      </div>
-                    )}
-
-                    {/* Row 4: File badges */}
-                    {n.files.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-0.5">
-                        {n.files.slice(0, 3).map((f) => (
-                          <FileBadge key={f.path} file={f} />
-                        ))}
-                        {n.files.length > 3 && (
-                          <span className="text-[9px] text-[var(--muted-foreground)] opacity-50">
-                            +{n.files.length - 3}
-                          </span>
+                          {stage.name}
+                        </div>
+                        {stage.description && (
+                          <div className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--muted-foreground)]">
+                            {stage.description}
+                          </div>
                         )}
                       </div>
-                    )}
-
-                    {/* Row 5: Gate status dots */}
-                    {n.gateStates.length > 0 && (
-                      <div className="mt-auto">
-                        <GateDots gateStates={n.gateStates} />
-                      </div>
-                    )}
-
-                    {/* Row 6: Rating stars (only for done/accepted with rating) */}
-                    {n.rating > 0 && (
-                      <div className="mt-auto">
-                        <RatingStars rating={n.rating} size={11} />
-                      </div>
-                    )}
+                      <span
+                        className="inline-flex shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em]"
+                        style={{
+                          borderColor: statusConfig.border,
+                          color: statusConfig.accent,
+                          background: 'var(--execution-chip-muted-bg)',
+                        }}
+                      >
+                        {stage.tasks.length} tasks
+                      </span>
+                    </div>
                   </div>
                 </foreignObject>
+
+                {stage.tasks.length > 0 && (
+                  <>
+                    <path
+                      d={`M ${stage.x + stage.width / 2} ${stage.flowStartY} L ${stage.x + stage.width / 2} ${stage.flowEndY}`}
+                      fill="none"
+                      stroke="var(--execution-link-stroke)"
+                      strokeWidth={1.25}
+                      opacity={0.22}
+                    />
+                    <circle
+                      cx={stage.x + stage.width / 2}
+                      cy={stage.flowStartY}
+                      r={FLOW_NODE_RADIUS}
+                      fill="var(--execution-panel-bg)"
+                      stroke="var(--execution-link-stroke)"
+                      strokeWidth={1.5}
+                    />
+                    <circle
+                      cx={stage.x + stage.width / 2}
+                      cy={stage.flowEndY}
+                      r={FLOW_NODE_RADIUS}
+                      fill="var(--execution-panel-bg)"
+                      stroke="var(--execution-link-stroke)"
+                      strokeWidth={1.5}
+                    />
+                    {stageTaskLinks.map((link, index) => {
+                      const pathStr = verticalFlowPath(link.from, link.to);
+                      return (
+                        <g key={`${stage.id}-task-link-${index}`}>
+                          <path
+                            d={pathStr}
+                            fill="none"
+                            stroke="var(--execution-link-stroke)"
+                            strokeWidth={1.5}
+                            markerEnd="url(#flow-arrowhead)"
+                            opacity={0.78}
+                          />
+                          <circle
+                            cx={link.from.x}
+                            cy={link.from.y}
+                            r={3}
+                            fill="var(--execution-panel-bg)"
+                            stroke="var(--execution-link-stroke)"
+                            strokeWidth={1.25}
+                          />
+                          {shouldRenderLinkLabel(link.label) ? (
+                            <foreignObject
+                              x={link.from.x - 26}
+                              y={(link.from.y + link.to.y) / 2 - 10}
+                              width={52}
+                              height={18}
+                            >
+                              <div className="inline-flex h-4 items-center justify-center rounded-full bg-[var(--execution-panel-bg)] px-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)] shadow-sm">
+                                {link.label}
+                              </div>
+                            </foreignObject>
+                          ) : null}
+                        </g>
+                      );
+                    })}
+                  </>
+                )}
+
+                {stage.tasks.map((task) => {
+                  const config = STATUS_CONFIG[task.status];
+                  const isSelected = selectedId === task.id;
+                  const isDone = task.status === 'done';
+                  const isRejected = task.status === 'rejected';
+                  const StatusIcon = config.icon;
+                  const isFocused = focusedTaskId === task.id && !isSelected;
+
+                  return (
+                    <g
+                      key={task.id}
+                      data-card
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
+                        }
+                      }}
+                      onFocus={() => setFocusedTaskId(task.id)}
+                      onBlur={() => setFocusedTaskId((current) => (current === task.id ? null : current))}
+                      aria-label={task.label}
+                      className="group cursor-pointer outline-none"
+                      role="button"
+                      tabIndex={0}
+                    >
+                      {isFocused && (
+                        <rect
+                          x={task.x - 4}
+                          y={task.y - 4}
+                          width={TASK_W + 8}
+                          height={task.h + 8}
+                          rx={24}
+                          ry={24}
+                          fill="none"
+                          stroke="var(--execution-card-stroke-hover)"
+                          strokeWidth={2}
+                          opacity={0.65}
+                        />
+                      )}
+                      {isSelected && (
+                        <rect
+                          x={task.x - 4}
+                          y={task.y - 4}
+                          width={TASK_W + 8}
+                          height={task.h + 8}
+                          rx={24}
+                          ry={24}
+                          fill="color-mix(in srgb, var(--execution-card-stroke-hover) 10%, transparent)"
+                        />
+                      )}
+                      <rect
+                        x={task.x}
+                        y={task.y}
+                        width={TASK_W}
+                        height={task.h}
+                        rx={22}
+                        ry={22}
+                        fill={
+                          isSelected
+                            ? 'var(--execution-card-fill-emphasis)'
+                            : task.status === 'active'
+                              ? 'var(--execution-card-fill-active)'
+                              : 'var(--execution-card-fill)'
+                        }
+                        stroke={
+                          isSelected
+                            ? 'var(--execution-card-stroke-hover)'
+                            : task.status === 'active'
+                              ? 'var(--execution-status-active)'
+                              : config.border
+                        }
+                        strokeWidth={isSelected ? 2 : 1.5}
+                        style={{ filter: 'var(--execution-card-shadow)' }}
+                      />
+                      <foreignObject
+                        x={task.x + 14}
+                        y={task.y + 14}
+                        width={TASK_W - 28}
+                        height={task.h - 20}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <div className="flex h-full flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <StatusIcon
+                              size={14}
+                              strokeWidth={2.4}
+                              className="shrink-0"
+                              style={{ color: isDone ? 'var(--execution-status-done)' : config.accent }}
+                            />
+                            <span
+                              className={`min-w-0 flex-1 truncate text-[13px] font-extrabold ${isRejected ? 'line-through' : ''}`}
+                              style={{
+                                color: isDone ? 'var(--execution-status-done)' : 'var(--text-main)',
+                                fontFamily: 'var(--font-display), sans-serif',
+                              }}
+                            >
+                              {task.label}
+                            </span>
+                            {task.progress > 0 && (
+                              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">
+                                {Math.round(task.progress * 100)}%
+                              </span>
+                            )}
+                          </div>
+
+                          {task.goal && (
+                            <div className="line-clamp-2 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                              {task.goal}
+                            </div>
+                          )}
+
+                          {(task.executionPhase && task.executionPhase !== 'idle') ||
+                          task.activeFiles.length > 0 ||
+                          task.latestEvent ? (
+                            <div className="mt-1">
+                              {task.executionPhase && task.executionPhase !== 'idle' && (
+                                <PhaseBadge phase={task.executionPhase} />
+                              )}
+                              <ActiveFileSummary
+                                activeFiles={task.activeFiles}
+                                latestEvent={task.latestEvent}
+                              />
+                            </div>
+                          ) : null}
+
+                          {task.stepCount > 0 && (
+                            <div className="text-[10px] text-[var(--muted-foreground)] opacity-60">
+                              {task.stepCount} {task.stepCount === 1 ? 'step' : 'steps'}
+                            </div>
+                          )}
+
+                          {task.files.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {task.files.slice(0, 2).map((file) => (
+                                <FileBadge key={file.path} file={file} />
+                              ))}
+                              {task.files.length > 2 && (
+                                <span className="text-[9px] text-[var(--muted-foreground)] opacity-50">
+                                  +{task.files.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {task.gateStates.length > 0 && (
+                            <div className="mt-auto pt-1">
+                              <GateDots gateStates={task.gateStates} />
+                            </div>
+                          )}
+
+                          {task.rating > 0 && (
+                            <div className="mt-auto">
+                              <RatingStars rating={task.rating} size={11} />
+                            </div>
+                          )}
+                        </div>
+                      </foreignObject>
+                    </g>
+                  );
+                })}
               </g>
             );
           })}
         </g>
       </svg>
 
-      {/* Zoom HUD */}
       <div className="absolute bottom-4 right-4 flex items-center gap-2">
         <div className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 px-3 py-1 text-[11px] font-medium text-[var(--text-main)] shadow-sm backdrop-blur">
           {Math.round(transform.k * 100)}%
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 p-1 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-1 rounded-full border border-[var(--execution-chip-border)]/15 bg-[var(--execution-panel-bg)]/88 p-1 shadow-sm backdrop-blur">
           <button
             type="button"
             onClick={() => stepZoom('out')}

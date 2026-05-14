@@ -624,6 +624,78 @@
             "description": "评分反馈闭环与 re-plan 流程"
           }
         ]
+      },
+      "executionFlow": {
+        "orientation": "horizontal",
+        "stages": [
+          {
+            "id": "schema-types",
+            "name": "Schema & Types",
+            "description": "数据层类型扩展",
+            "taskIds": [
+              "task-1",
+              "task-2"
+            ]
+          },
+          {
+            "id": "api-validation",
+            "name": "API & Validation",
+            "description": "服务端逻辑和校验",
+            "taskIds": [
+              "task-3",
+              "task-4"
+            ]
+          },
+          {
+            "id": "ui-flowchart-enhance",
+            "name": "UI - Flowchart Enhance",
+            "description": "DAG 卡片门禁指示器",
+            "taskIds": [
+              "task-5"
+            ]
+          },
+          {
+            "id": "ui-detail-panel",
+            "name": "UI - Detail Panel",
+            "description": "门禁配置与展示面板",
+            "taskIds": [
+              "task-6",
+              "task-7"
+            ]
+          },
+          {
+            "id": "agent-skills",
+            "name": "Agent Skills",
+            "description": "SKILL.md 更新与 review prompts 移植",
+            "taskIds": [
+              "task-8",
+              "task-9"
+            ]
+          },
+          {
+            "id": "feedback-loop",
+            "name": "Feedback Loop",
+            "description": "评分反馈闭环与 re-plan 流程",
+            "taskIds": [
+              "task-10",
+              "task-11"
+            ]
+          }
+        ],
+        "taskRelations": [
+          {
+            "fromTaskId": "task-1",
+            "toTaskId": "task-2"
+          },
+          {
+            "fromTaskId": "task-3",
+            "toTaskId": "task-4"
+          },
+          {
+            "fromTaskId": "task-10",
+            "toTaskId": "task-11"
+          }
+        ]
       }
     }
   },

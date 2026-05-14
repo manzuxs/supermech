@@ -30,7 +30,25 @@ export interface ImplementationStep {
   expectedOutput?: string;
 }
 
-export type ExecutionPhase = 'implementing' | 'reviewing' | 'idle';
+export type ExecutionPhase =
+  | 'implementing'
+  | 'editing-files'
+  | 'running-tests'
+  | 'reviewing'
+  | 'fixing'
+  | 'idle';
+
+export type ExecutionEventKind = 'phase' | 'file' | 'command' | 'review' | 'note';
+
+export type ExecutionEventStatus = 'info' | 'success' | 'warning' | 'error';
+
+export interface ExecutionEvent {
+  kind: ExecutionEventKind;
+  message: string;
+  timestamp: string;
+  status?: ExecutionEventStatus;
+  files?: string[];
+}
 
 export interface PlanTaskMetadata {
   goal?: string;
@@ -45,6 +63,8 @@ export interface PlanTaskMetadata {
   qualityGates?: QualityGateConfig[];
   gateStates?: QualityGateState[];
   executionPhase?: ExecutionPhase;
+  activeFiles?: string[];
+  executionEvents?: ExecutionEvent[];
 }
 
 export interface PlanPhase {
@@ -63,4 +83,32 @@ export interface PlanSession {
   phase: string;
   totalSteps: number;
   completedSteps: number;
+}
+
+export type ExecutionFlowOrientation = 'horizontal';
+
+export interface ExecutionFlowStage {
+  id: string;
+  name: string;
+  description?: string;
+  taskIds: string[];
+}
+
+export interface ExecutionFlowStageRelation {
+  fromStageId: string;
+  toStageId: string;
+  label?: string;
+}
+
+export interface ExecutionFlowTaskRelation {
+  fromTaskId: string;
+  toTaskId: string;
+  label?: string;
+}
+
+export interface ExecutionFlow {
+  orientation: ExecutionFlowOrientation;
+  stages: ExecutionFlowStage[];
+  stageRelations?: ExecutionFlowStageRelation[];
+  taskRelations?: ExecutionFlowTaskRelation[];
 }

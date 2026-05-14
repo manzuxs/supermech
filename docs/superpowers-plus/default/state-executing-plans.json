@@ -379,6 +379,60 @@
             "description": "SKILL.md + CLAUDE.md + 落文件"
           }
         ]
+      },
+      "executionFlow": {
+        "orientation": "horizontal",
+        "stages": [
+          {
+            "id": "schema-validation",
+            "name": "Schema & Validation",
+            "description": "数据层改动",
+            "taskIds": [
+              "task-1"
+            ]
+          },
+          {
+            "id": "planeditor",
+            "name": "PlanEditor 精简",
+            "description": "移除状态/进度 UI",
+            "taskIds": [
+              "task-2",
+              "task-5"
+            ]
+          },
+          {
+            "id": "slash-command-system",
+            "name": "Slash Command System",
+            "description": "通用指令体系",
+            "taskIds": [
+              "task-3"
+            ]
+          },
+          {
+            "id": "kanbanboard",
+            "name": "KanbanBoard 增强",
+            "description": "星级评价 + 详情面板",
+            "taskIds": [
+              "task-4"
+            ]
+          },
+          {
+            "id": "agent-skills",
+            "name": "Agent Skills 更新",
+            "description": "SKILL.md + CLAUDE.md + 落文件",
+            "taskIds": [
+              "task-6",
+              "task-7",
+              "task-8"
+            ]
+          }
+        ],
+        "taskRelations": [
+          {
+            "fromTaskId": "task-2",
+            "toTaskId": "task-5"
+          }
+        ]
       }
     }
   },

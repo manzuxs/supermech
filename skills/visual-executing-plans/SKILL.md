@@ -1,11 +1,11 @@
 ---
 name: visual-executing-plans
-description: "Execute implementation plans with real-time DAG progress tracking. Supports configurable quality gates per task — spec review and code quality review."
+description: "Execute implementation plans with real-time stage-based flow tracking. Supports configurable quality gates per task — spec review and code quality review."
 ---
 
 # Visual Executing Plans
 
-Execute implementation plans step by step. The DAG flowchart shows real-time progress. Each task can have **configurable quality gates** that run after implementation.
+Execute implementation plans step by step. The execution canvas is a **left-to-right phase flowchart**: each phase is a region, each region contains ordered subtasks, and each subtask carries its files and quality-gate state.
 
 ## Process Overview
 
@@ -50,6 +50,39 @@ digraph execute_task {
 
 Read tasks from `state.canvas.nodes`. If the plan was written by visual-writing-plans, the nodes should already exist with `status: "pending"`, `progress: 0`, and optionally `metadata.qualityGates` configured.
 
+Also maintain **canonical execution layout metadata** in `state.canvas.metadata.executionFlow`.
+
+Required structure:
+```json
+{
+  "orientation": "horizontal",
+  "stages": [
+    {
+      "id": "schema-types",
+      "name": "Schema & Types",
+      "description": "数据层类型扩展",
+      "taskIds": ["task-1", "task-2"]
+    }
+  ],
+  "stageRelations": [
+    { "fromStageId": "schema-types", "toStageId": "api-validation", "label": "blocks" }
+  ],
+  "taskRelations": [
+    { "fromTaskId": "task-1", "toTaskId": "task-2", "label": "blocks" }
+  ]
+}
+```
+
+Rules:
+- `stages` is the primary layout source for executing-plans
+- `taskIds` order defines the visual order of subtasks inside a stage
+- the main canvas renders **stage order itself** as the primary phase flow
+- `stageRelations` should be omitted unless a future renderer explicitly needs them
+- do not emit transitive, redundant, or optional cross-stage relations for the main canvas
+- `taskRelations` are optional: use them for within-stage sequencing or explicit local branching
+- avoid generic labels like `blocks`; omit labels unless they carry real semantic meaning
+- Do **not** rely on `canvas.edges` as the primary layout source for executing-plans
+
 Set the initial state:
 ```json
 {
@@ -68,7 +101,7 @@ For each task, read `node.metadata.qualityGates` to determine which gates are en
 | `medium`  | enabled     | disabled     |
 | `high`    | enabled     | enabled      |
 
-Users can override these in the UI. If no `qualityGates` is set, only the `executionPhase` metadata is used for display.
+Users can override these in the UI. Treat the `qualityGates` array order as the review flow order.
 
 Update state.json at each milestone:
 
@@ -76,12 +109,29 @@ Update state.json at each milestone:
 ```json
 { "id": "task-2", "status": "active", "progress": 0 }
 ```
-Also set `executionPhase` in metadata: `"implementing"`.
+Also set runtime metadata so the UI can show what the agent is doing:
+```json
+{
+  "executionPhase": "implementing",
+  "activeFiles": ["packages/schemas/src/planner.ts"],
+  "executionEvents": [
+    {
+      "kind": "phase",
+      "message": "Started implementing task-2",
+      "timestamp": "2026-05-14T10:00:00.000Z",
+      "status": "info",
+      "files": ["packages/schemas/src/planner.ts"]
+    }
+  ]
+}
+```
 
 **Progress update (during multi-step tasks):**
 ```json
 { "id": "task-2", "status": "active", "progress": 0.5 }
 ```
+Keep `activeFiles` pointed at the file(s) currently being edited, and append a fresh item to
+`executionEvents` whenever the phase changes, a command runs, a review starts, or a fix loop begins.
 
 **Gate review:**
 When a gate starts, set the gate state to `running`:
@@ -93,6 +143,15 @@ Also set `executionPhase` to `"reviewing"`:
 ```json
 // Via API: PATCH /__state/node/execution-phase
 { "nodeId": "task-2", "phase": "reviewing" }
+```
+Also append a review event such as:
+```json
+{
+  "kind": "review",
+  "message": "Started spec-review for task-2",
+  "timestamp": "2026-05-14T10:04:00.000Z",
+  "status": "info"
+}
 ```
 
 When a gate passes:
@@ -110,7 +169,13 @@ Fix the issues, then re-run the gate. Loop until passed.
 ```json
 { "id": "task-2", "status": "done", "progress": 1.0 }
 ```
-Set `executionPhase` to `"idle"`.
+Set `executionPhase` to `"idle"`, clear `activeFiles`, and append a success event.
+
+Keep `executionFlow` in sync when you re-plan:
+- if a task changes phase, move its `taskId` to the correct stage
+- if a stage becomes unnecessary, remove it
+- if a new phase relationship appears, add a `stageRelations` entry
+- if two tasks inside one stage need explicit order, add a `taskRelations` entry
 
 **Blocked / needs review:**
 ```json
@@ -149,7 +214,7 @@ Set agent status to idle. Keep `activeSkill` set so the user can review results 
 ## Key Rules
 
 - `activeSkill` stays set after execution completes — users review history in the UI. Only clear when the user explicitly switches skills.
-- Status, progress, gateStates, and executionPhase are **Agent-only**. The UI does not allow the user to change them. The user only rates quality.
+- Status, progress, gateStates, executionPhase, activeFiles, and executionEvents are **Agent-only**. The UI does not allow the user to change them. The user only rates quality.
 - `qualityGates` config is set by writing-plans or user via UI
 - Do NOT add new tasks — the plan is already defined
 - Only one task should be `active` at a time
@@ -159,7 +224,7 @@ Set agent status to idle. Keep `activeSkill` set so the user can review results 
 
 ## Checklist
 
-1. **Load plan** — read from `state.canvas.nodes`, check `qualityGates` config
+1. **Load plan** — read from `state.canvas.nodes`, check `qualityGates` config, and ensure `canvas.metadata.executionFlow` is present
 2. **Set activeSkill** — `meta.activeSkill: "executing-plans"`
 3. **Execute each task** — update status + progress at each milestone
 4. **Run enabled gates** — spec review first, then code quality (if enabled)
