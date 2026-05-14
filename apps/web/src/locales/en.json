@@ -9,6 +9,7 @@
     "name": "Name",
     "create": "Create",
     "save": "Save",
+    "settings": "Settings",
     "cancel": "Cancel"
   },
   "sidebar": {
@@ -82,6 +83,15 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "session": {
+    "title": "Session Manager",
+    "current": "Current",
+    "empty": "No sessions yet",
+    "newPlaceholder": "Session name...",
+    "skills": "{{count}} skills",
+    "switch": "Switch",
+    "confirmDelete": "Are you sure?"
   },
   "editor": {
     "goal": "Goal",

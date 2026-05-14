@@ -1,14 +1,16 @@
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 const modes = ['light', 'dark', 'system'] as const;
 
 const icons = { light: Sun, dark: Moon, system: Monitor };
 
-export default function ThemeToggle() {
-  const { t } = useTranslation();
+interface ThemeToggleProps {
+  className?: string;
+}
+
+export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -27,11 +29,10 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={cycle}
-      title={t(`theme.${theme}`)}
-      className="flex items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2 py-1 text-xs text-[var(--text-main)] transition-colors hover:bg-[var(--border)]"
+      title={theme ?? 'system'}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-all hover:opacity-100 ${className}`}
     >
-      <Icon size={14} className="opacity-70" />
-      <span>{t(`theme.${theme}`)}</span>
+      <Icon size={16} />
     </button>
   );
 }

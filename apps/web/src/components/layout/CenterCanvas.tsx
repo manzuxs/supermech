@@ -9,10 +9,12 @@ export default function CenterCanvas() {
   const { t } = useTranslation();
   const { state } = useWorkbench();
 
-  if (!state.meta.activeSkill) {
+  if (state.canvas.nodes.length === 0) {
     return (
-      <main className="flex items-center justify-center text-sm text-[var(--text-main)] opacity-50">
-        {t('canvas.empty')}
+      <main className="canvas-dot-grid flex h-full w-full items-center justify-center bg-[var(--bg-canvas)]">
+        <div className="text-[13px] text-[var(--text-main)] opacity-50">
+          {t('canvas.empty')}
+        </div>
       </main>
     );
   }
@@ -20,12 +22,8 @@ export default function CenterCanvas() {
   const kanbanTypes: SkillType[] = ['executing-plans'];
 
   return (
-    <main className="relative h-full w-full overflow-hidden bg-[var(--bg-canvas)]">
-      {state.canvas.nodes.length === 0 ? (
-        <div className="absolute inset-0 flex items-center justify-center text-[13px] text-[var(--text-main)] opacity-50">
-          {t('canvas.empty')}
-        </div>
-      ) : state.canvas.skillType === 'writing-plans' ? (
+    <main className="canvas-dot-grid relative h-full w-full bg-[var(--bg-canvas)]">
+      {state.canvas.skillType === 'writing-plans' ? (
         <SwimlaneCanvas />
       ) : kanbanTypes.includes(state.canvas.skillType) ? (
         <FlowchartCanvas nodes={state.canvas.nodes} edges={state.canvas.edges} />

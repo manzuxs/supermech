@@ -298,7 +298,7 @@
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": true,
-    "selectedNodeId": "scope-pro"
+    "rightSidebarOpen": false,
+    "selectedNodeId": null
   }
 }

@@ -1,8 +1,7 @@
 import CenterCanvas from './components/layout/CenterCanvas.tsx';
 import FloatingFeedback from './components/layout/FloatingFeedback.tsx';
-import Footer from './components/layout/Footer.tsx';
-import Header from './components/layout/Header.tsx';
-import LeftSidebar from './components/layout/LeftSidebar.tsx';
+import LogoBar from './components/layout/LogoBar.tsx';
+import SettingsPopover from './components/layout/SettingsPopover.tsx';
 import { useWorkbench } from './context/WorkbenchContext.tsx';
 
 export default function App() {
@@ -16,18 +15,17 @@ export default function App() {
     state.ui.selectedNodeId !== null;
 
   return (
-    <div className="grid h-screen w-screen grid-cols-[auto_1fr] grid-rows-[64px_1fr_32px] overflow-hidden bg-[var(--bg-main)]">
-      <Header />
-      <LeftSidebar />
+    <div className="relative h-screen w-screen overflow-hidden bg-[var(--bg-main)]">
       <div
-        className={`relative h-full min-w-0 overflow-hidden ${
+        className={`h-full w-full ${
           showInspector ? 'grid grid-cols-[minmax(0,1fr)_22rem]' : ''
         }`}
       >
         <CenterCanvas />
         {(isBrainstorming || isWritingPlans || isExecutingPlans) && <FloatingFeedback />}
       </div>
-      <Footer />
+      <LogoBar />
+      <SettingsPopover />
     </div>
   );
 }

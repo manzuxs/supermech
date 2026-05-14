@@ -9,6 +9,7 @@
     "name": "名称",
     "create": "创建",
     "save": "保存",
+    "settings": "设置",
     "cancel": "取消"
   },
   "sidebar": {
@@ -82,6 +83,15 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统"
+  },
+  "session": {
+    "title": "会话管理",
+    "current": "当前",
+    "empty": "暂无会话",
+    "newPlaceholder": "会话名称...",
+    "skills": "{{count}} 个技能",
+    "switch": "切换",
+    "confirmDelete": "确定删除？"
   },
   "editor": {
     "goal": "目标",
