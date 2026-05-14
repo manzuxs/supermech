@@ -51,7 +51,8 @@
   --success: #27a644;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   overflow: hidden;
   background: var(--bg-main);

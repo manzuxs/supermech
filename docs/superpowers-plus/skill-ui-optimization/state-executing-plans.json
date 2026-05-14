@@ -322,7 +322,12 @@
       "planHeader": {
         "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
         "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板。",
-        "techStack": ["React", "TypeScript", "Tailwind v4", "Vite"],
+        "techStack": [
+          "React",
+          "TypeScript",
+          "Tailwind v4",
+          "Vite"
+        ],
         "phases": [
           {
             "name": "Schema & Validation",
@@ -358,12 +363,22 @@
       "stepIndex": null,
       "quickAction": null,
       "createdAt": "2026-05-12T10:00:00.000Z"
+    },
+    {
+      "id": "b152a523-2606-4bc6-975f-84c2c4373474",
+      "nodeId": "task-4",
+      "text": "",
+      "rating": 5,
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T01:54:48.667Z"
     }
   ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,
-    "rightSidebarOpen": true,
-    "selectedNodeId": "task-5"
+    "rightSidebarOpen": false,
+    "selectedNodeId": null
   }
 }
