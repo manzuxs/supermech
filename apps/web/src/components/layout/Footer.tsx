@@ -12,21 +12,23 @@ export default function Footer() {
   const progress = totalNodes > 0 ? Math.round((doneNodes / totalNodes) * 100) : 0;
 
   return (
-    <footer className="col-span-full flex h-8 items-center justify-between border-t border-[var(--border)] bg-[var(--bg-main)] px-4 text-[11px] text-[var(--text-main)] opacity-60">
-      <span>
-        {t('footer.status')}: {t(`footer.${state.meta.agentStatus}`)}
-      </span>
+    <footer className="col-span-full flex h-8 items-center justify-between border-t border-[var(--border)] bg-[var(--background)] px-6 text-caption text-[var(--muted-foreground)]">
+      <div className="flex items-center gap-4">
+        <span>
+          {t('footer.status')}: <span className="text-[var(--foreground)]">{t(`footer.${state.meta.agentStatus}`)}</span>
+        </span>
+      </div>
 
-      <span className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {totalNodes > 0 && (
           <span>
-            {doneNodes}/{totalNodes} · {progress}%
+            {doneNodes}/{totalNodes} <span className="mx-1 opacity-30">·</span> {progress}%
           </span>
         )}
         <span>
-          {state.canvas.nodes.length} nodes · {state.feedback.length} feedback
+          {state.canvas.nodes.length} nodes <span className="mx-1 opacity-30">·</span> {state.feedback.length} feedback
         </span>
-      </span>
+      </div>
     </footer>
   );
 }
