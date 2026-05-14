@@ -135,6 +135,8 @@
     "codeQuality": "Code Quality",
     "required": "required",
     "replanAction": "Re-plan & Re-execute",
+    "startNode": "Start",
+    "endNode": "End",
     "showDetails": "Show details",
     "hideDetails": "Hide details",
     "task": "task",

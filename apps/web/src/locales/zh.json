@@ -135,6 +135,8 @@
     "codeQuality": "代码质量",
     "required": "必需",
     "replanAction": "重新规划并重新执行",
+    "startNode": "开始",
+    "endNode": "结束",
     "showDetails": "展开详情",
     "hideDetails": "收起详情",
     "task": "个任务",

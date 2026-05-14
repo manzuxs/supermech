@@ -3,7 +3,7 @@
     "projectName": "Superpowers+",
     "sessionId": "executing-plans",
     "activeSkill": "executing-plans",
-    "agentStatus": "idle"
+    "agentStatus": "error"
   },
   "canvas": {
     "skillType": "executing-plans",
@@ -62,7 +62,7 @@
       {
         "id": "task-2",
         "label": "扩展 PlanTaskMetadata，加入 qualityGates 和 executionPhase",
-        "status": "done",
+        "status": "accepted",
         "progress": 1,
         "parentId": null,
         "children": [],
@@ -108,8 +108,8 @@
       {
         "id": "task-3",
         "label": "Validate.ts 新增 qualityGates 和 gateStates 校验",
-        "status": "done",
-        "progress": 1,
+        "status": "active",
+        "progress": 0.58,
         "parentId": null,
         "children": [],
         "metadata": {
@@ -148,14 +148,35 @@
               "command": "pnpm typecheck && node -e \"const {validateState} = require('./packages/watcher/src/validate'); console.log(validateState({...}))\"",
               "expectedOutput": "合法数据返回 valid: true，非法数据返回 valid: false + 错误信息"
             }
+          ],
+          "executionPhase": "editing-files",
+          "activeFiles": [
+            "packages/watcher/src/validate.ts"
+          ],
+          "gateStates": [
+            {
+              "type": "spec-review",
+              "status": "running"
+            }
+          ],
+          "executionEvents": [
+            {
+              "kind": "phase",
+              "message": "正在补充 qualityGates 与 gateStates 的校验分支",
+              "timestamp": "2026-05-14T09:20:00.000Z",
+              "status": "info",
+              "files": [
+                "packages/watcher/src/validate.ts"
+              ]
+            }
           ]
         }
       },
       {
         "id": "task-4",
         "label": "API 层新增门禁状态更新端点",
-        "status": "done",
-        "progress": 1,
+        "status": "rejected",
+        "progress": 0.72,
         "parentId": null,
         "children": [],
         "metadata": {
@@ -194,14 +215,36 @@
               "command": "pnpm dev:web && curl -X PATCH http://localhost:5173/__state/node/gate-state \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"nodeId\":\"task-1\",\"type\":\"spec-review\",\"status\":\"passed\"}'",
               "expectedOutput": "返回 { ok: true, state: {...} } 且节点 metadata.gateStates 中包含更新后的状态"
             }
+          ],
+          "executionPhase": "fixing",
+          "activeFiles": [
+            "packages/watcher/src/vite-plugin.ts"
+          ],
+          "gateStates": [
+            {
+              "type": "spec-review",
+              "status": "failed",
+              "result": "端点参数校验未覆盖 phase 非法值场景。"
+            }
+          ],
+          "executionEvents": [
+            {
+              "kind": "review",
+              "message": "Spec review 未通过：需要补充 execution-phase 的非法输入校验。",
+              "timestamp": "2026-05-14T09:35:00.000Z",
+              "status": "warning",
+              "files": [
+                "packages/watcher/src/vite-plugin.ts"
+              ]
+            }
           ]
         }
       },
       {
         "id": "task-5",
         "label": "FlowchartCanvas 添加门禁状态指示器",
-        "status": "done",
-        "progress": 1,
+        "status": "pending",
+        "progress": 0,
         "parentId": null,
         "children": [],
         "metadata": {
@@ -287,8 +330,8 @@
       {
         "id": "task-7",
         "label": "DetailPanel 添加门禁结果展示和 Re-plan 按钮",
-        "status": "done",
-        "progress": 1,
+        "status": "pending",
+        "progress": 0,
         "parentId": null,
         "children": [],
         "metadata": {
@@ -394,8 +437,8 @@
       {
         "id": "task-9",
         "label": "配置 riskLevel → qualityGates 自动预设",
-        "status": "done",
-        "progress": 1,
+        "status": "pending",
+        "progress": 0,
         "parentId": null,
         "children": [],
         "metadata": {
@@ -430,7 +473,7 @@
       {
         "id": "task-10",
         "label": "实现评分反馈闭环：低评分触发 re-plan",
-        "status": "done",
+        "status": "accepted",
         "progress": 1,
         "parentId": null,
         "children": [],
@@ -699,7 +742,254 @@
       }
     }
   },
-  "feedback": [],
+  "feedback": [
+    {
+      "id": "fb-task-2-rating",
+      "nodeId": "task-2",
+      "text": "Schema 扩展完整，命名和字段设计都很清晰。",
+      "rating": 5,
+      "section": "general",
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:00:00.000Z"
+    },
+    {
+      "id": "fb-task-4-rating",
+      "nodeId": "task-4",
+      "text": "接口方向对，但缺少非法 phase 的边界校验，请继续修。",
+      "rating": 2,
+      "section": "general",
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:36:00.000Z"
+    },
+    {
+      "id": "fb-task-10-rating",
+      "nodeId": "task-10",
+      "text": "反馈闭环顺畅，交互清楚。",
+      "rating": 4,
+      "section": "general",
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:50:00.000Z"
+    },
+    {
+      "id": "88fa6fd4-bee4-41c6-bce1-0887a448f8b4",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:05.851Z"
+    },
+    {
+      "id": "5b27eaa8-dc4d-4b71-adb1-aac90259b56b",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:11.609Z"
+    },
+    {
+      "id": "97ea09a1-4e6d-416f-a319-1cca36d8076e",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:19.970Z"
+    },
+    {
+      "id": "453d2670-4780-4ea0-90a3-74e351b48846",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:22.330Z"
+    },
+    {
+      "id": "31609f5a-cd2a-4a20-b349-f8fe1691c010",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:24.049Z"
+    },
+    {
+      "id": "4573dcae-f407-4ca1-8d33-976da91cf1f0",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:36.630Z"
+    },
+    {
+      "id": "52a53f32-53b0-4919-a01e-ca52815dfb34",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:48.573Z"
+    },
+    {
+      "id": "f53237b5-b3be-450c-ab22-c4527dd5968a",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:49.260Z"
+    },
+    {
+      "id": "26fd881b-4322-4c4c-a499-e2b74aa6d0df",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:49.733Z"
+    },
+    {
+      "id": "75579f41-77b6-42c2-9f30-b14f6886909b",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:50.182Z"
+    },
+    {
+      "id": "25916dbf-e8ec-4cd1-b670-1fcf1a38d67d",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:11:50.860Z"
+    },
+    {
+      "id": "30b4329e-fc5d-47e7-9565-1966e7854854",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:11.075Z"
+    },
+    {
+      "id": "9effb4ca-2162-4ce1-a4b9-0413b5a7c29e",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:13.152Z"
+    },
+    {
+      "id": "d8e1e281-7cb7-4087-8326-b06c09142565",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:13.964Z"
+    },
+    {
+      "id": "136b1bc9-8aa0-4b73-b388-6f3df216343e",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:15.752Z"
+    },
+    {
+      "id": "76650857-32e1-48d2-8fee-168d9eefa1fa",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:16.553Z"
+    },
+    {
+      "id": "be322bd5-9aeb-4496-bd96-28daa45223b6",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:17.150Z"
+    },
+    {
+      "id": "98669474-eb5f-46b6-ade4-d844442c9bdc",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:51.005Z"
+    },
+    {
+      "id": "b29c2c02-0827-478b-bb42-fd3d3025c69a",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:51.517Z"
+    },
+    {
+      "id": "8ede0260-4eb3-47f7-8718-5f58db4602f0",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:52.115Z"
+    },
+    {
+      "id": "7b20de3c-bb83-4998-a6a3-2292257aa9b9",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:52.810Z"
+    },
+    {
+      "id": "16d941c9-cd07-4c3f-9766-e9efae87919c",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:53.521Z"
+    },
+    {
+      "id": "b45000bb-1b0c-4b4c-a6d2-2465a9f416fa",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:56.119Z"
+    },
+    {
+      "id": "24683542-6a72-4848-b2f5-fc090a839fee",
+      "nodeId": "__global__",
+      "text": "State validation error: canvas.nodes[2].metadata.executionPhase: must be one of implementing, reviewing, idle; canvas.nodes[3].metadata.executionPhase: must be one of implementing, reviewing, idle",
+      "section": null,
+      "stepIndex": null,
+      "quickAction": null,
+      "createdAt": "2026-05-14T09:14:58.708Z"
+    }
+  ],
   "ui": {
     "theme": "system",
     "leftSidebarOpen": true,

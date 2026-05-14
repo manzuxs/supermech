@@ -515,6 +515,59 @@ function StatusBadge({ status }: { status: NodeStatus }) {
   );
 }
 
+function TerminalNode({
+  x,
+  y,
+  kind,
+}: {
+  x: number;
+  y: number;
+  kind: 'start' | 'end';
+}) {
+  return (
+    <g>
+      {kind === 'start' ? (
+        <>
+          <circle
+            cx={x}
+            cy={y}
+            r={FLOW_NODE_RADIUS}
+            fill="var(--execution-panel-bg)"
+            stroke="var(--execution-link-stroke)"
+            strokeWidth={1.5}
+          />
+          <circle
+            cx={x}
+            cy={y}
+            r={3}
+            fill="var(--execution-link-stroke)"
+          />
+        </>
+      ) : (
+        <>
+          <circle
+            cx={x}
+            cy={y}
+            r={FLOW_NODE_RADIUS}
+            fill="var(--execution-panel-bg)"
+            stroke="var(--execution-link-stroke)"
+            strokeWidth={1.5}
+          />
+          <circle
+            cx={x}
+            cy={y}
+            r={FLOW_NODE_RADIUS - 3}
+            fill="none"
+            stroke="var(--execution-link-stroke)"
+            strokeWidth={1.25}
+          />
+        </>
+      )}
+
+    </g>
+  );
+}
+
 interface FlowchartCanvasProps {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
@@ -780,21 +833,15 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                       strokeWidth={1.25}
                       opacity={0.22}
                     />
-                    <circle
-                      cx={stage.x + stage.width / 2}
-                      cy={stage.flowStartY}
-                      r={FLOW_NODE_RADIUS}
-                      fill="var(--execution-panel-bg)"
-                      stroke="var(--execution-link-stroke)"
-                      strokeWidth={1.5}
+                    <TerminalNode
+                      x={stage.x + stage.width / 2}
+                      y={stage.flowStartY}
+                      kind="start"
                     />
-                    <circle
-                      cx={stage.x + stage.width / 2}
-                      cy={stage.flowEndY}
-                      r={FLOW_NODE_RADIUS}
-                      fill="var(--execution-panel-bg)"
-                      stroke="var(--execution-link-stroke)"
-                      strokeWidth={1.5}
+                    <TerminalNode
+                      x={stage.x + stage.width / 2}
+                      y={stage.flowEndY}
+                      kind="end"
                     />
                     {stageTaskLinks.map((link, index) => {
                       const pathStr = verticalFlowPath(link.from, link.to);
@@ -922,23 +969,25 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                       {isActive && (
                         <>
                           <rect
-                            x={task.x}
-                            y={task.y}
-                            width={TASK_W}
-                            height={5}
+                            x={task.x + 1.5}
+                            y={task.y + 1.5}
+                            width={TASK_W - 3}
+                            height={8}
                             rx={22}
                             ry={22}
                             fill="color-mix(in srgb, var(--execution-status-active) 18%, transparent)"
                             className="animate-pulse"
+                            style={{ clipPath: 'inset(0 round 22px 22px 0 0)' }}
                           />
                           <rect
-                            x={task.x}
-                            y={task.y}
-                            width={Math.max(56, TASK_W * Math.max(task.progress, 0.18))}
-                            height={5}
+                            x={task.x + 1.5}
+                            y={task.y + 1.5}
+                            width={Math.max(56, (TASK_W - 3) * Math.max(task.progress, 0.18))}
+                            height={8}
                             rx={22}
                             ry={22}
                             fill="var(--execution-status-active)"
+                            style={{ clipPath: 'inset(0 round 22px 22px 0 0)' }}
                           />
                         </>
                       )}
