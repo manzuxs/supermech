@@ -1,6 +1,6 @@
 import rawState from 'virtual:supermech/state';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import type { NodeStatus, UIPreferences, WorkbenchState } from 'schemas';
+import type { NodeStatus, UIPreferences, WorkbenchState } from '@supermech/schema';
 import { registerCommand } from '../lib/commands.ts';
 
 export interface FeedbackParams {

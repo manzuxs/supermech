@@ -7,154 +7,124 @@ Monorepo: terminal/Markdown-driven agent workflow upgraded to a data-driven visu
 ```
 Agent (Brain)          React Frontend (Canvas)
     │                        │
-    │   写入 state.json       │
+    │   writes state.json    │
     ├───────────────────────►│  Vite plugin → HMR → re-render
     │                        │
     │  ◄─────────────────────┤  User action → middleware → write state.json
-    │   下一轮读取反馈        │
+    │   reads feedback       │
 ```
 
 Three layers:
-- **Logic** — skills in `skills/` that write structured JSON to `state.json`
-- **Data protocol** — `packages/schemas/` TypeScript types for `WorkbenchState`
-- **Presentation** — `apps/web/` React app rendering MindMap or KanbanBoard
+- **Logic** — skills in `.supermech/skills/` that write structured JSON to `state-<skill>.json`
+- **Data protocol** — `@supermech/schema` TypeScript types + zod runtime validation
+- **Presentation** — `apps/web/` React app rendering MindMap, PlanEditor, or KanbanBoard
 
 ## Directory Structure
 
 ```
+.supermech/
+├── config.json
+├── skills/
+│   ├── visual-brainstorming/
+│   ├── visual-writing-plans/
+│   └── visual-executing-plans/
+├── state-brainstorming.json
+└── state-writing-plans.json
+
 apps/web/                       # React frontend (Vite + React 18 + Tailwind v4)
-├── src/
-│   ├── main.tsx                # Entry: ThemeProvider + WorkbenchProvider
-│   ├── App.tsx                 # 5-zone grid layout
-│   ├── styles.css              # Tailwind v4 + CSS variables (light/dark)
-│   ├── components/layout/      # Header, LeftSidebar, CenterCanvas, RightSidebar, Footer, ThemeToggle
-│   ├── components/visuals/     # MindMap (brainstorming), PlanEditor (writing-plans), KanbanBoard (executing-plans)
-│   ├── components/shared/      # CommandInput (feedback + slash commands)
-│   ├── context/WorkbenchContext.tsx  # React Context: state + API calls + session management
-│   ├── lib/commands.ts         # Slash command registry (/execute, etc.)
-│   ├── lib/i18n.ts             # i18next init
-│   ├── locales/                # en.json, zh.json
-│   └── env.d.ts                # virtual:supermech/state declaration
-├── index.html
-├── vite.config.ts              # React + Tailwind + supermechWatcherPlugin
-└── tsconfig.json
-
 packages/
-├── schemas/src/                # Shared TypeScript types
-│   ├── workbench.ts            # WorkbenchState, CanvasNode, CanvasEdge, FeedbackEntry
-│   ├── brainstorm.ts           # BrainstormNodeMetadata
-│   └── planner.ts              # PlanStepMetadata
-├── watcher/src/
-│   ├── vite-plugin.ts          # Vite plugin: virtual module + middleware + session management
-│   └── session-manager.ts      # Session file CRUD utilities
+├── schemas/                    # @supermech/schema
+├── watcher/                    # @supermech/runtime
+└── init/                       # @supermech/init
 
-skills/
-├── visual-brainstorming/       # Agent skill: outputs tree nodes to state.json
-├── visual-writing-plans/       # Agent skill: outputs plan tasks as Kanban nodes
-└── visual-executing-plans/     # Agent skill: updates task status/progress in real-time
-    ├── SKILL.md                # Execution flow with quality gates
-    ├── spec-reviewer-prompt.md # Spec compliance review prompt template
-    └── code-quality-reviewer-prompt.md # Code quality review prompt template
-
-state.json                      # Single source of truth (or state-<sessionId>.json for sessions)
+state.json                      # Legacy state file
 ```
 
-## Data Flow
+## Published Packages
 
-1. **Agent → JSON**: Agent modifies `state.json` (or `state-<sessionId>.json`)
-2. **JSON → UI**: Vite plugin watches file → invalidates virtual module → sends HMR custom event → Context re-fetches via GET
-3. **UI → JSON**: User clicks/feedback → Context calls middleware API → middleware writes file, returns updated state
-4. **JSON → Agent**: Agent reads state.json next iteration (via file or GET endpoint)
+| Package | Purpose |
+|---------|---------|
+| `@supermech/schema` | TS types + `validateState()` |
+| `@supermech/runtime` | `readState()` / `writeState()` / `watchState()` + Vite plugin |
+| `@supermech/init` | `initProject()` one-command setup |
 
-## API Endpoints (Vite middleware at `/__state`)
+## Agent Workflow
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/__state` | GET | Read current state |
-| `/__state/select` | POST | Set selectedNodeId |
-| `/__state/ui` | PATCH | Update UI prefs |
-| `/__state/feedback` | POST | Add feedback entry |
-| `/__state/node` | PATCH | Update node (status, progress, label) |
-| `/__state/node/gate-state` | PATCH | Update quality gate status (nodeId, type, status, result?) |
-| `/__state/node/execution-phase` | PATCH | Update execution phase (nodeId, phase) |
-| `/__state/replan` | POST | Reset node to pending for re-execution |
-| `/__state/sessions` | GET | List sessions + current ID |
-| `/__state/sessions` | POST | Create session `{sessionId}` |
-| `/__state/sessions/switch` | POST | Switch session `{sessionId}` |
-| `/__state/sessions/rename` | PATCH | Rename session `{sessionId, newLabel}` |
-| `/__state/sessions/delete` | POST | Delete session `{sessionId}` |
+### Writing State
+Write structured JSON to `.supermech/state-<skill>.json`. The file path tells the UI which skill view to render.
 
-## State Schema (`WorkbenchState`)
-
-```typescript
-interface WorkbenchState {
-  meta:     { projectName, sessionId, activeSkill, agentStatus }
-  canvas:   { skillType, nodes: CanvasNode[], edges: CanvasEdge[] }
-  feedback: FeedbackEntry[]
-  ui:       { theme, leftSidebarOpen, rightSidebarOpen, selectedNodeId }
+```json
+// .supermech/state-brainstorming.json
+{
+  "meta": { "projectName": "My Project", "sessionId": "brainstorming", "activeSkill": "brainstorming", "agentStatus": "writing" },
+  "canvas": { "skillType": "brainstorming", "nodes": [...], "edges": [] },
+  "feedback": [],
+  "ui": { "theme": "system", "leftSidebarOpen": true, "rightSidebarOpen": true, "selectedNodeId": null }
 }
 ```
 
-`CanvasNode.status`: `pending | active | accepted | rejected | done`
+### Reading Feedback
+The `feedback[]` array contains user annotations. Check it on each iteration:
 
-## Available Skills
+```json
+{
+  "feedback": [{ "nodeId": "q-approach", "text": "Consider serverless option", "rating": null, "createdAt": "..." }]
+}
+```
 
-| Skill | Renders As | Purpose |
-|-------|-----------|---------|
-| `visual-brainstorming` | MindMap (SVG tree) | Explore ideas, propose approaches, design |
-| `visual-writing-plans` | PlanEditor (tree + detail panel) | Write implementation plans as structured tasks; `status`/`progress` are Agent-only, not shown in UI |
-| `visual-executing-plans` | KanbanBoard (3-column + detail panel) | Execute plans; Agent sets status/progress, user rates quality via stars |
+### Detecting Active State
+- `meta.activeSkill === null` → canvas is idle, no view rendered
+- `meta.activeSkill === 'brainstorming'` → MindMap view
+- `meta.activeSkill === 'writing-plans'` → PlanEditor view
+- `meta.activeSkill === 'executing-plans'` → KanbanBoard view
 
-## Commands
+### Skill Discovery
+List `.supermech/skills/` to discover available skills. Each subdirectory contains a `SKILL.md` defining the skill's behavior.
 
-```bash
-pnpm dev:web       # Start Vite dev server at localhost:5173
-pnpm typecheck     # tsc --noEmit for all packages
-pnpm check         # biome check .
-pnpm check:fix     # biome check --write .
-pnpm build         # turbo run build
+### Plan Scoping (Optional)
+Set `currentPlan` in config or runtime calls to scope state to a subdirectory:
+- `.supermech/<plan>/state-<skill>.json`
+
+Useful for parallel work contexts (e.g., "feature-a" and "feature-b").
+
+### Using Runtime API (TypeScript agents)
+
+```typescript
+import { readState, writeState } from '@supermech/runtime';
+
+// Read
+const state = readState('brainstorming');
+
+// Write
+writeState('brainstorming', updatedState);
+
+// Validate
+import { validateState } from '@supermech/schema';
+const { valid, errors } = validateState(state);
 ```
 
 ## Conventions
 
-- `state.json` at workspace root is the default session. Sessions create `state-<sessionId>.json`
-- Agent sets `meta.activeSkill` to enable canvas rendering (`null` = idle)
-- Agent sets `canvas.skillType` to choose MindMap vs PlanEditor vs KanbanBoard
-- MindMap uses `parentId`/`children` for tree hierarchy
-- KanbanBoard and PlanEditor use `edges[]` for dependency tracking
-- Use `metadata.description` for long-form content, `label` for short titles (3-8 words)
-- Renaming a session only changes the UI label, not the Agent's internal sessionId
+- State files: `.supermech/state-<skill>.json`
+- Root `state.json` exists for backward compatibility
+- `meta.activeSkill` controls which view renders (`null` = idle)
+- `canvas.skillType` matches the skill name
+- Skills are independent — not a pipeline. Any skill can be used without others.
+- Adding a skill = add a directory in `.supermech/skills/` + write `state-<new-skill>.json`
+- Plans are optional groupings, not required
 
-## Design Decisions
+## Commands
 
-### Status ownership: Agent-only
-Status (`pending`/`active`/`done`) and `progress` (0.0–1.0) are **exclusively managed by the Agent** during execution. The UI (both PlanEditor and KanbanBoard) does not allow user to change them. This keeps "planner" and "executor" roles cleanly separated.
+```bash
+pnpm dev:web       # Start dev server
+pnpm typecheck     # tsc --noEmit
+pnpm check         # biome check
+pnpm check:fix     # biome check --write .
+```
 
-### Human role: rating, not managing
-After a task is done, the user rates quality (1–5 stars) and optionally adds text feedback via the FlowchartCanvas detail panel. Ratings are stored in `feedback[].rating`. Low ratings (1-2 stars) show a **"Re-plan & Re-execute"** button that resets the node to `pending` and adds a feedback entry with `quickAction: "replan"` for the agent to pick up.
+## Design Notes
 
-### Quality Gate System
-Each task can have configurable quality gates that run during execution:
-
-| Gate | Type | Purpose |
-|------|------|---------|
-| Spec Compliance | `spec-review` | Verify implementation matches requirements |
-| Code Quality | `code-quality` | Verify code is clean, tested, maintainable |
-
-Gates are **preset by risk level** (`low`/`medium`/`high`) and can be **overridden in the UI** (DetailPanel) at any time:
-
-- `low`: all gates disabled
-- `medium`: spec-review enabled+required
-- `high`: both gates enabled+required
-
-During execution, the agent sets `executionPhase` (`implementing`/`reviewing`/`idle`) and `gateStates` per gate (`pending`/`running`/`passed`/`failed`/`skipped`). The FlowchartCanvas shows gate status as colored dots on each card.
-
-### Slash command system (`lib/commands.ts`)
-The bottom input box doubles as a CLI: normal text → submitted as feedback; input starting with `/` → dispatched to the command registry. `CommandInput` is the shared component handling this. Pre-registered commands:
-- `/execute` (aliases: `start`, `run`) — switches to `executing-plans` skill
-
-New skills can call `registerCommand()` to add their own commands.
-
-### Plan vs Execute separation
-- **PlanEditor** (writing-plans): pure planning view — task tree, goal, files, code steps, tests. No status dots, no progress bars, no state controls.
-- **KanbanBoard** (executing-plans): execution view — 3 columns (To Do / In Progress / Done), agent-driven status, user rating. Selected card opens a detail panel with read-only info + star rating + feedback form.
+- Status (`pending`/`active`/`done`) is Agent-managed only — UI does not change it
+- User provides quality rating (1-5 stars) and text feedback
+- Low ratings (1-2 stars) trigger "Re-plan & Re-execute" button in UI
+- Slash commands in the input box: `/execute` switches to executing-plans

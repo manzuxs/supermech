@@ -1,4 +1,4 @@
-import type { SkillType } from 'schemas';
+import type { SkillType } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import FlowchartCanvas from '../visuals/FlowchartCanvas.tsx';
 import MindMap from '../visuals/MindMap.tsx';

@@ -2,7 +2,7 @@ import { Beaker, CheckCircle2, ChevronRight, Circle, Code, FileText, Loader2, Mi
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, ImplementationStep } from 'schemas';
+import type { CanvasNode, ImplementationStep } from '@supermech/schema';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 

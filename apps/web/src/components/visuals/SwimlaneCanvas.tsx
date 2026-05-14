@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from 'schemas';
+import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 

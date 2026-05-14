@@ -1,6 +1,6 @@
 import { useState, type SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SkillType } from 'schemas';
+import type { SkillType } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import SessionSwitcher from './SessionSwitcher.tsx';
 

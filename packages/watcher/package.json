@@ -1,12 +1,20 @@
 {
-  "name": "watcher",
-  "version": "0.0.0",
+  "name": "@supermech/runtime",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "src/vite-plugin.ts",
-  "types": "src/vite-plugin.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": "./src/vite-plugin.ts",
+    "./storage": "./src/storage.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supermech/schema": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",

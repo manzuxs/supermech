@@ -1,12 +1,22 @@
 {
-  "name": "schemas",
-  "version": "0.0.0",
+  "name": "@supermech/schema",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./validation": "./src/validation.ts",
+    "./workbench": "./src/workbench.ts",
+    "./brainstorm": "./src/brainstorm.ts",
+    "./planner": "./src/planner.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

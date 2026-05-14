@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { supermechWatcherPlugin } from 'watcher';
+import { supermechWatcherPlugin } from '@supermech/runtime/vite';
 
 const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
 

@@ -19,7 +19,7 @@ import type {
   ExecutionFlowStageRelation,
   ExecutionFlowTaskRelation,
   NodeStatus,
-} from 'schemas';
+} from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 

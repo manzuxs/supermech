@@ -11,3 +11,6 @@ dist/
 
 # Local inspection artifacts
 .playwright-mcp/
+
+# Supermech session data (config.json and skills/ are tracked)
+.supermech/state-*.json

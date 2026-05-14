@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, NodeStatus } from 'schemas';
+import type { CanvasNode, NodeStatus } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 const NODE_W = 200;
