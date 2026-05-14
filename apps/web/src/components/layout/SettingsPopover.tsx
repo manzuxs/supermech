@@ -28,11 +28,12 @@ export default function SettingsPopover() {
           <button
             type="button"
             title={t('session.title')}
+            aria-label={t('session.title')}
             onClick={() => {
               setSessionOpen(true);
               setOpen(false);
             }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-all hover:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <UserRound size={16} />
           </button>
@@ -44,8 +45,9 @@ export default function SettingsPopover() {
           <button
             type="button"
             title={i18n.language === 'zh' ? 'English' : '中文'}
+            aria-label={i18n.language === 'zh' ? 'English' : '中文'}
             onClick={toggleLang}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-all hover:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-main)] text-[var(--text-main)] opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Globe size={16} />
           </button>
@@ -55,8 +57,9 @@ export default function SettingsPopover() {
         <button
           type="button"
           title={t('common.settings')}
+          aria-label={t('common.settings')}
           onClick={() => setOpen(!open)}
-          className={`flex h-9 w-9 items-center justify-center rounded-xl border bg-[var(--bg-main)] shadow-sm transition-all ${
+          className={`flex h-9 w-9 items-center justify-center rounded-xl border bg-[var(--bg-main)] shadow-sm transition-[opacity,border-color,color] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 ${
             open
               ? 'border-[var(--primary)]/50 text-[var(--primary)] opacity-100'
               : 'border-[var(--border)] text-[var(--text-main)] opacity-40 hover:opacity-80'

@@ -207,6 +207,7 @@ function RatingSection({
             key={star}
             type="button"
             onClick={() => setRating(star)}
+            aria-label={`${t('feedback.rating')} ${star}`}
             className="transition hover:scale-110 active:scale-95"
             title={`${star} star${star > 1 ? 's' : ''}`}
           >
@@ -346,6 +347,7 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
               <button
                 type="button"
                 onClick={() => toggleGate(i, 'enabled')}
+                aria-label={gate.label}
                 className={`h-4 w-8 rounded-full transition-colors ${gate.enabled ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'}`}
               >
                 <span

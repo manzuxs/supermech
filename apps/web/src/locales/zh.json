@@ -10,7 +10,9 @@
     "create": "创建",
     "save": "保存",
     "settings": "设置",
-    "cancel": "取消"
+    "cancel": "取消",
+    "show": "显示",
+    "hide": "隐藏"
   },
   "sidebar": {
     "skills": "技能库",
@@ -18,7 +20,8 @@
     "writingPlans": "制定计划",
     "executingPlans": "执行计划",
     "properties": "属性详情",
-    "feedback": "反馈建议"
+    "feedback": "反馈建议",
+    "toggleSkills": "{{action}}技能库"
   },
   "canvas": {
     "empty": "暂无内容，等待智能体创建…",
@@ -82,7 +85,8 @@
   "theme": {
     "light": "浅色",
     "dark": "深色",
-    "system": "跟随系统"
+    "system": "跟随系统",
+    "cycle": "切换主题（当前：{{mode}}）"
   },
   "session": {
     "title": "会话管理",
@@ -91,7 +95,10 @@
     "newPlaceholder": "会话名称...",
     "skills": "{{count}} 个技能",
     "switch": "切换",
-    "confirmDelete": "确定删除？"
+    "confirmDelete": "确定删除？",
+    "expand": "展开会话",
+    "collapse": "收起会话",
+    "nameInputLabel": "会话名称"
   },
   "editor": {
     "goal": "目标",
@@ -106,6 +113,7 @@
     "noTests": "未定义验证步骤",
     "feedbackTitle": "针对此部分的反馈",
     "feedbackPlaceholder": "提出修改建议或问题...",
+    "feedbackInputLabel": "反馈内容",
     "send": "发送",
     "sent": "已发送",
     "expected": "预期结果:",

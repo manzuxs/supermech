@@ -335,6 +335,7 @@ export default function SwimlaneCanvas() {
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
   const layoutSig = lanes.map((l) => `${l.name}:${l.tasks.length}`).join('|');
 
@@ -553,6 +554,7 @@ export default function SwimlaneCanvas() {
           {lanes.map((lane) =>
             lane.tasks.map((task) => {
               const isSelected = task.id === selectedId;
+              const isFocused = focusedTaskId === task.id && !isSelected;
 
               return (
                 <g
@@ -563,15 +565,35 @@ export default function SwimlaneCanvas() {
                     updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
                       e.stopPropagation();
                       updateUI({ selectedNodeId: task.id, rightSidebarOpen: true });
                     }
                   }}
+                  onFocus={() => setFocusedTaskId(task.id)}
+                  onBlur={() =>
+                    setFocusedTaskId((current) => (current === task.id ? null : current))
+                  }
+                  aria-label={task.label}
                   className="group cursor-pointer outline-none"
                   role="button"
                   tabIndex={0}
                 >
+                  {isFocused && (
+                    <rect
+                      x={task.x - 2}
+                      y={task.y - 2}
+                      width={CARD_W + 4}
+                      height={task.h + 4}
+                      rx={14}
+                      ry={14}
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth={2}
+                      opacity={0.65}
+                    />
+                  )}
                   {/* Selection glow */}
                   {isSelected && (
                     <rect
@@ -757,7 +779,8 @@ export default function SwimlaneCanvas() {
             type="button"
             onClick={() => stepZoom('out')}
             title={t('canvas.zoomOut')}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
+            aria-label={t('canvas.zoomOut')}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Minus size={14} />
           </button>
@@ -765,7 +788,8 @@ export default function SwimlaneCanvas() {
             type="button"
             onClick={() => stepZoom('in')}
             title={t('canvas.zoomIn')}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
+            aria-label={t('canvas.zoomIn')}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Plus size={14} />
           </button>
@@ -773,7 +797,8 @@ export default function SwimlaneCanvas() {
             type="button"
             onClick={() => fitToView()}
             title={t('canvas.fitView')}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]"
+            aria-label={t('canvas.fitView')}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Crosshair size={14} />
           </button>

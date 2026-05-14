@@ -14,6 +14,9 @@ export default function LogoBar() {
   const { t } = useTranslation();
   const { currentSkill, switchSkill } = useWorkbench();
   const [skillsOpen, setSkillsOpen] = useState(true);
+  const toggleSkillsLabel = t('sidebar.toggleSkills', {
+    action: skillsOpen ? t('common.hide') : t('common.show'),
+  });
 
   return (
     <div className="absolute left-4 top-4 z-50 flex items-start gap-2">
@@ -21,7 +24,9 @@ export default function LogoBar() {
       <button
         type="button"
         onClick={() => setSkillsOpen(!skillsOpen)}
-        className="h-10 w-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-[var(--border)] bg-[var(--bg-main)] shadow-sm transition-all hover:ring-[var(--primary)]/40"
+        aria-label={toggleSkillsLabel}
+        title={toggleSkillsLabel}
+        className="h-10 w-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-[var(--border)] bg-[var(--bg-main)] shadow-sm transition-colors hover:ring-[var(--primary)]/40 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
       >
         <img src="/logo.png" alt="Logo" className="h-full w-full object-cover" />
       </button>
@@ -39,7 +44,8 @@ export default function LogoBar() {
               key={key}
               type="button"
               onClick={() => switchSkill(key)}
-              className={`group flex items-center gap-0 rounded-full border bg-[var(--bg-main)] p-2 transition-all hover:gap-1.5 hover:pr-3 ${
+              aria-label={t(labelKey)}
+              className={`group flex items-center gap-0 rounded-full border bg-[var(--bg-main)] p-2 transition-[gap,padding,opacity,border-color,color] hover:gap-1.5 hover:pr-3 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 ${
                 isActive
                   ? 'border-[var(--primary)]/50 text-[var(--primary)] opacity-100'
                   : 'border-[var(--border)] text-[var(--text-main)] opacity-70 hover:border-[var(--primary)]/30 hover:opacity-100'

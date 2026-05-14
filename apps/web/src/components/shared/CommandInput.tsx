@@ -54,17 +54,20 @@ export default function CommandInput({ onSubmit, placeholder }: CommandInputProp
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
+          aria-label={t('editor.feedbackInputLabel')}
+          name="feedbackMessage"
+          autoComplete="off"
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSubmit();
           }}
           placeholder={placeholder ?? t('editor.feedbackPlaceholder')}
-          className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] px-4 py-2 text-xs text-[var(--text-main)] outline-none transition-colors placeholder:opacity-30 focus:border-[var(--primary)]"
+          className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg-main)] px-4 py-2 text-xs text-[var(--text-main)] outline-none transition-colors placeholder:opacity-30 focus:border-[var(--primary)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
         />
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!text.trim()}
-          className="rounded-lg bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-30"
+          className="rounded-lg bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white transition-[opacity,transform] hover:opacity-90 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-30"
         >
           {t('editor.send')}
         </button>

@@ -291,18 +291,22 @@ export default function FloatingFeedback() {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
+              aria-label={t('editor.feedbackInputLabel')}
+              name="feedbackMessage"
+              autoComplete="off"
               onKeyDown={handleKeyDown}
               placeholder={
                 selectedNode
                   ? t('feedback.nodePlaceholder', { name: selectedNode.label })
                   : t('feedback.placeholder')
               }
-              className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30"
+              className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
             />
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!text.trim()}
+              aria-label={t('feedback.submit')}
               className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
               title={t('feedback.submit')}
             >
@@ -363,14 +367,18 @@ export default function FloatingFeedback() {
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                aria-label={t('editor.feedbackInputLabel')}
+                name="feedbackMessage"
+                autoComplete="off"
                 onKeyDown={handleKeyDown}
                 placeholder={t('feedback.nodePlaceholder', { name: selectedNode.label })}
-                className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30"
+                className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
               />
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={!text.trim()}
+                aria-label={t('feedback.submit')}
                 className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
                 title={t('feedback.submit')}
               >

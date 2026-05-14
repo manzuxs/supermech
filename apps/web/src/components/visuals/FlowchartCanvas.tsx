@@ -396,6 +396,7 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
 
   const layoutSig = dagNodes.map((n) => `${n.id}:${n.level}`).join('|');
 
@@ -592,6 +593,7 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
               n.phase !== activePhase &&
               phaseOrder.indexOf(n.phase) > phaseOrder.indexOf(activePhase);
             const opacityVal = isFuturePhase && !isActive ? 0.4 : 1;
+            const isFocused = focusedNodeId === n.id && !isSelected;
 
             return (
               <g
@@ -602,15 +604,33 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
                   updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
                     e.stopPropagation();
                     updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
                   }
                 }}
+                onFocus={() => setFocusedNodeId(n.id)}
+                onBlur={() => setFocusedNodeId((current) => (current === n.id ? null : current))}
+                aria-label={n.label}
                 className="group cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 rounded-lg"
                 role="button"
                 tabIndex={0}
               >
+                {isFocused && (
+                  <rect
+                    x={n.x - NODE_W / 2 - 5}
+                    y={n.y - NODE_H / 2 - 5}
+                    width={NODE_W + 10}
+                    height={NODE_H + 10}
+                    rx={14}
+                    ry={14}
+                    fill="none"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    opacity={0.65}
+                  />
+                )}
                 {/* Selection glow */}
                 {isSelected && (
                   <rect
@@ -776,7 +796,8 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
             type="button"
             onClick={() => stepZoom('out')}
             title={t('canvas.zoomOut')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            aria-label={t('canvas.zoomOut')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Minus size={14} />
           </button>
@@ -784,7 +805,8 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
             type="button"
             onClick={() => stepZoom('in')}
             title={t('canvas.zoomIn')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            aria-label={t('canvas.zoomIn')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Plus size={14} />
           </button>
@@ -792,7 +814,8 @@ export default function FlowchartCanvas({ nodes, edges }: FlowchartCanvasProps) 
             type="button"
             onClick={() => fitToView()}
             title={t('canvas.fitView')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+            aria-label={t('canvas.fitView')}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
           >
             <Crosshair size={14} />
           </button>

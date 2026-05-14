@@ -10,7 +10,9 @@
     "create": "Create",
     "save": "Save",
     "settings": "Settings",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "show": "Show",
+    "hide": "Hide"
   },
   "sidebar": {
     "skills": "Skills",
@@ -18,7 +20,8 @@
     "writingPlans": "Writing Plans",
     "executingPlans": "Executing Plans",
     "properties": "Properties",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "toggleSkills": "{{action}} skills"
   },
   "canvas": {
     "empty": "No content yet — waiting for the agent…",
@@ -82,7 +85,8 @@
   "theme": {
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "cycle": "Switch theme (current: {{mode}})"
   },
   "session": {
     "title": "Session Manager",
@@ -91,7 +95,10 @@
     "newPlaceholder": "Session name...",
     "skills": "{{count}} skills",
     "switch": "Switch",
-    "confirmDelete": "Are you sure?"
+    "confirmDelete": "Are you sure?",
+    "expand": "Expand session",
+    "collapse": "Collapse session",
+    "nameInputLabel": "Session name"
   },
   "editor": {
     "goal": "Goal",
@@ -106,6 +113,7 @@
     "noTests": "No verification steps defined",
     "feedbackTitle": "Feedback on this section",
     "feedbackPlaceholder": "Suggest a change or ask a question...",
+    "feedbackInputLabel": "Feedback message",
     "send": "Send",
     "sent": "Sent",
     "expected": "Expected:",

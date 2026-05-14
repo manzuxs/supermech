@@ -91,33 +91,38 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
                   <div key={s.name}>
                     <div
                       className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isCurrent
-                          ? 'bg-[var(--surface-2)]'
-                          : 'hover:bg-[var(--surface-1)] cursor-pointer'
+                        isCurrent ? 'bg-[var(--surface-2)]' : 'hover:bg-[var(--surface-1)]'
                       }`}
-                      onClick={() => !isCurrent && handleSwitch(s.name)}
                     >
                       <button
                         type="button"
+                        aria-label={t(isExpanded ? 'session.collapse' : 'session.expand')}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleExpand(s.name);
                         }}
-                        className="flex h-5 w-5 items-center justify-center text-[var(--text-main)] opacity-40 hover:opacity-80"
+                        className="flex h-5 w-5 items-center justify-center text-[var(--text-main)] opacity-40 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
                       >
                         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </button>
 
-                      <span className="flex-1 truncate font-medium text-[var(--text-main)]">
-                        {s.name === 'default' ? 'Default' : s.name}
-                      </span>
-
-                      {isCurrent && (
-                        <span className="flex items-center gap-1 text-xs text-[var(--primary)]">
-                          <Check size={12} />
-                          {t('session.current')}
+                      <button
+                        type="button"
+                        disabled={isCurrent}
+                        onClick={() => !isCurrent && handleSwitch(s.name)}
+                        className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 disabled:cursor-default"
+                      >
+                        <span className="flex-1 truncate font-medium text-[var(--text-main)]">
+                          {s.name === 'default' ? 'Default' : s.name}
                         </span>
-                      )}
+
+                        {isCurrent && (
+                          <span className="flex items-center gap-1 text-xs text-[var(--primary)]">
+                            <Check size={12} />
+                            {t('session.current')}
+                          </span>
+                        )}
+                      </button>
                     </div>
 
                     {/* 展开详情 */}
@@ -150,6 +155,9 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            aria-label={t('session.nameInputLabel')}
+            name="sessionName"
+            autoComplete="off"
             placeholder={t('session.newPlaceholder')}
             className="flex-1"
             onKeyDown={(e) => {

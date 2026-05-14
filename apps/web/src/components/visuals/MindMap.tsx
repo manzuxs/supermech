@@ -182,6 +182,7 @@ export default function MindMap({ nodes }: MindMapProps) {
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
 
   function fitToView() {
     const el = containerRef.current;
@@ -411,6 +412,7 @@ export default function MindMap({ nodes }: MindMapProps) {
             const isFocusNode = !selectedId || focusIds.has(n.id);
             const contentOpacity = isSelected ? 1 : isFocusNode ? 0.94 : 0.62;
             const cardOpacity = isSelected ? 1 : isFocusNode ? 0.98 : 0.58;
+            const isFocused = focusedNodeId === n.id && !isSelected;
 
             return (
               <g
@@ -423,14 +425,34 @@ export default function MindMap({ nodes }: MindMapProps) {
                   updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    updateUI({ selectedNodeId: n.id, rightSidebarOpen: true });
+                  }
                 }}
+                onFocus={() => setFocusedNodeId(n.id)}
+                onBlur={() => setFocusedNodeId((current) => (current === n.id ? null : current))}
+                aria-label={n.label}
                 role="button"
                 tabIndex={0}
                 className="group cursor-pointer outline-none"
                 style={{ opacity: cardOpacity }}
               >
                 <title>{tooltip}</title>
+                {isFocused && (
+                  <rect
+                    x={n.x - NODE_W / 2 - 4}
+                    y={n.y - NODE_H / 2 - 4}
+                    width={NODE_W + 8}
+                    height={NODE_H + 8}
+                    rx={16}
+                    ry={16}
+                    fill="none"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    opacity={0.65}
+                  />
+                )}
 
                 {/* Card Shadow/Glow (Selection) */}
                 {isSelected && (
@@ -585,7 +607,7 @@ function CanvasControlButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100"
+      className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-main)] opacity-70 transition hover:bg-[var(--border)]/50 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
     >
       {icon}
     </button>
