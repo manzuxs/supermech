@@ -2,14 +2,14 @@
   "name": "@supermech/cli",
   "version": "0.0.1",
   "type": "module",
-  "main": "src/server.ts",
   "bin": {
-    "supermech": "./bin/cli.mjs"
+    "supermech": "./bin/supermech.mjs"
   },
-  "files": ["bin", "src", "web"],
+  "files": ["bin/supermech.mjs", "web"],
   "scripts": {
+    "build": "node ../../scripts/build-cli.cjs",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "node ../../scripts/copy-web-dist.cjs"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@supermech/runtime": "workspace:*",
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^25.6.2",
+    "esbuild": "0.28.0",
     "typescript": "^5.8.3"
   },
   "publishConfig": {
