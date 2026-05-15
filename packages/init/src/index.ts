@@ -1,6 +1,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+const BUILTIN_SKILLS = ['brainstorming', 'writing-plans', 'executing-plans'];
+
 export interface InitOptions {
   /** Target directory (defaults to cwd). */
   cwd?: string;
@@ -39,7 +41,7 @@ const DEFAULT_STATE_META = {
 /** Initialize a `.supermech/` directory in the target project. */
 export function initProject(options: InitOptions = {}): { dir: string; skills: string[] } {
   const cwd = options.cwd ?? process.cwd();
-  const skills = options.skills ?? [];
+  const skills = options.skills ?? BUILTIN_SKILLS;
 
   const supermechDir = join(cwd, '.supermech');
   const skillsDir = join(supermechDir, 'skills');

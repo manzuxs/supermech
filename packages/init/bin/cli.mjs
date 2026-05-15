@@ -3,6 +3,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+const BUILTIN_SKILLS = ['brainstorming', 'writing-plans', 'executing-plans'];
+
 const DEFAULT_CONFIG = {
   schemaVersion: 1,
   statePath: '.supermech/state',
@@ -32,14 +34,20 @@ const DEFAULT_STATE_META = {
 };
 
 function parseArgs(argv) {
-  const skills = [];
+  let skills = null; // null = install all built-in
+  let noSkills = false;
+
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--with-skills' && argv[i + 1]) {
-      skills.push(...argv[i + 1].split(',').map((s) => s.trim()));
+      skills = argv[i + 1].split(',').map((s) => s.trim());
       i++;
+    } else if (argv[i] === '--no-skills') {
+      noSkills = true;
     }
   }
-  return { skills };
+
+  if (noSkills) return { skills: [] };
+  return { skills: skills ?? BUILTIN_SKILLS };
 }
 
 function init(cwd, options) {
@@ -69,7 +77,7 @@ const args = parseArgs(process.argv.slice(2));
 const result = init(cwd, args);
 
 console.log(`Supermech initialized at ${result.dir}`);
+console.log(`Skills installed: ${result.skills.join(', ')}`);
 if (result.skills.length > 0) {
-  console.log(`Skills installed: ${result.skills.join(', ')}`);
+  console.log(`Start workbench: npx supermech`);
 }
-console.log('Run `ls .supermech/` to see the files.');

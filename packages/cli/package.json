@@ -9,7 +9,7 @@
   "files": ["bin", "src", "web"],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "node ../../scripts/copy-web-dist.js"
+    "prepublishOnly": "node ../../scripts/copy-web-dist.cjs"
   },
   "dependencies": {
     "@supermech/runtime": "workspace:*",
