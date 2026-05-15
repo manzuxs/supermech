@@ -1,44 +1,83 @@
 ---
 name: supermech-writing-plans
-description: Write implementation plans as structured task trees. Output to .supermech/<plan>/state-writing-plans.json for the Supermech PlanEditor to render.
+description: Use when you have a spec or requirements for a multi-step task, before touching code. Writes structured plan to .supermech/<plan>/state-writing-plans.json for the Supermech PlanEditor to render.
 ---
 
 # Visual Writing Plans
 
-Write structured JSON to `.supermech/<plan>/state-writing-plans.json` to render an interactive plan editor.
+Write comprehensive implementation plans as structured JSON. Assume the engineer has zero context for the codebase and questionable taste. Document everything: which files to touch, code, tests, docs to reference, how to verify. DRY. YAGNI. TDD. Frequent commits.
+
+**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
 ## Plan Directory
 
-Use the same plan directory created during brainstorming, or create a new one based on the user's request topic:
+Use the same plan directory created during brainstorming (e.g., `.supermech/<plan>/`). If there was no brainstorming session, create a new plan directory based on the user's request topic.
 
-- `.supermech/<plan>/state-writing-plans.json`
+Write to: `.supermech/<plan>/state-writing-plans.json`
 
-If there are existing brainstorming results in a plan directory, use that same plan name for writing-plans.
+## Scope Check
 
-## How It Works
+If the spec covers multiple independent subsystems, suggest breaking into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
 
-1. Define a `PlanHeader` with goal, architecture, tech stack, and phases
-2. Write task nodes with goals, files, implementation steps, and tests
-3. Use `edges[]` for dependency tracking between tasks
-4. User reviews and gives feedback via the UI
-5. When done, switch to `executing-plans` to execute
+## File Structure
 
-## Workflow
+Before defining tasks, map out which files will be created or modified and what each one is responsible for:
 
-1. **Find or create plan** — reuse existing plan directory, or create a new one
-2. **Write PlanHeader** — root goal, architecture, tech stack, optional phases — put it in `canvas.metadata.planHeader`
-3. **Create task nodes** — each task has:
-   - `metadata.goal`: what the task achieves
-   - `metadata.files`: files to create/modify
-   - `metadata.implementationSteps`: step-by-step code instructions
-   - `metadata.verificationSteps`: test steps
-   - `metadata.phase`: which phase the task belongs to
-   - `metadata.riskLevel`: `"low" | "medium" | "high"`
-4. **Define dependencies** — use `edges[]` for task ordering
-5. **Get user approval** — user reviews via PlanEditor, feedback in `feedback[]`
-6. **Hand off to execution** — user or agent can switch to executing-plans
+- Design units with clear boundaries and well-defined interfaces
+- Each file should have one clear responsibility
+- Prefer smaller, focused files over large ones that do too much
+- In existing codebases, follow established patterns. If a file has grown unwieldy, a split is reasonable.
+
+This structure informs task decomposition. Each task should produce self-contained changes.
+
+## Bite-Sized Task Granularity
+
+**Each task is one action (2-5 minutes):**
+- "Write the failing test" — one task
+- "Run it to make sure it fails" — one task
+- "Implement the minimal code to pass" — one task
+- "Run the tests — they pass" — one task
+- "Commit" — one task
+
+## No Placeholders
+
+Every step must contain actual content. These are **plan failures** — never write them:
+- "TBD", "TODO", "implement later", "fill in details"
+- "Add appropriate error handling" / "add validation" / "handle edge cases"
+- "Write tests for the above" (without actual test code)
+- "Similar to Task N" (repeat the code — tasks may be read out of order)
+- Steps that describe what to do without showing how
+
+## Checklist
+
+1. **Find or create plan directory** — reuse the brainstorming plan, or create a new one
+2. **Map file structure** — list files to create/modify with their responsibilities
+3. **Write PlanHeader** — goal, architecture, tech stack, phases → put in `canvas.metadata.planHeader`
+4. **Define phases** — up to 4 logical phases (Setup, Core, Integration, Polish)
+5. **Create task nodes** — each task has goal, files, implementation steps, verification steps, phase, risk level
+6. **Define dependencies** — use `edges[]` for task ordering
+7. **Self-review** — spec coverage, placeholder scan, type consistency (see below)
+8. **Hand off to execution** — task statuses are `"pending"`, ready for executing-plans
+
+## Self-Review
+
+After writing the complete plan:
+
+1. **Spec coverage:** Skim each requirement in the spec. Can you point to a task that implements it? List any gaps.
+2. **Placeholder scan:** Search for red flags — any of the patterns from "No Placeholders". Fix them.
+3. **Type consistency:** Do types, method signatures, and property names used in later tasks match what was defined earlier?
+
+Fix issues inline and move on.
+
+## Execution Handoff
+
+After saving the plan, tell the user:
+
+> "Plan written to `.supermech/<plan>/state-writing-plans.json`. Ready to execute with executing-plans skill."
 
 ## State Schema
+
+Write to `.supermech/<plan>/state-writing-plans.json`:
 
 ```json
 {
@@ -52,43 +91,64 @@ If there are existing brainstorming results in a plan directory, use that same p
     "skillType": "writing-plans",
     "nodes": [
       {
-        "id": "task-id",
-        "label": "task title",
+        "id": "task-unique-id",
+        "label": "short task title (3-8 words)",
         "status": "pending | active | done",
         "progress": 0.0,
         "parentId": null,
         "children": [],
         "metadata": {
           "goal": "what this task achieves",
-          "files": [{"path": "src/...", "type": "create | modify | test | delete"}],
-          "implementationSteps": [{"description": "...", "code": "..."}],
-          "verificationSteps": [{"description": "..."}],
-          "phase": "phase name",
+          "files": [
+            {"path": "src/feature/file.ts", "type": "create | modify | test | delete", "description": "what this file does"}
+          ],
+          "implementationSteps": [
+            {"description": "step description", "code": "actual code", "command": "exact shell command", "expectedOutput": "..."}
+          ],
+          "verificationSteps": [
+            {"description": "verification step"}
+          ],
+          "dependencies": ["other-task-id"],
+          "phase": "Phase 1: Setup",
           "riskLevel": "low | medium | high",
-          "estimatedMinutes": 30
+          "estimatedMinutes": 30,
+          "qualityGates": [
+            {"type": "spec-review | code-quality", "label": "Spec Compliance", "enabled": true, "required": true}
+          ]
         }
       }
     ],
-    "edges": [{"from": "task-a", "to": "task-b"}],
+    "edges": [
+      {"from": "task-a", "to": "task-b", "label": "depends on"}
+    ],
     "metadata": {
       "planHeader": {
-        "goal": "project goal",
-        "architecture": "architecture description",
-        "techStack": ["React", "Node.js"],
-        "phases": [{"name": "Setup", "description": "..."}]
+        "goal": "Build feature X with Y capability",
+        "architecture": "2-3 sentences about the approach",
+        "techStack": ["React 18", "TypeScript", "Express"],
+        "phases": [
+          {"name": "Phase 1: Setup", "description": "Project scaffolding and config"},
+          {"name": "Phase 2: Core", "description": "Core logic implementation"}
+        ]
       }
     }
   },
   "feedback": [],
-  "ui": { "theme": "system", "leftSidebarOpen": true, "rightSidebarOpen": true, "selectedNodeId": null }
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": null
+  }
 }
 ```
 
 ## Key Rules
 
-- `status`/`progress` are Agent-only — don't expose in UI
-- `edges[]` define task dependencies for ordering
-- Each task in the plan is a `CanvasNode`
+- `status` and `progress` are Agent-only fields — UI displays them, user cannot change them
+- `edges[]` define task dependencies for execution ordering
 - PlanHeader goes in `canvas.metadata.planHeader`
 - Keep `label` short (3-8 words), put details in `metadata`
+- `sessionId` must be `"writing-plans"`
+- `qualityGates` are preset by `riskLevel`: `low` = all disabled, `medium` = spec-review required, `high` = both required
 - Reuse the same plan directory as brainstorming if one exists
