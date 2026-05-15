@@ -7,10 +7,8 @@ import { createStateMiddleware } from '@supermech/runtime';
 
 function findWebDist(): string {
   const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
-  // Check development path first
   const dev = resolve(dirname, '../../../apps/web/dist');
   if (existsSync(join(dev, 'index.html'))) return dev;
-  // Fallback: bundled web/ directory
   const local = resolve(dirname, '../web');
   return local;
 }
@@ -22,28 +20,37 @@ export interface ServerOptions {
   noOpen?: boolean;
 }
 
+function stateFilePath(baseDir: string, plan: string | null, skill: string): string {
+  return plan ? join(baseDir, plan, `state-${skill}.json`) : join(baseDir, `state-${skill}.json`);
+}
+
+function planDirectory(baseDir: string, plan: string): string {
+  return join(baseDir, plan);
+}
+
 export async function startServer(options: ServerOptions = {}) {
   const port = options.port ?? 4388;
   const cwd = options.cwd ?? process.cwd();
-  const baseDir = resolve(cwd, options.baseDir ?? 'docs/supermech');
+  const baseDir = resolve(cwd, options.baseDir ?? '.supermech');
 
   if (!existsSync(baseDir)) mkdirSync(baseDir, { recursive: true });
 
   const app = express();
   const sseClients = new Set<ServerResponse>();
 
-  let currentPlan = 'default';
+  // Flat structure by default (no plan), matching @supermech/init output
+  let currentPlan: string | null = null;
   let currentSkill = 'brainstorming';
-  let planDir = join(baseDir, currentPlan);
-  let statePath = join(baseDir, currentPlan, 'state-brainstorming.json');
+  let planDir = baseDir; // no plan = flat, use baseDir directly
+  let statePath = stateFilePath(baseDir, null, currentSkill);
 
-  function ensurePlanDir() {
-    if (!existsSync(planDir)) mkdirSync(planDir, { recursive: true });
+  function ensureDir(path: string) {
+    if (!existsSync(path)) mkdirSync(path, { recursive: true });
   }
 
   function readState(): Record<string, unknown> {
     try {
-      ensurePlanDir();
+      ensureDir(planDir);
       if (!existsSync(statePath)) return createDefaultState(currentSkill);
       return JSON.parse(readFileSync(statePath, 'utf-8'));
     } catch {
@@ -52,13 +59,13 @@ export async function startServer(options: ServerOptions = {}) {
   }
 
   function writeStateInternal(data: unknown) {
-    ensurePlanDir();
+    ensureDir(planDir);
     writeFileSync(statePath, JSON.stringify(data, null, 2));
   }
 
   function createDefaultState(skill: string) {
     return {
-      meta: { projectName: 'My Project', sessionId: skill, activeSkill: null, agentStatus: 'idle' },
+      meta: { projectName: 'My Project', sessionId: skill, activeSkill: skill, agentStatus: 'idle' },
       canvas: { skillType: skill, nodes: [], edges: [] },
       feedback: [],
       ui: { theme: 'system', leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
@@ -83,8 +90,8 @@ export async function startServer(options: ServerOptions = {}) {
 
   function switchSkill(skill: string) {
     currentSkill = skill;
-    statePath = join(baseDir, currentPlan, `state-${skill}.json`);
-    ensurePlanDir();
+    statePath = stateFilePath(baseDir, currentPlan, skill);
+    ensureDir(planDir);
     if (!existsSync(statePath)) writeStateInternal(createDefaultState(skill));
     startWatching(statePath);
   }
@@ -92,14 +99,14 @@ export async function startServer(options: ServerOptions = {}) {
   function switchPlan(plan: string) {
     currentPlan = plan;
     currentSkill = 'brainstorming';
-    planDir = join(baseDir, plan);
-    statePath = join(baseDir, plan, 'state-brainstorming.json');
-    ensurePlanDir();
+    planDir = planDirectory(baseDir, plan);
+    statePath = stateFilePath(baseDir, plan, 'brainstorming');
+    ensureDir(planDir);
     if (!existsSync(statePath)) writeStateInternal(createDefaultState('brainstorming'));
     startWatching(statePath);
   }
 
-  ensurePlanDir();
+  ensureDir(planDir);
   if (!existsSync(statePath)) writeStateInternal(createDefaultState(currentSkill));
   startWatching(statePath);
 
@@ -118,14 +125,14 @@ export async function startServer(options: ServerOptions = {}) {
     baseDir,
     statePath,
     planDir,
-    currentPlan,
+    currentPlan: currentPlan ?? 'default',
     currentSkill,
     state: readState,
     writeState: writeStateInternal,
     listPlans: () => {
       try {
         return readdirSync(baseDir, { withFileTypes: true })
-          .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+          .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'skills')
           .map((d) => d.name);
       } catch {
         return [];
@@ -141,15 +148,11 @@ export async function startServer(options: ServerOptions = {}) {
       }
     },
     createPlan: (plan: string) => {
-      const dir = join(baseDir, plan);
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      ensureDir(planDirectory(baseDir, plan));
     },
     switchSkill,
     switchPlan,
-    validate: (s: unknown) => {
-      // Simple inline validator for MVP
-      return { valid: true, errors: [] };
-    },
+    validate: () => ({ valid: true, errors: [] }),
   }));
 
   const webDist = findWebDist();
