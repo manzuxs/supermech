@@ -12,3 +12,6 @@ export {
   supermechWatcherPlugin,
 } from './vite-plugin.ts';
 export type { WatcherPluginOptions } from './vite-plugin.ts';
+
+export { createStateMiddleware } from './middleware.ts';
+export type { MiddlewareConfig } from './middleware.ts';

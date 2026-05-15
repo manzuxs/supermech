@@ -1,0 +1,34 @@
+{
+  "name": "@supermech/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/server.ts",
+  "bin": {
+    "supermech": "./bin/cli.mjs"
+  },
+  "files": ["bin", "src", "web"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "node ../../scripts/copy-web-dist.js"
+  },
+  "dependencies": {
+    "@supermech/runtime": "workspace:*",
+    "@supermech/schema": "workspace:*",
+    "chokidar": "^4.0.3",
+    "express": "^5.2.1",
+    "open": "^10.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^25.6.2",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kunchenguid/supermech.git"
+  }
+}

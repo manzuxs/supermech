@@ -1,4 +1,5 @@
 import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from 'node:fs';
+import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
 import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
@@ -27,6 +28,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
   let server: ViteDevServer;
   let fileWatcher: FSWatcher | null = null;
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const sseClients = new Set<ServerResponse>();
 
   function planDirectory(plan: string): string {
     return join(baseDir, plan);
@@ -51,6 +53,9 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
       if (mod) {
         server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'custom', event: 'supermech:state-update', data: {} });
+      }
+      for (const client of sseClients) {
+        client.write('data: update\n\n');
       }
     }, 150);
   }
@@ -132,6 +137,20 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
       fileWatcher = watch(statePath, (eventType) => {
         if (eventType !== 'change') return;
         triggerHMR();
+      });
+
+      server.middlewares.use('/__state/events', (req, res) => {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        });
+        sseClients.add(res);
+        // Send initial heartbeat
+        res.write('data: connected\n\n');
+        req.on('close', () => {
+          sseClients.delete(res);
+        });
       });
 
       server.middlewares.use('/__state', async (req, res, next) => {

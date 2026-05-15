@@ -1,4 +1,3 @@
-import rawState from 'virtual:supermech/state';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import type { NodeStatus, UIPreferences, WorkbenchState } from '@supermech/schema';
 import { registerCommand } from '../lib/commands.ts';
@@ -40,8 +39,15 @@ interface WorkbenchContextValue {
 
 const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
 
+const DEFAULT_STATE: WorkbenchState = {
+  meta: { projectName: '', sessionId: '', activeSkill: null, agentStatus: 'idle' },
+  canvas: { skillType: 'brainstorming', nodes: [], edges: [] },
+  feedback: [],
+  ui: { theme: 'system', leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
+};
+
 export function WorkbenchProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<WorkbenchState>(() => rawState as WorkbenchState);
+  const [state, setState] = useState<WorkbenchState>(DEFAULT_STATE);
   const [plans, setPlans] = useState<string[]>([]);
   const [currentPlan, setCurrentPlan] = useState('default');
   const [skills, setSkills] = useState<string[]>([]);
@@ -61,13 +67,34 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Load initial state via HTTP
+    fetch('/__state')
+      .then((r) => r.json())
+      .then(setState)
+      .catch(() => {});
     fetchMeta();
+
     registerCommand({
       name: 'execute',
       aliases: ['start', 'run'],
       description: 'Switch to execution mode',
       run: () => switchSkill('executing-plans'),
     });
+
+    let evtSource: EventSource | null = null;
+    try {
+      evtSource = new EventSource('/__state/events');
+      evtSource.onmessage = () => {
+        fetch('/__state')
+          .then((r) => r.json())
+          .then(setState);
+        fetchMeta();
+      };
+    } catch {
+      // SSE not available — fall back to HMR
+    }
+
+    // Keep HMR listener as additional fallback in dev mode
     if (import.meta.hot) {
       import.meta.hot.on('supermech:state-update', async () => {
         const res = await fetch('/__state');
@@ -76,6 +103,10 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
         fetchMeta();
       });
     }
+
+    return () => {
+      if (evtSource) evtSource.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchMeta]);
 
