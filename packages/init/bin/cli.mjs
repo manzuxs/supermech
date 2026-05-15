@@ -79,5 +79,5 @@ const result = init(cwd, args);
 console.log(`Supermech initialized at ${result.dir}`);
 console.log(`Skills installed: ${result.skills.join(', ')}`);
 if (result.skills.length > 0) {
-  console.log(`Start workbench: npx supermech`);
+  console.log(`Start workbench: npx @supermech/cli`);
 }

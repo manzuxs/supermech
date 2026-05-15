@@ -1,11 +1,15 @@
 {
   "name": "@supermech/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "bin": {
     "supermech": "./bin/supermech.mjs"
   },
-  "files": ["bin/supermech.mjs", "web"],
+  "files": [
+    "bin/supermech.mjs",
+    "bin/server.mjs",
+    "web"
+  ],
   "scripts": {
     "build": "node ../../scripts/build-cli.cjs",
     "typecheck": "tsc --noEmit",

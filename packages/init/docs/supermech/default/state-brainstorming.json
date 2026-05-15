@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "projectName": "My Project",
+    "sessionId": "brainstorming",
+    "activeSkill": null,
+    "agentStatus": "idle"
+  },
+  "canvas": {
+    "skillType": "brainstorming",
+    "nodes": [],
+    "edges": []
+  },
+  "feedback": [],
+  "ui": {
+    "theme": "system",
+    "leftSidebarOpen": true,
+    "rightSidebarOpen": true,
+    "selectedNodeId": null
+  }
+}
