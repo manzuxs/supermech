@@ -19,28 +19,6 @@ const DEFAULT_CONFIG = {
   schemaVersion: 1,
   statePath: '.supermech',
   skillsPath: '.supermech/skills',
-  currentPlan: null,
-};
-
-const DEFAULT_STATE_META = {
-  meta: {
-    projectName: 'My Project',
-    sessionId: 'default',
-    activeSkill: null,
-    agentStatus: 'idle',
-  },
-  canvas: {
-    skillType: 'brainstorming',
-    nodes: [],
-    edges: [],
-  },
-  feedback: [],
-  ui: {
-    theme: 'system',
-    leftSidebarOpen: true,
-    rightSidebarOpen: true,
-    selectedNodeId: null,
-  },
 };
 
 function parseArgs(argv) {
@@ -104,14 +82,6 @@ function init(cwd, options) {
   writeFileSync(join(supermechDir, 'config.json'), JSON.stringify(DEFAULT_CONFIG, null, 2));
 
   for (const skill of skills) {
-    // Create state file
-    const state = {
-      ...DEFAULT_STATE_META,
-      meta: { ...DEFAULT_STATE_META.meta, sessionId: skill },
-      canvas: { ...DEFAULT_STATE_META.canvas, skillType: skill },
-    };
-    writeFileSync(join(supermechDir, `state-${skill}.json`), JSON.stringify(state, null, 2));
-
     // Copy SKILL.md to .supermech/skills/
     const skillSrc = join(skillsSrc, skill);
     if (existsSync(skillSrc)) {

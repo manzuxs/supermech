@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, watch } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, watch } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ServerResponse } from 'node:http';
@@ -24,8 +24,21 @@ function stateFilePath(baseDir: string, plan: string | null, skill: string): str
   return plan ? join(baseDir, plan, `state-${skill}.json`) : join(baseDir, `state-${skill}.json`);
 }
 
-function planDirectory(baseDir: string, plan: string): string {
-  return join(baseDir, plan);
+/** Detect plan directories under baseDir. Excludes skills/ and dot-directories. */
+function detectPlans(baseDir: string): string[] {
+  try {
+    return readdirSync(baseDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'skills')
+      .map((d) => d.name)
+      .sort((a, b) => {
+        // Sort by modification time, newest first
+        const aStat = statSync(join(baseDir, a));
+        const bStat = statSync(join(baseDir, b));
+        return bStat.mtimeMs - aStat.mtimeMs;
+      });
+  } catch {
+    return [];
+  }
 }
 
 export async function startServer(options: ServerOptions = {}) {
@@ -38,14 +51,20 @@ export async function startServer(options: ServerOptions = {}) {
   const app = express();
   const sseClients = new Set<ServerResponse>();
 
-  // Flat structure by default (no plan), matching @supermech/init output
-  let currentPlan: string | null = null;
+  // Detect plans from .supermech/ subdirectories
+  const plans = detectPlans(baseDir);
+  // Default to the most recently modified plan, or null if none
+  let currentPlan: string | null = plans[0] ?? null;
   let currentSkill = 'brainstorming';
-  let planDir = baseDir; // no plan = flat, use baseDir directly
-  let statePath = stateFilePath(baseDir, null, currentSkill);
+  let planDir = currentPlan ? join(baseDir, currentPlan) : baseDir;
+  let statePath = stateFilePath(baseDir, currentPlan, currentSkill);
 
   function ensureDir(path: string) {
     if (!existsSync(path)) mkdirSync(path, { recursive: true });
+  }
+
+  function refreshPlans(): string[] {
+    return detectPlans(baseDir);
   }
 
   function readState(): Record<string, unknown> {
@@ -65,10 +84,10 @@ export async function startServer(options: ServerOptions = {}) {
 
   function createDefaultState(skill: string) {
     return {
-      meta: { projectName: 'My Project', sessionId: skill, activeSkill: skill, agentStatus: 'idle' },
-      canvas: { skillType: skill, nodes: [], edges: [] },
-      feedback: [],
-      ui: { theme: 'system', leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
+      meta: { projectName: currentPlan ?? 'My Project', sessionId: skill, activeSkill: skill, agentStatus: 'idle' as const },
+      canvas: { skillType: skill, nodes: [] as unknown[], edges: [] as unknown[] },
+      feedback: [] as unknown[],
+      ui: { theme: 'system' as const, leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
     };
   }
 
@@ -82,9 +101,7 @@ export async function startServer(options: ServerOptions = {}) {
   function startWatching(path: string) {
     if (fileWatcher) fileWatcher.close();
     if (existsSync(path)) {
-      fileWatcher = watch(path, () => {
-        notifySSE();
-      });
+      fileWatcher = watch(path, () => notifySSE());
     }
   }
 
@@ -99,17 +116,20 @@ export async function startServer(options: ServerOptions = {}) {
   function switchPlan(plan: string) {
     currentPlan = plan;
     currentSkill = 'brainstorming';
-    planDir = planDirectory(baseDir, plan);
+    planDir = join(baseDir, plan);
     statePath = stateFilePath(baseDir, plan, 'brainstorming');
     ensureDir(planDir);
     if (!existsSync(statePath)) writeStateInternal(createDefaultState('brainstorming'));
     startWatching(statePath);
   }
 
-  ensureDir(planDir);
-  if (!existsSync(statePath)) writeStateInternal(createDefaultState(currentSkill));
-  startWatching(statePath);
+  if (currentPlan) {
+    ensureDir(planDir);
+    if (!existsSync(statePath)) writeStateInternal(createDefaultState(currentSkill));
+    startWatching(statePath);
+  }
 
+  // SSE endpoint
   app.get('/__state/events', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -121,23 +141,16 @@ export async function startServer(options: ServerOptions = {}) {
     req.on('close', () => sseClients.delete(res));
   });
 
+  // State middleware
   app.use('/__state', createStateMiddleware({
     baseDir,
     statePath,
     planDir,
-    currentPlan: currentPlan ?? 'default',
+    currentPlan: currentPlan ?? '',
     currentSkill,
     state: readState,
     writeState: writeStateInternal,
-    listPlans: () => {
-      try {
-        return readdirSync(baseDir, { withFileTypes: true })
-          .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'skills')
-          .map((d) => d.name);
-      } catch {
-        return [];
-      }
-    },
+    listPlans: () => refreshPlans(),
     listSkills: () => {
       try {
         return readdirSync(planDir)
@@ -148,16 +161,18 @@ export async function startServer(options: ServerOptions = {}) {
       }
     },
     createPlan: (plan: string) => {
-      ensureDir(planDirectory(baseDir, plan));
+      ensureDir(join(baseDir, plan));
     },
     switchSkill,
     switchPlan,
     validate: () => ({ valid: true, errors: [] }),
   }));
 
+  // Serve static files
   const webDist = findWebDist();
   app.use(express.static(webDist));
 
+  // SPA fallback
   app.use((req, res, next) => {
     if (req.path.startsWith('/__state')) return next();
     if (req.path.includes('.') && !req.path.endsWith('.html')) return next();

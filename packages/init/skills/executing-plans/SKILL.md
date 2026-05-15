@@ -1,19 +1,21 @@
 ---
 name: supermech-executing-plans
-description: Execute implementation plans with quality gates. Update .supermech/state-executing-plans.json for the Supermech KanbanBoard to render.
+description: Execute implementation plans with quality gates. Update .supermech/<plan>/state-executing-plans.json for the Supermech KanbanBoard to render.
 ---
 
 # Visual Executing Plans
 
-Write to `.supermech/state-executing-plans.json` to render a 3-column Kanban board with quality gates.
+Write to `.supermech/<plan>/state-executing-plans.json` to render a 3-column Kanban board with quality gates.
 
-## State File
+## Plan Directory
 
-`.supermech/state-executing-plans.json`
+Use the same plan directory as writing-plans. If that plan has task nodes defined there, load them and set their `status` and `progress`:
+
+- `.supermech/<plan>/state-executing-plans.json`
 
 ## How It Works
 
-1. Take tasks from the writing-plans plan
+1. Take tasks from the writing-plans plan (same plan directory)
 2. Execute one task at a time (`status: "active"`, max one at a time)
 3. Report progress and execution events
 4. Run quality gates (spec review, code quality) before marking done
@@ -21,19 +23,20 @@ Write to `.supermech/state-executing-plans.json` to render a 3-column Kanban boa
 
 ## Workflow
 
-1. **Start execution** — set first task to `status: "active"`, `meta.activeSkill: "executing-plans"`
-2. **Set execution phase** — `metadata.executionPhase`: `implementing → editing-files → running-tests → reviewing → idle`
-3. **Run quality gates** — set gate statuses in `metadata.gateStates[]`
-4. **Mark done** — task `status: "done"`, `progress: 1.0`
-5. **Handle feedback** — user ratings in `feedback[]`; low ratings (1-2 stars) trigger re-plan
-6. **Clear canvas** — set `meta.activeSkill: null` when all done
+1. **Find plan** — use the same plan directory as writing-plans
+2. **Start execution** — set first task to `status: "active"`, `meta.activeSkill: "executing-plans"`
+3. **Set execution phase** — `metadata.executionPhase`: `implementing → editing-files → running-tests → reviewing → idle`
+4. **Run quality gates** — set gate statuses in `metadata.gateStates[]`
+5. **Mark done** — task `status: "done"`, `progress: 1.0`, move to next task
+6. **Handle feedback** — user ratings in `feedback[]`; low ratings (1-2 stars) trigger re-plan
+7. **Clear canvas** — set `meta.activeSkill: null` when all done
 
 ## State Schema
 
 ```json
 {
   "meta": {
-    "projectName": "string",
+    "projectName": "<plan-name>",
     "sessionId": "executing-plans",
     "activeSkill": "executing-plans",
     "agentStatus": "writing"
@@ -42,7 +45,7 @@ Write to `.supermech/state-executing-plans.json` to render a 3-column Kanban boa
     "skillType": "executing-plans",
     "nodes": [
       {
-        "id": "string",
+        "id": "task-id",
         "label": "task title",
         "status": "pending | active | done",
         "progress": 0.0,

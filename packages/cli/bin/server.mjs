@@ -1,5 +1,5 @@
 // src/server.ts
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, watch } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, watch } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -223,8 +223,16 @@ function findWebDist() {
 function stateFilePath(baseDir, plan, skill) {
   return plan ? join(baseDir, plan, `state-${skill}.json`) : join(baseDir, `state-${skill}.json`);
 }
-function planDirectory(baseDir, plan) {
-  return join(baseDir, plan);
+function detectPlans(baseDir) {
+  try {
+    return readdirSync(baseDir, { withFileTypes: true }).filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "skills").map((d) => d.name).sort((a, b) => {
+      const aStat = statSync(join(baseDir, a));
+      const bStat = statSync(join(baseDir, b));
+      return bStat.mtimeMs - aStat.mtimeMs;
+    });
+  } catch {
+    return [];
+  }
 }
 async function startServer(options = {}) {
   const port = options.port ?? 4388;
@@ -233,12 +241,16 @@ async function startServer(options = {}) {
   if (!existsSync(baseDir)) mkdirSync(baseDir, { recursive: true });
   const app = express();
   const sseClients = /* @__PURE__ */ new Set();
-  let currentPlan = null;
+  const plans = detectPlans(baseDir);
+  let currentPlan = plans[0] ?? null;
   let currentSkill = "brainstorming";
-  let planDir = baseDir;
-  let statePath = stateFilePath(baseDir, null, currentSkill);
+  let planDir = currentPlan ? join(baseDir, currentPlan) : baseDir;
+  let statePath = stateFilePath(baseDir, currentPlan, currentSkill);
   function ensureDir3(path) {
     if (!existsSync(path)) mkdirSync(path, { recursive: true });
+  }
+  function refreshPlans() {
+    return detectPlans(baseDir);
   }
   function readState2() {
     try {
@@ -255,7 +267,7 @@ async function startServer(options = {}) {
   }
   function createDefaultState(skill) {
     return {
-      meta: { projectName: "My Project", sessionId: skill, activeSkill: skill, agentStatus: "idle" },
+      meta: { projectName: currentPlan ?? "My Project", sessionId: skill, activeSkill: skill, agentStatus: "idle" },
       canvas: { skillType: skill, nodes: [], edges: [] },
       feedback: [],
       ui: { theme: "system", leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null }
@@ -270,9 +282,7 @@ async function startServer(options = {}) {
   function startWatching(path) {
     if (fileWatcher) fileWatcher.close();
     if (existsSync(path)) {
-      fileWatcher = watch(path, () => {
-        notifySSE();
-      });
+      fileWatcher = watch(path, () => notifySSE());
     }
   }
   function switchSkill(skill) {
@@ -285,15 +295,17 @@ async function startServer(options = {}) {
   function switchPlan(plan) {
     currentPlan = plan;
     currentSkill = "brainstorming";
-    planDir = planDirectory(baseDir, plan);
+    planDir = join(baseDir, plan);
     statePath = stateFilePath(baseDir, plan, "brainstorming");
     ensureDir3(planDir);
     if (!existsSync(statePath)) writeStateInternal(createDefaultState("brainstorming"));
     startWatching(statePath);
   }
-  ensureDir3(planDir);
-  if (!existsSync(statePath)) writeStateInternal(createDefaultState(currentSkill));
-  startWatching(statePath);
+  if (currentPlan) {
+    ensureDir3(planDir);
+    if (!existsSync(statePath)) writeStateInternal(createDefaultState(currentSkill));
+    startWatching(statePath);
+  }
   app.get("/__state/events", (req, res) => {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -308,17 +320,11 @@ async function startServer(options = {}) {
     baseDir,
     statePath,
     planDir,
-    currentPlan: currentPlan ?? "default",
+    currentPlan: currentPlan ?? "",
     currentSkill,
     state: readState2,
     writeState: writeStateInternal,
-    listPlans: () => {
-      try {
-        return readdirSync(baseDir, { withFileTypes: true }).filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "skills").map((d) => d.name);
-      } catch {
-        return [];
-      }
-    },
+    listPlans: () => refreshPlans(),
     listSkills: () => {
       try {
         return readdirSync(planDir).filter((f) => /^state-.+\.json$/.test(f)).map((f) => f.replace(/^state-(.+)\.json$/, "$1"));
@@ -327,7 +333,7 @@ async function startServer(options = {}) {
       }
     },
     createPlan: (plan) => {
-      ensureDir3(planDirectory(baseDir, plan));
+      ensureDir3(join(baseDir, plan));
     },
     switchSkill,
     switchPlan,
