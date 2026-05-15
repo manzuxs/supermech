@@ -5,18 +5,10 @@ const { join, resolve } = require('node:path');
 const root = resolve(__dirname, '..');
 const cliDir = join(root, 'packages', 'cli');
 
-// Mark all non-relative imports as external
-const externalPlugin = {
-  name: 'external-deps',
-  setup(build) {
-    build.onResolve({ filter: /^[^./]/ }, (args) => {
-      return { external: true, path: args.path };
-    });
-  },
-};
+// Only keep these as external (they ship compiled JS)
+const EXTERNAL_PKGS = ['express', 'chokidar', 'open'];
 
 async function main() {
-  // Bundle bin entry
   await esbuild.build({
     entryPoints: [join(cliDir, 'src', 'server.ts')],
     bundle: true,
@@ -24,7 +16,7 @@ async function main() {
     format: 'esm',
     target: 'node22',
     outfile: join(cliDir, 'bin', 'server.mjs'),
-    plugins: [externalPlugin],
+    external: EXTERNAL_PKGS,
     tsconfig: join(cliDir, 'tsconfig.json'),
   });
 
