@@ -6,8 +6,9 @@ import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './ses
 import { validateState } from './validate.ts';
 
 export interface WatcherPluginOptions {
+  /** Optional explicit state file override. Prefer plan-scoped files under `basePlanDir`. */
   statePath?: string;
-  /** Base directory containing plan directories. Defaults to `<root>/docs/supermech/`. */
+  /** Base directory containing plan directories. Defaults to `<root>/.supermech/`. */
   basePlanDir?: string;
 }
 
@@ -20,7 +21,7 @@ function readJSON(path: string): string {
 }
 
 export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
-  let baseDir: string; // docs/supermech/
+  let baseDir: string; // .supermech/
   let currentPlan = 'default';
   let currentSkill = 'brainstorming';
   let statePath: string;
@@ -123,9 +124,11 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
     enforce: 'pre',
 
     configResolved(config) {
-      statePath = options?.statePath ?? resolve(config.root, 'state.json');
-      baseDir = options?.basePlanDir ?? resolve(config.root, 'docs/supermech');
+      baseDir = options?.basePlanDir ?? resolve(config.root, '.supermech');
       updatePaths();
+      if (options?.statePath) {
+        statePath = options.statePath;
+      }
     },
 
     configureServer(_server) {

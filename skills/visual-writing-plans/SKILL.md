@@ -14,7 +14,7 @@ The PlanEditor renders a two-panel view: a phase-grouped task tree on the left, 
 a tabbed detail panel (Goal / Code Steps / Tests) on the right. This replaces the
 flat Markdown document with a scannable, feedback-rich interface.
 
-You write two things into `state.json`:
+You write two things into `.supermech/<plan>/state-writing-plans.json`:
 
 1. **PlanHeader** into `canvas.metadata.planHeader` — the overall plan context
 2. **Task nodes** into `canvas.nodes[]` — each with structured `metadata`

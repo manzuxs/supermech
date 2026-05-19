@@ -14,12 +14,18 @@ import { useTranslation } from 'react-i18next';
 import type {
   CanvasEdge,
   CanvasNode,
+  ExecutionCanvasMetadata,
+  ExecutionEvent,
   ExecutionFlow,
+  ExecutionPhase,
   ExecutionFlowStage,
   ExecutionFlowStageRelation,
   ExecutionFlowTaskRelation,
   NodeStatus,
+  PlanStepFile,
+  QualityGateState,
 } from '@supermech/schema';
+import { getExecutionFlow as getExecutionFlowFromMetadata } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
@@ -40,11 +46,7 @@ const MAX_ZOOM = 2.5;
 const VIEWPORT_PAD_X = 72;
 const VIEWPORT_PAD_Y = 64;
 
-interface FileInfo {
-  path: string;
-  type: string;
-  description?: string;
-}
+type FileInfo = PlanStepFile;
 
 interface FlowTask {
   id: string;
@@ -165,10 +167,16 @@ const STAGE_ACCENT_COLORS = [
 ] as const;
 
 function getExecutionFlow(state: ReturnType<typeof useWorkbench>['state']): ExecutionFlow | null {
-  const meta = state.canvas.metadata as Record<string, unknown> | undefined;
-  const flow = meta?.executionFlow;
-  if (!flow || typeof flow !== 'object') return null;
-  return flow as ExecutionFlow;
+  const meta = getCanvasExecutionMeta(state.canvas.metadata);
+  return meta.executionFlow ?? null;
+}
+
+function getCanvasExecutionMeta(
+  metadata: Record<string, unknown> | undefined,
+): ExecutionCanvasMetadata {
+  return {
+    executionFlow: getExecutionFlowFromMetadata(metadata),
+  };
 }
 
 function calculateTaskHeight(task: Pick<
@@ -249,18 +257,17 @@ function buildLayout(
       const node = nodeMap.get(taskId);
       if (!node) continue;
       const meta = getTaskMeta(node);
-      const files = (meta.files as FileInfo[] | undefined) ?? [];
-      const steps = (meta.implementationSteps as Array<unknown> | undefined) ?? [];
-      const gateStates = (meta.gateStates as Array<{ type: string; status: string }> | undefined) ?? [];
-      const executionPhase = (meta.executionPhase as string | undefined) ?? '';
-      const activeFiles = (meta.activeFiles as string[] | undefined) ?? [];
-      const executionEvents =
-        (meta.executionEvents as Array<{ message?: string }> | undefined) ?? [];
+      const files = meta.files;
+      const steps = meta.implementationSteps;
+      const gateStates: QualityGateState[] = meta.gateStates;
+      const executionPhase: ExecutionPhase | '' = meta.executionPhase ?? '';
+      const activeFiles = meta.activeFiles;
+      const executionEvents: ExecutionEvent[] = meta.executionEvents;
       const latestEvent =
         executionEvents.length > 0
           ? (executionEvents[executionEvents.length - 1]?.message ?? '')
           : '';
-      const goal = ((meta.goal as string | undefined) ?? (meta.description as string | undefined) ?? '').trim();
+      const goal = (meta.goal ?? meta.description ?? '').trim();
 
       const task: FlowTask = {
         id: node.id,

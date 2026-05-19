@@ -17,8 +17,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     supermechWatcherPlugin({
-      statePath: resolve(dirname, '../../state.json'),
-      basePlanDir: resolve(dirname, '../../docs/supermech'),
+      basePlanDir: resolve(dirname, '../../.supermech'),
     }),
   ],
   server: {

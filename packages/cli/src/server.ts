@@ -3,7 +3,8 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ServerResponse } from 'node:http';
 import express from 'express';
-import { createStateMiddleware } from '@supermech/runtime';
+import { createStateMiddleware, validateState } from '@supermech/runtime';
+import { createDefaultWorkbenchState } from '@supermech/schema';
 
 function findWebDist(): string {
   const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
@@ -82,13 +83,14 @@ export async function startServer(options: ServerOptions = {}) {
     writeFileSync(statePath, JSON.stringify(data, null, 2));
   }
 
-  function createDefaultState(skill: string) {
-    return {
-      meta: { projectName: currentPlan ?? 'My Project', sessionId: skill, activeSkill: skill, agentStatus: 'idle' as const },
-      canvas: { skillType: skill, nodes: [] as unknown[], edges: [] as unknown[] },
-      feedback: [] as unknown[],
-      ui: { theme: 'system' as const, leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
-    };
+  function createDefaultState(skill: string): Record<string, unknown> {
+    const typedSkill = skill as 'brainstorming' | 'writing-plans' | 'executing-plans';
+    return createDefaultWorkbenchState({
+      projectName: currentPlan ?? 'My Project',
+      sessionId: skill,
+      activeSkill: typedSkill,
+      skillType: typedSkill,
+    }) as unknown as Record<string, unknown>;
   }
 
   function notifySSE() {
@@ -165,7 +167,7 @@ export async function startServer(options: ServerOptions = {}) {
     },
     switchSkill,
     switchPlan,
-    validate: () => ({ valid: true, errors: [] }),
+    validate: validateState,
   }));
 
   // Serve static files

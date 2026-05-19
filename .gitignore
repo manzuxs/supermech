@@ -14,3 +14,4 @@ dist/
 
 # Supermech session data (config.json and skills/ are tracked)
 .supermech/state-*.json
+.supermech/**/state-*.json

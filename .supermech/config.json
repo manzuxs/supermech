@@ -1,6 +1,5 @@
 {
   "schemaVersion": 1,
-  "statePath": ".",
-  "skillsPath": ".supermech/skills",
-  "currentPlan": null
+  "statePath": ".supermech",
+  "skillsPath": ".supermech/skills"
 }

@@ -103,7 +103,7 @@ For each task, read `node.metadata.qualityGates` to determine which gates are en
 
 Users can override these in the UI. Treat the `qualityGates` array order as the review flow order.
 
-Update state.json at each milestone:
+Update `.supermech/<plan>/state-executing-plans.json` at each milestone:
 
 **Starting a task:**
 ```json

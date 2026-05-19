@@ -2,7 +2,19 @@ import { Beaker, CheckCircle2, ChevronRight, Circle, Code, FileText, Loader2, Mi
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, ImplementationStep } from '@supermech/schema';
+import { getResolvedPlanTaskExecutionMetadata } from '@supermech/schema';
+import type {
+  CanvasNode,
+  ExecutionPhase,
+  ExecutionEvent,
+  GateType,
+  ImplementationStep,
+  PlanStepFile,
+  PlanTaskRiskLevel,
+  QualityGateConfig,
+  QualityGateState,
+  ResolvedPlanTaskExecutionMetadata,
+} from '@supermech/schema';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
@@ -17,23 +29,38 @@ export const FILE_TYPE_STYLES: Record<string, string> = {
     'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
 };
 
-export function getTaskMeta(node: CanvasNode): Record<string, unknown> {
-  return node.metadata ?? {};
+export type TaskDetailMetadata = ResolvedPlanTaskExecutionMetadata & {
+  description?: string;
+  estimatedMinutes?: number;
+  assignee?: string;
+  dependencies?: string[];
+  phase?: string;
+  riskLevel?: PlanTaskRiskLevel;
+};
+
+export function getTaskMeta(node: CanvasNode): TaskDetailMetadata {
+  const raw = (node.metadata ?? {}) as Record<string, unknown>;
+  return {
+    ...getResolvedPlanTaskExecutionMetadata(raw),
+    description: typeof raw.description === 'string' ? raw.description : undefined,
+    estimatedMinutes: typeof raw.estimatedMinutes === 'number' ? raw.estimatedMinutes : undefined,
+    assignee: typeof raw.assignee === 'string' ? raw.assignee : undefined,
+    dependencies: Array.isArray(raw.dependencies)
+      ? raw.dependencies.filter((item): item is string => typeof item === 'string')
+      : undefined,
+    phase: typeof raw.phase === 'string' ? raw.phase : undefined,
+    riskLevel:
+      raw.riskLevel === 'low' || raw.riskLevel === 'medium' || raw.riskLevel === 'high'
+        ? raw.riskLevel
+        : undefined,
+  };
 }
 
 interface GateItem {
-  type: string;
+  type: GateType;
   label: string;
   enabled: boolean;
   required: boolean;
-}
-
-interface ExecutionEventItem {
-  kind: string;
-  message: string;
-  timestamp: string;
-  status?: string;
-  files?: string[];
 }
 
 const QUALITY_GATE_CATALOG: GateItem[] = [
@@ -95,25 +122,19 @@ interface TaskDetailProps {
 export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onReplan }: TaskDetailProps) {
   const { t } = useTranslation();
   const meta = getTaskMeta(node);
-  const goal = (meta.goal as string) || (meta.description as string) || undefined;
-  const files = meta.files as
-    | Array<{ path: string; type: string; description?: string }>
-    | undefined;
-  const riskLevel = meta.riskLevel as string | undefined;
-  const estimatedMinutes = meta.estimatedMinutes as number | undefined;
-  const assignee = meta.assignee as string | undefined;
-  const steps = meta.implementationSteps as ImplementationStep[] | undefined;
-  const verifications = meta.verificationSteps as ImplementationStep[] | undefined;
-  const phase = meta.phase as string | undefined;
-  const qualityGates = buildQualityGates(riskLevel, meta.qualityGates as
-    | Array<{ type: string; label: string; enabled: boolean; required: boolean }>
-    | undefined);
-  const gateStates = meta.gateStates as
-    | Array<{ type: string; status: string; result?: string }>
-    | undefined;
-  const executionPhase = meta.executionPhase as string | undefined;
-  const activeFiles = (meta.activeFiles as string[] | undefined) ?? [];
-  const executionEvents = (meta.executionEvents as ExecutionEventItem[] | undefined) ?? [];
+  const goal = meta.goal || meta.description || undefined;
+  const files: PlanStepFile[] = meta.files;
+  const riskLevel: PlanTaskRiskLevel | undefined = meta.riskLevel;
+  const estimatedMinutes = meta.estimatedMinutes;
+  const assignee = meta.assignee;
+  const steps: ImplementationStep[] = meta.implementationSteps;
+  const verifications: ImplementationStep[] = meta.verificationSteps;
+  const phase = meta.phase;
+  const qualityGates = buildQualityGates(riskLevel, meta.qualityGates);
+  const gateStates: QualityGateState[] = meta.gateStates;
+  const executionPhase: ExecutionPhase | undefined = meta.executionPhase;
+  const activeFiles = meta.activeFiles;
+  const executionEvents: ExecutionEvent[] = meta.executionEvents;
   const phaseLabel = formatExecutionPhase(executionPhase, t);
 
   return (
@@ -177,11 +198,11 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
             />
           )}
 
-          {showRating && gateStates && gateStates.length > 0 && (
+          {showRating && gateStates.length > 0 && (
             <GateResultSection gateStates={gateStates} />
           )}
 
-          {steps && steps.length > 0 && (
+          {steps.length > 0 && (
             <section className="mb-6">
               <SectionHeader
                 icon={<Code size={12} />}
@@ -196,7 +217,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
             </section>
           )}
 
-          {verifications && verifications.length > 0 && (
+          {verifications.length > 0 && (
             <section className="mb-6">
               <SectionHeader
                 icon={<Beaker size={12} />}
@@ -211,7 +232,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
             </section>
           )}
 
-          {files && files.length > 0 && (
+          {files.length > 0 && (
             <section className="mb-6">
               <SectionHeader
                 icon={<FileText size={12} />}
@@ -397,10 +418,12 @@ function GateConfigSection({ nodeId, gates }: { nodeId: string; gates: GateItem[
   async function toggleGate(index: number, field: 'enabled' | 'required') {
     const updated = state.canvas.nodes.find((n) => n.id === nodeId);
     if (!updated) return;
-    const meta = updated.metadata ?? {};
-    const next = gates.map((g, i) => (i === index ? { ...g, [field]: !g[field] } : g));
+    const meta = getTaskMeta(updated);
+    const next: QualityGateConfig[] = gates.map((g, i) =>
+      i === index ? { ...g, [field]: !g[field] } : g,
+    );
     await updateNode(nodeId, {
-      metadata: { ...meta, qualityGates: next } as Record<string, unknown>,
+      metadata: { ...meta, qualityGates: next },
     });
   }
 
@@ -460,7 +483,7 @@ function ExecutionProgressSection({
 }: {
   executionPhase: string | null;
   activeFiles: string[];
-  executionEvents: ExecutionEventItem[];
+  executionEvents: ExecutionEvent[];
 }) {
   const { t } = useTranslation();
   const recentEvents = executionEvents.slice(-3).reverse();

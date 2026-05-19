@@ -22,18 +22,37 @@ export {
   workbenchStateSchema,
 } from './validation.ts';
 export type { ValidationResult } from './validation.ts';
+export type { DefaultWorkbenchStateOptions } from './default-state.ts';
+export {
+  getExecutionFlow,
+  getPlanTaskActiveFiles,
+  getPlanTaskExecutionEvents,
+  getPlanTaskExecutionPhase,
+  getPlanTaskFiles,
+  getPlanTaskGateStates,
+  getPlanTaskGoal,
+  getPlanTaskImplementationSteps,
+  getPlanTaskQualityGates,
+  getPlanTaskVerificationSteps,
+  getResolvedExecutionCanvasMetadata,
+  getResolvedPlanTaskExecutionMetadata,
+} from './planner-helpers.ts';
 
 export type { BrainstormNodeMetadata, BrainstormSession } from './brainstorm.ts';
 export type {
+  ExecutionCanvasMetadata,
   ExecutionEvent,
   ExecutionEventKind,
+  ExecutionEventList,
   ExecutionEventStatus,
   ExecutionFlow,
   ExecutionFlowOrientation,
   ExecutionFlowStage,
   ExecutionFlowStageRelation,
   ExecutionFlowTaskRelation,
+  ExecutionGateStates,
   ExecutionPhase,
+  ExecutionQualityGates,
   GateStatus,
   GateType,
   ImplementationStep,
@@ -41,10 +60,23 @@ export type {
   PlanPhase,
   PlanSession,
   PlanStepFile,
+  PlanTaskExecutionMetadata,
+  PlanTaskExecutionMetadataPatch,
   PlanTaskMetadata,
+  PlanTaskRiskLevel,
   QualityGateConfig,
   QualityGateState,
+  ResolvedPlanTaskExecutionMetadata,
 } from './planner.ts';
+export {
+  defineExecutionCanvasMetadata,
+  defineExecutionEvent,
+  defineExecutionFlow,
+  definePlanTaskExecutionMetadata,
+  defineQualityGateConfig,
+  defineQualityGateState,
+} from './planner.ts';
+export { createDefaultWorkbenchState } from './default-state.ts';
 export type {
   AgentStatus,
   CanvasEdge,

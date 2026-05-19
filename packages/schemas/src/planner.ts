@@ -67,6 +67,40 @@ export interface PlanTaskMetadata {
   executionEvents?: ExecutionEvent[];
 }
 
+export type PlanTaskRiskLevel = NonNullable<PlanTaskMetadata['riskLevel']>;
+
+export type PlanTaskExecutionMetadata = Pick<
+  PlanTaskMetadata,
+  | 'goal'
+  | 'files'
+  | 'implementationSteps'
+  | 'verificationSteps'
+  | 'phase'
+  | 'riskLevel'
+  | 'qualityGates'
+  | 'gateStates'
+  | 'executionPhase'
+  | 'activeFiles'
+  | 'executionEvents'
+>;
+
+export type PlanTaskExecutionMetadataPatch = Partial<PlanTaskExecutionMetadata>;
+export type ExecutionQualityGates = QualityGateConfig[];
+export type ExecutionGateStates = QualityGateState[];
+export type ExecutionEventList = ExecutionEvent[];
+
+export interface ResolvedPlanTaskExecutionMetadata {
+  goal?: string;
+  files: PlanStepFile[];
+  implementationSteps: ImplementationStep[];
+  verificationSteps: ImplementationStep[];
+  qualityGates: QualityGateConfig[];
+  gateStates: QualityGateState[];
+  executionPhase?: ExecutionPhase;
+  activeFiles: string[];
+  executionEvents: ExecutionEvent[];
+}
+
 export interface PlanPhase {
   name: string;
   description?: string;
@@ -111,4 +145,34 @@ export interface ExecutionFlow {
   stages: ExecutionFlowStage[];
   stageRelations?: ExecutionFlowStageRelation[];
   taskRelations?: ExecutionFlowTaskRelation[];
+}
+
+export interface ExecutionCanvasMetadata {
+  executionFlow?: ExecutionFlow;
+}
+
+export function definePlanTaskExecutionMetadata<T extends PlanTaskExecutionMetadata>(
+  metadata: T,
+): T {
+  return metadata;
+}
+
+export function defineExecutionCanvasMetadata<T extends ExecutionCanvasMetadata>(metadata: T): T {
+  return metadata;
+}
+
+export function defineQualityGateConfig<T extends QualityGateConfig>(gate: T): T {
+  return gate;
+}
+
+export function defineQualityGateState<T extends QualityGateState>(gateState: T): T {
+  return gateState;
+}
+
+export function defineExecutionEvent<T extends ExecutionEvent>(event: T): T {
+  return event;
+}
+
+export function defineExecutionFlow<T extends ExecutionFlow>(flow: T): T {
+  return flow;
 }

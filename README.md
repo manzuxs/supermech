@@ -99,16 +99,16 @@ Agent creates a plan directory based on the request topic and writes structured 
 ```
 Agent (Brain)          React Frontend (Canvas)
     │                        │
-    │   writes state.json    │
+    │   writes state file    │
     ├───────────────────────►│  Vite plugin → HMR → re-render
     │                        │
-    │  ◄─────────────────────┤  User action → middleware → write state.json
+    │  ◄─────────────────────┤  User action → middleware → write state file
     │   reads feedback       │
 ```
 
 **Data flow:**
 
-1. **Agent → JSON**: Agent executes a skill and writes structured JSON to `.supermech/state-<skill>.json`
+1. **Agent → JSON**: Agent executes a skill and writes structured JSON to `.supermech/<plan>/state-<skill>.json`
 2. **JSON → UI**: The Vite plugin watches the file → invalidates the virtual module → sends HMR event → React Context re-fetches via GET
 3. **UI → JSON**: User interacts (clicks, rates, annotates) → Context calls middleware API → middleware writes the update to file
 4. **JSON → Agent**: Agent reads the state file on the next iteration, including any new `feedback[]` entries
@@ -116,14 +116,16 @@ Agent (Brain)          React Frontend (Canvas)
 ### Directory Layout
 
 ```
-.supermech/                     # Standard product directory (config + skills + state)
+.supermech/                     # Standard product directory (config + skills + plan-scoped state)
 ├── config.json                 # Workspace configuration (optional)
 ├── skills/                     # Agent discovers skills by listing this directory
 │   ├── visual-brainstorming/   #   SKILL.md defines behavior
 │   ├── visual-writing-plans/
 │   └── visual-executing-plans/
-├── state-brainstorming.json    # Session state files (gitignored)
-└── state-writing-plans.json
+└── 用户认证/                    # One plan directory per work topic
+    ├── state-brainstorming.json
+    ├── state-writing-plans.json
+    └── state-executing-plans.json
 
 packages/
 ├── schemas/                    # @supermech/schema — types + runtime validation
@@ -167,7 +169,7 @@ packages/schemas/  — @supermech/schema: types + zod validation
 packages/watcher/  — @supermech/runtime: file I/O + Vite plugin
 packages/init/     — @supermech/init: project initializer
 skills/            — Legacy skill definitions (migrating to .supermech/skills/)
-docs/              — Product docs and plan/session state samples
+docs/              — Product docs and sample state snapshots
 ```
 
 ---

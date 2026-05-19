@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import type { FSWatcher } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { validateState } from './validate.ts';
 
 export interface RuntimeConfig {
   /** Base directory for state files. Defaults to `.supermech`. */
@@ -52,6 +53,10 @@ export function writeState(skill: string, data: unknown, config: RuntimeConfig =
   const basePath = resolve(config.statePath ?? '.supermech');
   const path = resolveStatePath(basePath, skill, config.currentPlan);
   const dir = join(path, '..');
+  const result = validateState(data);
+  if (!result.valid) {
+    throw new Error(`Invalid state for skill "${skill}": ${result.errors.join('; ')}`);
+  }
   ensureDir(dir);
   writeFileSync(path, JSON.stringify(data, null, 2));
 }

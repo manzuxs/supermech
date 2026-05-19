@@ -7,10 +7,10 @@ Monorepo: terminal/Markdown-driven agent workflow upgraded to a data-driven visu
 ```
 Agent (Brain)          React Frontend (Canvas)
     │                        │
-    │   写入 state.json       │
+    │   写入状态文件          │
     ├───────────────────────►│  Vite plugin / CLI server → SSE → re-render
     │                        │
-    │  ◄─────────────────────┤  User action → middleware → write state.json
+    │  ◄─────────────────────┤  User action → middleware → write 状态文件
     │   下一轮读取反馈        │
 ```
 

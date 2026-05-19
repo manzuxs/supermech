@@ -6,7 +6,9 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
+import { createDefaultWorkbenchState } from '@supermech/schema';
+import { validateState } from './validate.ts';
 
 export interface PlanInfo {
   planName: string;
@@ -17,27 +19,6 @@ export interface SkillInfo {
   skill: string;
   filePath: string;
 }
-
-const DEFAULT_STATE = {
-  meta: {
-    projectName: 'My Project',
-    sessionId: 'default',
-    activeSkill: null,
-    agentStatus: 'idle',
-  },
-  canvas: {
-    skillType: 'brainstorming' as const,
-    nodes: [],
-    edges: [],
-  },
-  feedback: [],
-  ui: {
-    theme: 'system',
-    leftSidebarOpen: true,
-    rightSidebarOpen: true,
-    selectedNodeId: null,
-  },
-};
 
 export function ensureDir(dir: string): void {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -78,6 +59,10 @@ export function readSkill(planDir: string, skill: string): unknown | null {
 }
 
 export function writeSkill(planDir: string, skill: string, state: unknown): void {
+  const result = validateState(state);
+  if (!result.valid) {
+    throw new Error(`Invalid state for skill "${skill}": ${result.errors.join('; ')}`);
+  }
   writeFileSync(join(planDir, `state-${skill}.json`), JSON.stringify(state, null, 2));
 }
 
@@ -95,11 +80,13 @@ export function createPlan(baseDir: string, planName: string): void {
 
 /** Create a skill file with default state */
 export function createSkill(planDir: string, skill: string): unknown {
-  const state = {
-    ...DEFAULT_STATE,
-    meta: { ...DEFAULT_STATE.meta, sessionId: skill },
-    canvas: { ...DEFAULT_STATE.canvas, skillType: skill },
-  };
+  const typedSkill = skill as 'brainstorming' | 'writing-plans' | 'executing-plans';
+  const state = createDefaultWorkbenchState({
+    projectName: basename(planDir),
+    sessionId: skill,
+    activeSkill: typedSkill,
+    skillType: typedSkill,
+  });
   writeSkill(planDir, skill, state);
   return state;
 }

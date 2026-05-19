@@ -1,5 +1,10 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import type { NodeStatus, UIPreferences, WorkbenchState } from '@supermech/schema';
+import {
+  createDefaultWorkbenchState,
+  type NodeStatus,
+  type UIPreferences,
+  type WorkbenchState,
+} from '@supermech/schema';
 import { registerCommand } from '../lib/commands.ts';
 
 export interface FeedbackParams {
@@ -39,12 +44,12 @@ interface WorkbenchContextValue {
 
 const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
 
-const DEFAULT_STATE: WorkbenchState = {
-  meta: { projectName: '', sessionId: '', activeSkill: null, agentStatus: 'idle' },
-  canvas: { skillType: 'brainstorming', nodes: [], edges: [] },
-  feedback: [],
-  ui: { theme: 'system', leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
-};
+const DEFAULT_STATE: WorkbenchState = createDefaultWorkbenchState({
+  projectName: '',
+  sessionId: '',
+  activeSkill: null,
+  skillType: 'brainstorming',
+});
 
 export function WorkbenchProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorkbenchState>(DEFAULT_STATE);
