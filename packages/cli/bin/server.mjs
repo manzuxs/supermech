@@ -14900,6 +14900,46 @@ function validateState2(data) {
   return validateState(data);
 }
 
+// ../watcher/src/execution-state.ts
+function ensureMetadata(node) {
+  if (!node.metadata || typeof node.metadata !== "object") {
+    node.metadata = {};
+  }
+  return node.metadata;
+}
+function readGateStates(metadata) {
+  if (!Array.isArray(metadata.gateStates)) {
+    return [];
+  }
+  return metadata.gateStates.filter((value) => {
+    if (!value || typeof value !== "object") return false;
+    const gateState = value;
+    return typeof gateState.type === "string" && typeof gateState.status === "string";
+  });
+}
+function applyNodeGateState(node, type, status, result) {
+  const metadata = ensureMetadata(node);
+  const gateStates = readGateStates(metadata);
+  const existing = gateStates.find((gateState) => gateState.type === type);
+  if (existing) {
+    existing.status = status;
+    if (result !== void 0) existing.result = result;
+    existing.attemptedAt = (/* @__PURE__ */ new Date()).toISOString();
+  } else {
+    gateStates.push({ type, status, result, attemptedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  }
+  metadata.gateStates = gateStates;
+}
+function applyNodeExecutionPhase(node, phase) {
+  const metadata = ensureMetadata(node);
+  metadata.executionPhase = phase;
+}
+function resetNodeExecutionState(node) {
+  const metadata = ensureMetadata(node);
+  metadata.executionPhase = "idle";
+  metadata.gateStates = [];
+}
+
 // ../watcher/src/vite-plugin.ts
 var VIRTUAL_MODULE_ID = "virtual:supermech/state";
 var RESOLVED_VIRTUAL_MODULE_ID = `\0${VIRTUAL_MODULE_ID}`;
@@ -15032,17 +15072,7 @@ function createStateMiddleware(cfg) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        const meta3 = node.metadata ?? {};
-        const gateStates = meta3.gateStates ?? [];
-        const existing = gateStates.find((g) => g.type === type);
-        if (existing) {
-          existing.status = status;
-          if (result !== void 0) existing.result = result;
-          existing.attemptedAt = (/* @__PURE__ */ new Date()).toISOString();
-        } else {
-          gateStates.push({ type, status, result, attemptedAt: (/* @__PURE__ */ new Date()).toISOString() });
-        }
-        meta3.gateStates = gateStates;
+        applyNodeGateState(node, type, status, result);
       } else if (url2 === "/node/execution-phase" && req.method === "PATCH") {
         const { nodeId, phase } = data;
         if (!nodeId || !phase) {
@@ -15054,8 +15084,7 @@ function createStateMiddleware(cfg) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        const meta3 = node.metadata ?? {};
-        meta3.executionPhase = phase;
+        applyNodeExecutionPhase(node, phase);
       } else if (url2 === "/replan" && req.method === "POST") {
         const { nodeId } = data;
         if (!nodeId) {
@@ -15069,9 +15098,7 @@ function createStateMiddleware(cfg) {
         }
         node.status = "pending";
         node.progress = 0;
-        const meta3 = node.metadata ?? {};
-        meta3.executionPhase = "idle";
-        meta3.gateStates = [];
+        resetNodeExecutionState(node);
         s.feedback.push({
           id: crypto.randomUUID(),
           nodeId,

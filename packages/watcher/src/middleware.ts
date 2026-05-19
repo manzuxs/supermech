@@ -1,4 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { ExecutionPhase, GateStatus, GateType } from '@supermech/schema';
+import {
+  applyNodeExecutionPhase,
+  applyNodeGateState,
+  resetNodeExecutionState,
+} from './execution-state.ts';
 
 export interface MiddlewareConfig {
   /** Base directory for plan-based state files. */
@@ -174,17 +180,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        const meta = node.metadata ?? {};
-        const gateStates: Array<Record<string, unknown>> = meta.gateStates ?? [];
-        const existing = gateStates.find((g) => g.type === type);
-        if (existing) {
-          existing.status = status;
-          if (result !== undefined) existing.result = result;
-          existing.attemptedAt = new Date().toISOString();
-        } else {
-          gateStates.push({ type, status, result, attemptedAt: new Date().toISOString() });
-        }
-        meta.gateStates = gateStates;
+        applyNodeGateState(node, type as GateType, status as GateStatus, result);
       } else if (url === '/node/execution-phase' && req.method === 'PATCH') {
         const { nodeId, phase } = data;
         if (!nodeId || !phase) {
@@ -196,8 +192,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        const meta = node.metadata ?? {};
-        meta.executionPhase = phase;
+        applyNodeExecutionPhase(node, phase as ExecutionPhase);
       } else if (url === '/replan' && req.method === 'POST') {
         const { nodeId } = data;
         if (!nodeId) {
@@ -211,9 +206,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
         }
         node.status = 'pending';
         node.progress = 0;
-        const meta = node.metadata ?? {};
-        meta.executionPhase = 'idle';
-        meta.gateStates = [];
+        resetNodeExecutionState(node);
         s.feedback.push({
           id: crypto.randomUUID(),
           nodeId,

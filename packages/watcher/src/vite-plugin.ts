@@ -1,7 +1,13 @@
 import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
+import type { ExecutionPhase, GateStatus, GateType } from '@supermech/schema';
 import type { Plugin, ViteDevServer } from 'vite';
+import {
+  applyNodeExecutionPhase,
+  applyNodeGateState,
+  resetNodeExecutionState,
+} from './execution-state.ts';
 import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
 import { validateState } from './validate.ts';
 
@@ -280,17 +286,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
               sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
               return;
             }
-            const meta = node.metadata ?? {};
-            const gateStates: Array<Record<string, unknown>> = meta.gateStates ?? [];
-            const existing = gateStates.find((g) => g.type === type);
-            if (existing) {
-              existing.status = status;
-              if (result !== undefined) existing.result = result;
-              existing.attemptedAt = new Date().toISOString();
-            } else {
-              gateStates.push({ type, status, result, attemptedAt: new Date().toISOString() });
-            }
-            meta.gateStates = gateStates;
+            applyNodeGateState(node, type as GateType, status as GateStatus, result);
           } else if (url === '/node/execution-phase' && req.method === 'PATCH') {
             const { nodeId, phase } = data;
             if (!nodeId || !phase) {
@@ -302,8 +298,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
               sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
               return;
             }
-            const meta = node.metadata ?? {};
-            meta.executionPhase = phase;
+            applyNodeExecutionPhase(node, phase as ExecutionPhase);
           } else if (url === '/replan' && req.method === 'POST') {
             const { nodeId } = data;
             if (!nodeId) {
@@ -317,9 +312,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
             }
             node.status = 'pending';
             node.progress = 0;
-            const meta = node.metadata ?? {};
-            meta.executionPhase = 'idle';
-            meta.gateStates = [];
+            resetNodeExecutionState(node);
             s.feedback.push({
               id: crypto.randomUUID(),
               nodeId,

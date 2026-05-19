@@ -1,7 +1,11 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
+  type CanvasNode,
   createDefaultWorkbenchState,
-  type NodeStatus,
+  type ExecutionPhase,
+  type GateStatus,
+  type GateType,
+  type PlanTaskExecutionMetadataPatch,
   type UIPreferences,
   type WorkbenchState,
 } from '@supermech/schema';
@@ -16,6 +20,26 @@ export interface FeedbackParams {
   quickAction?: string;
 }
 
+type JSONRecord = Record<string, unknown>;
+
+type WorkbenchNodeMetadataPatch = PlanTaskExecutionMetadataPatch & JSONRecord;
+
+type WorkbenchNodePatch = Pick<CanvasNode, 'status' | 'label' | 'progress'> & {
+  metadata?: WorkbenchNodeMetadataPatch;
+};
+
+type GateStateUpdatePayload = {
+  nodeId: string;
+  type: GateType;
+  status: GateStatus;
+  result?: string;
+};
+
+type ExecutionPhaseUpdatePayload = {
+  nodeId: string;
+  phase: ExecutionPhase;
+};
+
 interface WorkbenchContextValue {
   state: WorkbenchState;
   plans: string[];
@@ -25,20 +49,17 @@ interface WorkbenchContextValue {
   selectNode: (nodeId: string | null) => Promise<void>;
   updateUI: (patch: Partial<UIPreferences>) => Promise<void>;
   addFeedback: (params: FeedbackParams) => Promise<void>;
-  updateNode: (
-    id: string,
-    patch: { status?: NodeStatus; label?: string; progress?: number; metadata?: Record<string, unknown> },
-  ) => Promise<void>;
+  updateNode: (id: string, patch: Partial<WorkbenchNodePatch>) => Promise<void>;
   switchPlan: (plan: string) => Promise<void>;
   switchSkill: (skill: string) => Promise<void>;
   createPlan: (plan: string) => Promise<void>;
   updateGateState: (
     nodeId: string,
-    type: string,
-    status: string,
+    type: GateType,
+    status: GateStatus,
     result?: string,
   ) => Promise<void>;
-  updateExecutionPhase: (nodeId: string, phase: string) => Promise<void>;
+  updateExecutionPhase: (nodeId: string, phase: ExecutionPhase) => Promise<void>;
   requestReplan: (nodeId: string) => Promise<void>;
 }
 
@@ -115,7 +136,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchMeta]);
 
-  async function callAPI(path: string, method: string, data: Record<string, unknown>) {
+  async function callAPI(path: string, method: string, data: JSONRecord) {
     const res = await fetch(path, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -177,9 +198,17 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     switchSkill,
     createPlan,
     updateGateState: (nodeId, type, status, result) =>
-      callAPI('/__state/node/gate-state', 'PATCH', { nodeId, type, status, result }),
+      callAPI('/__state/node/gate-state', 'PATCH', {
+        nodeId,
+        type,
+        status,
+        result,
+      } satisfies GateStateUpdatePayload),
     updateExecutionPhase: (nodeId, phase) =>
-      callAPI('/__state/node/execution-phase', 'PATCH', { nodeId, phase }),
+      callAPI('/__state/node/execution-phase', 'PATCH', {
+        nodeId,
+        phase,
+      } satisfies ExecutionPhaseUpdatePayload),
     requestReplan: (nodeId) => callAPI('/__state/replan', 'POST', { nodeId }),
   };
 
