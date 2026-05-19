@@ -179,6 +179,18 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           quickAction: data.quickAction ?? null,
           createdAt: new Date().toISOString(),
         });
+      } else if (url === '/feedback/process' && req.method === 'POST') {
+        const { feedbackId } = data;
+        if (!feedbackId) {
+          sendJSON(res, 400, { ok: false, error: 'feedbackId required' });
+          return;
+        }
+        const feedbackEntry = s.feedback.find((entry) => entry.id === feedbackId);
+        if (!feedbackEntry) {
+          sendJSON(res, 404, { ok: false, error: `feedback ${feedbackId} not found` });
+          return;
+        }
+        feedbackEntry.processedAt = new Date().toISOString();
       } else if (url === '/node' && req.method === 'PATCH') {
         const idx = s.canvas.nodes.findIndex((n: { id: string }) => n.id === data.id);
         if (idx === -1) {

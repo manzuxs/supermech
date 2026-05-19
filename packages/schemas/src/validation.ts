@@ -52,6 +52,7 @@ export const feedbackEntrySchema = z.object({
   stepIndex: z.number().int().nullable().optional(),
   quickAction: z.string().nullable(),
   createdAt: z.string(),
+  processedAt: z.string().optional(),
 });
 
 export const uiPreferencesSchema = z.object({

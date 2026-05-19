@@ -42,6 +42,7 @@ export interface FeedbackEntry {
   stepIndex?: number | null;
   quickAction: string | null;
   createdAt: string;
+  processedAt?: string;
 }
 
 export interface UIPreferences {

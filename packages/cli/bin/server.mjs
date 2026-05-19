@@ -14567,7 +14567,8 @@ var feedbackEntrySchema = external_exports.object({
   section: external_exports.enum(["goal", "code", "test", "general"]).nullable().optional(),
   stepIndex: external_exports.number().int().nullable().optional(),
   quickAction: external_exports.string().nullable(),
-  createdAt: external_exports.string()
+  createdAt: external_exports.string(),
+  processedAt: external_exports.string().optional()
 });
 var uiPreferencesSchema = external_exports.object({
   theme: themeModeSchema,
@@ -15087,6 +15088,18 @@ function createStateMiddleware(cfg) {
           quickAction: data.quickAction ?? null,
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         });
+      } else if (url2 === "/feedback/process" && req.method === "POST") {
+        const { feedbackId } = data;
+        if (!feedbackId) {
+          sendJSON(res, 400, { ok: false, error: "feedbackId required" });
+          return;
+        }
+        const feedbackEntry = s.feedback.find((entry) => entry.id === feedbackId);
+        if (!feedbackEntry) {
+          sendJSON(res, 404, { ok: false, error: `feedback ${feedbackId} not found` });
+          return;
+        }
+        feedbackEntry.processedAt = (/* @__PURE__ */ new Date()).toISOString();
       } else if (url2 === "/node" && req.method === "PATCH") {
         const idx = s.canvas.nodes.findIndex((n) => n.id === data.id);
         if (idx === -1) {

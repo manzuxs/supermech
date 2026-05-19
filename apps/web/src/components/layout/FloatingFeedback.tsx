@@ -2,11 +2,20 @@ import { Crosshair, Send, Sparkles, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
+import { getCommand } from '../../lib/commands.ts';
 import { TaskDetail } from '../visuals/DetailPanel.tsx';
 
 export default function FloatingFeedback() {
   const { t } = useTranslation();
-  const { state, addFeedback, updateUI, requestReplan } = useWorkbench();
+  const {
+    state,
+    addFeedback,
+    updateUI,
+    requestReplan,
+    updateNode,
+    markFeedbackProcessed,
+    switchSkill,
+  } = useWorkbench();
   const [text, setText] = useState('');
   const isBrainstorming = state.meta.activeSkill === 'brainstorming';
   const isWritingPlans = state.meta.activeSkill === 'writing-plans';
@@ -85,12 +94,30 @@ export default function FloatingFeedback() {
     },
   };
 
+  function parseSlashCommand(input: string) {
+    const normalized = input.trim().slice(1).trim();
+    if (!normalized) return null;
+    const [commandName] = normalized.split(/\s+/, 1);
+    return getCommand(commandName);
+  }
+
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!text.trim()) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    if (trimmed.startsWith('/')) {
+      const command = parseSlashCommand(trimmed);
+      if (command) {
+        await command.run();
+        setText('');
+        return;
+      }
+    }
+
     await addFeedback({
       nodeId: state.ui.selectedNodeId ?? '__global__',
-      text: text.trim(),
+      text: trimmed,
       section: 'general',
     });
     setText('');
@@ -108,6 +135,15 @@ export default function FloatingFeedback() {
 
   function locateNode(nodeId: string) {
     window.dispatchEvent(new CustomEvent('workbench:focus-node', { detail: { nodeId } }));
+  }
+
+  async function setBrainstormStatus(status: 'accepted' | 'rejected') {
+    if (!selectedNode) return;
+    await updateNode(selectedNode.id, { status });
+  }
+
+  async function enterWritingPlans() {
+    await switchSkill('writing-plans');
   }
 
   if (!isInspectorOpen) {
@@ -176,6 +212,45 @@ export default function FloatingFeedback() {
                     <Crosshair className="h-3.5 w-3.5" />
                     <span>{t('feedback.locate')}</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setBrainstormStatus('accepted')}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--success)] transition hover:bg-[var(--success)]/18"
+                  >
+                    <span>{t('feedback.acceptAction', { defaultValue: 'Accept' })}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBrainstormStatus('rejected')}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--muted-foreground)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted-foreground)]/18"
+                  >
+                    <span>{t('feedback.rejectAction', { defaultValue: 'Reject' })}</span>
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-main)]/55 p-3">
+                  <div className="text-[12px] font-medium text-[var(--text-main)]">
+                    {t('feedback.planTransitionTitle', {
+                      defaultValue: 'Ready to turn ideas into a plan?',
+                    })}
+                  </div>
+                  <div className="mt-1 text-[12px] leading-5 text-[var(--text-main)] opacity-55">
+                    {t('feedback.planTransitionHint', {
+                      defaultValue:
+                        'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={enterWritingPlans}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95"
+                  >
+                    <span>
+                      {t('feedback.enterWritingPlans', {
+                        defaultValue: 'Enter Writing Plans',
+                      })}
+                    </span>
+                  </button>
                 </div>
 
                 <div className="mt-4 border-t border-[var(--border)]/70 pt-4">
@@ -237,10 +312,24 @@ export default function FloatingFeedback() {
                         </div>
                         <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--text-main)] opacity-40">
                           <span>{new Date(entry.createdAt).toLocaleString()}</span>
-                          {!('processedAt' in entry) && (
+                          {!entry.processedAt && (
                             <span className="rounded-full bg-[var(--accent)]/12 px-2 py-0.5 text-[var(--accent)] opacity-100">
                               {t('feedback.pendingBadge')}
                             </span>
+                          )}
+                          {entry.processedAt && (
+                            <span className="rounded-full bg-[var(--success)]/12 px-2 py-0.5 text-[var(--success)] opacity-100">
+                              {t('feedback.processedBadge', { defaultValue: 'Processed' })}
+                            </span>
+                          )}
+                          {!entry.processedAt && (
+                            <button
+                              type="button"
+                              onClick={() => markFeedbackProcessed(entry.id)}
+                              className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/70 px-2 py-0.5 text-[10px] text-[var(--text-main)] opacity-80 transition hover:opacity-100"
+                            >
+                              {t('feedback.markProcessed', { defaultValue: 'Mark Processed' })}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -298,7 +387,9 @@ export default function FloatingFeedback() {
               placeholder={
                 selectedNode
                   ? t('feedback.nodePlaceholder', { name: selectedNode.label })
-                  : t('feedback.placeholder')
+                  : t('feedback.placeholder', {
+                      defaultValue: 'Leave feedback or try /execute',
+                    })
               }
               className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
             />
@@ -374,7 +465,10 @@ export default function FloatingFeedback() {
                 name="feedbackMessage"
                 autoComplete="off"
                 onKeyDown={handleKeyDown}
-                placeholder={t('feedback.nodePlaceholder', { name: selectedNode.label })}
+                placeholder={t('feedback.nodePlaceholder', {
+                  name: selectedNode.label,
+                  defaultValue: `Leave feedback for ${selectedNode.label} or try /execute`,
+                })}
                 className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--execution-panel-action-bg)] focus-visible:outline-offset-2"
               />
               <button

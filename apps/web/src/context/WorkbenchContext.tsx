@@ -49,6 +49,7 @@ interface WorkbenchContextValue {
   selectNode: (nodeId: string | null) => Promise<void>;
   updateUI: (patch: Partial<UIPreferences>) => Promise<void>;
   addFeedback: (params: FeedbackParams) => Promise<void>;
+  markFeedbackProcessed: (feedbackId: string) => Promise<void>;
   updateNode: (id: string, patch: Partial<WorkbenchNodePatch>) => Promise<void>;
   switchPlan: (plan: string) => Promise<void>;
   switchSkill: (skill: string) => Promise<void>;
@@ -193,6 +194,8 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     updateUI: (patch) => callAPI('/__state/ui', 'PATCH', patch),
     addFeedback: (params) =>
       callAPI('/__state/feedback', 'POST', { ...params, quickAction: params.quickAction ?? null }),
+    markFeedbackProcessed: (feedbackId) =>
+      callAPI('/__state/feedback/process', 'POST', { feedbackId }),
     updateNode: (id, patch) => callAPI('/__state/node', 'PATCH', { id, ...patch }),
     switchPlan,
     switchSkill,
