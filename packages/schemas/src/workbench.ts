@@ -37,9 +37,9 @@ export interface FeedbackEntry {
   id: string;
   nodeId: string;
   text: string;
-  rating?: number;
-  section?: 'goal' | 'code' | 'test' | 'general';
-  stepIndex?: number;
+  rating?: number | null;
+  section?: 'goal' | 'code' | 'test' | 'general' | null;
+  stepIndex?: number | null;
   quickAction: string | null;
   createdAt: string;
 }

@@ -40,6 +40,23 @@ function sendJSON(res: ServerResponse, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
+function buildValidationErrorResponse(
+  method: string | undefined,
+  path: string,
+  validationErrors: string[],
+) {
+  return {
+    ok: false,
+    error: 'state validation failed',
+    code: 'STATE_VALIDATION_FAILED',
+    details: {
+      method: method ?? 'UNKNOWN',
+      path,
+      validationErrors,
+    },
+  };
+}
+
 function parseBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve) => {
     let body = '';
@@ -145,7 +162,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
       }
 
       const data: any = await parseBody(req);
-      const s = cfg.state() as WorkbenchState;
+      const s = structuredClone(cfg.state() as unknown as WorkbenchState);
 
       if (url === '/select' && req.method === 'POST') {
         s.ui.selectedNodeId = data.nodeId ?? null;
@@ -157,8 +174,8 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           nodeId: data.nodeId,
           text: data.text,
           rating: data.rating ?? undefined,
-          section: data.section ?? null,
-          stepIndex: data.stepIndex ?? null,
+          section: data.section ?? undefined,
+          stepIndex: data.stepIndex ?? undefined,
           quickAction: data.quickAction ?? null,
           createdAt: new Date().toISOString(),
         });
@@ -209,9 +226,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           id: crypto.randomUUID(),
           nodeId,
           text: 'User requested re-plan. Please review and re-execute this task.',
-          rating: null,
-          section: null,
-          stepIndex: null,
+          rating: undefined,
           quickAction: 'replan',
           createdAt: new Date().toISOString(),
         });
@@ -222,17 +237,15 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
 
       const { valid, errors: validationErrors } = cfg.validate(s);
       if (!valid) {
-        console.error('[supermech] state validation failed:', validationErrors.join('; '));
-        s.meta.agentStatus = 'error';
-        s.feedback.push({
-          id: crypto.randomUUID(),
-          nodeId: '__global__',
-          text: `State validation error: ${validationErrors.join('; ')}`,
-          section: null,
-          stepIndex: null,
-          quickAction: null,
-          createdAt: new Date().toISOString(),
+        console.error('[supermech] state validation failed:', {
+          method: req.method ?? 'UNKNOWN',
+          path: url,
+          plan: cfg.currentPlan,
+          skill: cfg.currentSkill,
+          validationErrors,
         });
+        sendJSON(res, 422, buildValidationErrorResponse(req.method, url, validationErrors));
+        return;
       }
 
       cfg.writeState(s);

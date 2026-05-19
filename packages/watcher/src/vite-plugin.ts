@@ -26,6 +26,27 @@ function readJSON(path: string): string {
   return readFileSync(path, 'utf-8');
 }
 
+function buildValidationErrorResponse(
+  method: string | undefined,
+  path: string,
+  plan: string,
+  skill: string,
+  validationErrors: string[],
+) {
+  return {
+    ok: false,
+    error: 'state validation failed',
+    code: 'STATE_VALIDATION_FAILED',
+    details: {
+      method: method ?? 'UNKNOWN',
+      path,
+      plan,
+      skill,
+      validationErrors,
+    },
+  };
+}
+
 export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
   let baseDir: string; // .supermech/
   let currentPlan = 'default';
@@ -251,7 +272,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
           }
 
           const data: any = await parseBody(req);
-          const s = state() as WorkbenchState;
+          const s = state() as unknown as WorkbenchState;
 
           if (url === '/select' && req.method === 'POST') {
             s.ui.selectedNodeId = data.nodeId ?? null;
@@ -263,8 +284,8 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
               nodeId: data.nodeId,
               text: data.text,
               rating: data.rating ?? undefined,
-              section: data.section ?? null,
-              stepIndex: data.stepIndex ?? null,
+              section: data.section ?? undefined,
+              stepIndex: data.stepIndex ?? undefined,
               quickAction: data.quickAction ?? null,
               createdAt: new Date().toISOString(),
             });
@@ -315,9 +336,6 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
               id: crypto.randomUUID(),
               nodeId,
               text: 'User requested re-plan. Please review and re-execute this task.',
-              rating: null,
-              section: null,
-              stepIndex: null,
               quickAction: 'replan',
               createdAt: new Date().toISOString(),
             });
@@ -328,17 +346,25 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
 
           const { valid, errors: validationErrors } = validateState(s);
           if (!valid) {
-            console.error('[supermech] state validation failed:', validationErrors.join('; '));
-            s.meta.agentStatus = 'error' as const;
-            s.feedback.push({
-              id: crypto.randomUUID(),
-              nodeId: '__global__',
-              text: `State validation error: ${validationErrors.join('; ')}`,
-              section: null,
-              stepIndex: null,
-              quickAction: null,
-              createdAt: new Date().toISOString(),
+            console.error('[supermech] state validation failed:', {
+              method: req.method ?? 'UNKNOWN',
+              path: url,
+              plan: currentPlan,
+              skill: currentSkill,
+              validationErrors,
             });
+            sendJSON(
+              res,
+              422,
+              buildValidationErrorResponse(
+                req.method,
+                url,
+                currentPlan,
+                currentSkill,
+                validationErrors,
+              ),
+            );
+            return;
           }
 
           const raw = JSON.stringify(s, null, 2);

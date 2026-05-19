@@ -14940,6 +14940,27 @@ function resetNodeExecutionState(node) {
   metadata.gateStates = [];
 }
 
+// ../watcher/src/node-execution-state.ts
+function requireStateNode(state, nodeId) {
+  const node = state.canvas.nodes.find((candidate) => candidate.id === nodeId);
+  if (!node) {
+    throw new Error(`node ${nodeId} not found`);
+  }
+  return node;
+}
+function applyStateNodeGateState(state, nodeId, type, status, result) {
+  applyNodeGateState(requireStateNode(state, nodeId), type, status, result);
+}
+function applyStateNodeExecutionPhase(state, nodeId, phase) {
+  applyNodeExecutionPhase(requireStateNode(state, nodeId), phase);
+}
+function resetStateNodeForReplan(state, nodeId) {
+  const node = requireStateNode(state, nodeId);
+  node.status = "pending";
+  node.progress = 0;
+  resetNodeExecutionState(node);
+}
+
 // ../watcher/src/vite-plugin.ts
 var VIRTUAL_MODULE_ID = "virtual:supermech/state";
 var RESOLVED_VIRTUAL_MODULE_ID = `\0${VIRTUAL_MODULE_ID}`;
@@ -14948,6 +14969,18 @@ var RESOLVED_VIRTUAL_MODULE_ID = `\0${VIRTUAL_MODULE_ID}`;
 function sendJSON(res, status, data) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data));
+}
+function buildValidationErrorResponse(method, path, validationErrors) {
+  return {
+    ok: false,
+    error: "state validation failed",
+    code: "STATE_VALIDATION_FAILED",
+    details: {
+      method: method ?? "UNKNOWN",
+      path,
+      validationErrors
+    }
+  };
 }
 function parseBody(req) {
   return new Promise((resolve2) => {
@@ -15038,7 +15071,7 @@ function createStateMiddleware(cfg) {
         return;
       }
       const data = await parseBody(req);
-      const s = cfg.state();
+      const s = structuredClone(cfg.state());
       if (url2 === "/select" && req.method === "POST") {
         s.ui.selectedNodeId = data.nodeId ?? null;
       } else if (url2 === "/ui" && req.method === "PATCH") {
@@ -15049,8 +15082,8 @@ function createStateMiddleware(cfg) {
           nodeId: data.nodeId,
           text: data.text,
           rating: data.rating ?? void 0,
-          section: data.section ?? null,
-          stepIndex: data.stepIndex ?? null,
+          section: data.section ?? void 0,
+          stepIndex: data.stepIndex ?? void 0,
           quickAction: data.quickAction ?? null,
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         });
@@ -15067,45 +15100,41 @@ function createStateMiddleware(cfg) {
           sendJSON(res, 400, { ok: false, error: "nodeId, type, status required" });
           return;
         }
-        const node = s.canvas.nodes.find((n) => n.id === nodeId);
-        if (!node) {
+        try {
+          applyStateNodeGateState(s, nodeId, type, status, result);
+        } catch (error51) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        applyNodeGateState(node, type, status, result);
       } else if (url2 === "/node/execution-phase" && req.method === "PATCH") {
         const { nodeId, phase } = data;
         if (!nodeId || !phase) {
           sendJSON(res, 400, { ok: false, error: "nodeId, phase required" });
           return;
         }
-        const node = s.canvas.nodes.find((n) => n.id === nodeId);
-        if (!node) {
+        try {
+          applyStateNodeExecutionPhase(s, nodeId, phase);
+        } catch (error51) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        applyNodeExecutionPhase(node, phase);
       } else if (url2 === "/replan" && req.method === "POST") {
         const { nodeId } = data;
         if (!nodeId) {
           sendJSON(res, 400, { ok: false, error: "nodeId required" });
           return;
         }
-        const node = s.canvas.nodes.find((n) => n.id === nodeId);
-        if (!node) {
+        try {
+          resetStateNodeForReplan(s, nodeId);
+        } catch (error51) {
           sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
           return;
         }
-        node.status = "pending";
-        node.progress = 0;
-        resetNodeExecutionState(node);
         s.feedback.push({
           id: crypto.randomUUID(),
           nodeId,
           text: "User requested re-plan. Please review and re-execute this task.",
-          rating: null,
-          section: null,
-          stepIndex: null,
+          rating: void 0,
           quickAction: "replan",
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         });
@@ -15115,17 +15144,15 @@ function createStateMiddleware(cfg) {
       }
       const { valid, errors: validationErrors } = cfg.validate(s);
       if (!valid) {
-        console.error("[supermech] state validation failed:", validationErrors.join("; "));
-        s.meta.agentStatus = "error";
-        s.feedback.push({
-          id: crypto.randomUUID(),
-          nodeId: "__global__",
-          text: `State validation error: ${validationErrors.join("; ")}`,
-          section: null,
-          stepIndex: null,
-          quickAction: null,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        console.error("[supermech] state validation failed:", {
+          method: req.method ?? "UNKNOWN",
+          path: url2,
+          plan: cfg.currentPlan,
+          skill: cfg.currentSkill,
+          validationErrors
         });
+        sendJSON(res, 422, buildValidationErrorResponse(req.method, url2, validationErrors));
+        return;
       }
       cfg.writeState(s);
       sendJSON(res, 200, s);
