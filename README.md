@@ -25,9 +25,9 @@ It's designed as a **low-invasion sidecar**: any project (Node, Python, Go, or o
 
 | Skill | View | Purpose |
 |-------|------|---------|
-| **visual-brainstorming** | MindMap (SVG tree) | Explore ideas, propose approaches, make design decisions |
-| **visual-writing-plans** | PlanEditor (tree + detail) | Write implementation plans as structured tasks |
-| **visual-executing-plans** | KanbanBoard (3-column) | Execute plans with quality gates and user rating |
+| **brainstorming** | MindMap (SVG tree) | Socratic design exploration → structured decisions |
+| **writing-plans** | PlanEditor (tree + detail) | Implementation plans with TDD steps and quality gates |
+| **executing-plans** | KanbanBoard (3-column) | One-task-at-a-time execution with user rating |
 
 Skills are **independent** — not a pipeline. Use only what you need.
 
@@ -54,56 +54,43 @@ Open [localhost:5173](http://localhost:5173) to see the workbench.
 ### Add Supermech to your project
 
 ```bash
-npm install @supermech/schema @supermech/runtime
-npx @supermech/init --with-skills brainstorming,writing-plans,executing-plans
+npx @supermech/init
 ```
 
-This creates `.supermech/` in your project — the standard directory for skill definitions and session state.
+Creates `.supermech/` plus installs skill definitions to `.claude/skills/`. Your agent can now discover and use `supermech-brainstorming`, `supermech-writing-plans`, and `supermech-executing-plans`.
 
-### Agent Usage
+```bash
+npx @supermech/cli
+```
 
-```typescript
-import { readState, writeState } from '@supermech/runtime';
-import { validateState } from '@supermech/schema';
+Starts the visual workbench at `localhost:4388`. Agent writes state → UI renders in real time.
 
-// Write state for the brainstorming skill
-writeState('brainstorming', {
-  meta: {
-    projectName: 'My Project',
-    sessionId: 'brainstorming',
-    activeSkill: 'brainstorming',
-    agentStatus: 'writing',
+### Agent writes state
+
+Agent creates a plan directory based on the request topic and writes structured JSON:
+
+```
+.supermech/用户认证/state-brainstorming.json
+```
+
+```json
+{
+  "meta": {
+    "projectName": "用户认证",
+    "sessionId": "brainstorming",
+    "activeSkill": "brainstorming",
+    "agentStatus": "writing"
   },
-  canvas: {
-    skillType: 'brainstorming',
-    nodes: [
-      { id: 'root', label: 'Main Topic', status: 'active', progress: 0.5, parentId: null, children: [], metadata: {} },
+  "canvas": {
+    "skillType": "brainstorming",
+    "nodes": [
+      { "id": "root", "label": "认证方案", "status": "active", "progress": 0.5, "parentId": null, "children": [], "metadata": {} }
     ],
-    edges: [],
+    "edges": []
   },
-  feedback: [],
-  ui: { theme: 'system', leftSidebarOpen: true, rightSidebarOpen: true, selectedNodeId: null },
-});
-
-// Validate before writing
-const { valid, errors } = validateState(myState);
-if (!valid) console.error('Invalid state:', errors);
-
-// Read user feedback
-const state = readState('brainstorming');
-console.log(state?.feedback);
-```
-
-### Plan Scoping (Multiple Work Contexts)
-
-For parallel work contexts (e.g., "Feature A" and "Feature B"):
-
-```typescript
-writeState('brainstorming', data, { currentPlan: 'feature-a' });
-const state = readState('brainstorming', { currentPlan: 'feature-b' });
-```
-
-This resolves to `.supermech/feature-a/state-brainstorming.json`.
+  "feedback": [],
+  "ui": { "theme": "system", "leftSidebarOpen": true, "rightSidebarOpen": true, "selectedNodeId": null }
+}
 
 ---
 
