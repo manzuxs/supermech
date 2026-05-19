@@ -1,15 +1,10 @@
 import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
-import type { ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
 import type { Plugin, ViteDevServer } from 'vite';
-import {
-  applyStateNodeExecutionPhase,
-  applyStateNodeGateState,
-  resetStateNodeForReplan,
-} from './node-execution-state.ts';
 import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
-import { validateState } from './validate.ts';
+import { validateState } from '@supermech/schema';
+import { createStateMiddleware } from './middleware.ts';
 
 export interface WatcherPluginOptions {
   /** Optional explicit state file override. Prefer plan-scoped files under `basePlanDir`. */
@@ -26,26 +21,7 @@ function readJSON(path: string): string {
   return readFileSync(path, 'utf-8');
 }
 
-function buildValidationErrorResponse(
-  method: string | undefined,
-  path: string,
-  plan: string,
-  skill: string,
-  validationErrors: string[],
-) {
-  return {
-    ok: false,
-    error: 'state validation failed',
-    code: 'STATE_VALIDATION_FAILED',
-    details: {
-      method: method ?? 'UNKNOWN',
-      path,
-      plan,
-      skill,
-      validationErrors,
-    },
-  };
-}
+
 
 export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
   let baseDir: string; // .supermech/
@@ -127,25 +103,6 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
     }
   }
 
-  function sendJSON(res: any, status: number, data: unknown): void {
-    res.writeHead(status, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(data));
-  }
-
-  function parseBody(req: any): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      let body = '';
-      req.on('data', (chunk: string) => (body += chunk));
-      req.on('end', () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch {
-          reject(new Error('invalid JSON'));
-        }
-      });
-    });
-  }
-
   return {
     name: 'supermech-watcher',
     enforce: 'pre',
@@ -183,209 +140,21 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
         });
       });
 
-      server.middlewares.use('/__state', async (req, res, next) => {
-        const url = req.url ?? '';
-
-        try {
-          // --- Plan management ---
-          if (url.startsWith('/plans')) {
-            const sub = url.replace('/plans', '') || '/';
-
-            if (sub === '/' && req.method === 'GET') {
-              const plans = listPlans(baseDir);
-              const skills = listSkills(planDir);
-              sendJSON(res, 200, {
-                plans: plans.map((p) => p.planName),
-                current: currentPlan,
-                skills: skills.map((s) => s.skill),
-                currentSkill,
-              });
-              return;
-            }
-
-            if (sub === '/switch' && req.method === 'POST') {
-              const data: any = await parseBody(req);
-              if (!data.plan) {
-                sendJSON(res, 400, { ok: false, error: 'plan required' });
-                return;
-              }
-              switchPlan(data.plan);
-              const skills = listSkills(planDir);
-              sendJSON(res, 200, {
-                ok: true,
-                plan: data.plan,
-                skills: skills.map((s) => s.skill),
-                currentSkill,
-                state: state(),
-              });
-              return;
-            }
-
-            if (sub === '/create' && req.method === 'POST') {
-              const data: any = await parseBody(req);
-              if (!data.plan) {
-                sendJSON(res, 400, { ok: false, error: 'plan required' });
-                return;
-              }
-              createPlan(baseDir, data.plan);
-              sendJSON(res, 200, { ok: true });
-              return;
-            }
-
-            sendJSON(res, 404, { ok: false, error: 'plan endpoint not found' });
-            return;
-          }
-
-          // --- Skill management ---
-          if (url.startsWith('/skills')) {
-            const sub = url.replace('/skills', '') || '/';
-
-            if (sub === '/' && req.method === 'GET') {
-              const skills = listSkills(planDir);
-              sendJSON(res, 200, { skills: skills.map((s) => s.skill), current: currentSkill });
-              return;
-            }
-
-            if (sub === '/switch' && req.method === 'POST') {
-              const data: any = await parseBody(req);
-              if (!data.skill) {
-                sendJSON(res, 400, { ok: false, error: 'skill required' });
-                return;
-              }
-              switchSkill(data.skill);
-              sendJSON(res, 200, { ok: true, skill: data.skill, state: state() });
-              return;
-            }
-
-            sendJSON(res, 404, { ok: false, error: 'skill endpoint not found' });
-            return;
-          }
-
-          // --- Data endpoints ---
-          if (req.method === 'GET') {
-            sendJSON(res, 200, state());
-            return;
-          }
-
-          if (req.method !== 'POST' && req.method !== 'PATCH') {
-            return next();
-          }
-
-          const data: any = await parseBody(req);
-          const s = state() as unknown as WorkbenchState;
-
-          if (url === '/select' && req.method === 'POST') {
-            s.ui.selectedNodeId = data.nodeId ?? null;
-          } else if (url === '/ui' && req.method === 'PATCH') {
-            Object.assign(s.ui, data);
-          } else if (url === '/feedback' && req.method === 'POST') {
-            s.feedback.push({
-              id: crypto.randomUUID(),
-              nodeId: data.nodeId,
-              text: data.text,
-              rating: data.rating ?? undefined,
-              section: data.section ?? undefined,
-              stepIndex: data.stepIndex ?? undefined,
-              quickAction: data.quickAction ?? null,
-              createdAt: new Date().toISOString(),
-            });
-          } else if (url === '/feedback/process' && req.method === 'POST') {
-            const { feedbackId } = data;
-            if (!feedbackId) {
-              sendJSON(res, 400, { ok: false, error: 'feedbackId required' });
-              return;
-            }
-            const feedbackEntry = s.feedback.find((entry) => entry.id === feedbackId);
-            if (!feedbackEntry) {
-              sendJSON(res, 404, { ok: false, error: `feedback ${feedbackId} not found` });
-              return;
-            }
-            feedbackEntry.processedAt = new Date().toISOString();
-          } else if (url === '/node' && req.method === 'PATCH') {
-            const idx = s.canvas.nodes.findIndex((n: { id: string }) => n.id === data.id);
-            if (idx === -1) {
-              sendJSON(res, 404, { ok: false, error: `node ${data.id} not found` });
-              return;
-            }
-            Object.assign(s.canvas.nodes[idx], data);
-          } else if (url === '/node/gate-state' && req.method === 'PATCH') {
-            const { nodeId, type, status, result } = data;
-            if (!nodeId || !type || !status) {
-              sendJSON(res, 400, { ok: false, error: 'nodeId, type, status required' });
-              return;
-            }
-            try {
-              applyStateNodeGateState(s, nodeId, type as GateType, status as GateStatus, result);
-            } catch (error) {
-              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
-              return;
-            }
-          } else if (url === '/node/execution-phase' && req.method === 'PATCH') {
-            const { nodeId, phase } = data;
-            if (!nodeId || !phase) {
-              sendJSON(res, 400, { ok: false, error: 'nodeId, phase required' });
-              return;
-            }
-            try {
-              applyStateNodeExecutionPhase(s, nodeId, phase as ExecutionPhase);
-            } catch (error) {
-              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
-              return;
-            }
-          } else if (url === '/replan' && req.method === 'POST') {
-            const { nodeId } = data;
-            if (!nodeId) {
-              sendJSON(res, 400, { ok: false, error: 'nodeId required' });
-              return;
-            }
-            try {
-              resetStateNodeForReplan(s, nodeId);
-            } catch (error) {
-              sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
-              return;
-            }
-            s.feedback.push({
-              id: crypto.randomUUID(),
-              nodeId,
-              text: 'User requested re-plan. Please review and re-execute this task.',
-              quickAction: 'replan',
-              createdAt: new Date().toISOString(),
-            });
-          } else {
-            sendJSON(res, 404, { ok: false, error: 'not found' });
-            return;
-          }
-
-          const { valid, errors: validationErrors } = validateState(s);
-          if (!valid) {
-            console.error('[supermech] state validation failed:', {
-              method: req.method ?? 'UNKNOWN',
-              path: url,
-              plan: currentPlan,
-              skill: currentSkill,
-              validationErrors,
-            });
-            sendJSON(
-              res,
-              422,
-              buildValidationErrorResponse(
-                req.method,
-                url,
-                currentPlan,
-                currentSkill,
-                validationErrors,
-              ),
-            );
-            return;
-          }
-
-          const raw = JSON.stringify(s, null, 2);
-          writeFileSync(statePath, raw);
-          sendJSON(res, 200, s);
-        } catch (err) {
-          sendJSON(res, 400, { ok: false, error: String(err) });
-        }
-      });
+      server.middlewares.use('/__state', createStateMiddleware({
+        baseDir,
+        getStatePath: () => statePath,
+        getPlanDir: () => planDir,
+        getCurrentPlan: () => currentPlan,
+        getCurrentSkill: () => currentSkill,
+        state,
+        writeState: (s) => writeFileSync(statePath, JSON.stringify(s, null, 2)),
+        listPlans: () => listPlans(baseDir).map(p => p.planName),
+        listSkills: () => listSkills(planDir).map(s => s.skill),
+        createPlan: (plan) => createPlan(baseDir, plan),
+        switchSkill,
+        switchPlan,
+        validate: validateState,
+      }));
     },
 
     resolveId(id) {

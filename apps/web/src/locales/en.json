@@ -12,7 +12,9 @@
     "settings": "Settings",
     "cancel": "Cancel",
     "show": "Show",
-    "hide": "Hide"
+    "hide": "Hide",
+    "close": "Close",
+    "loading": "Loading..."
   },
   "sidebar": {
     "skills": "Skills",
@@ -61,6 +63,14 @@
     "quickRefine": "Refine this step",
     "quickExpand": "Add more detail",
     "quickRegenerate": "Regenerate this node",
+    "acceptAction": "Accept",
+    "rejectAction": "Reject",
+    "planTransitionTitle": "Ready to turn ideas into a plan?",
+    "planTransitionHint": "Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.",
+    "planTransitionBlockedHint": "Approve at least one idea before moving into writing-plans.",
+    "enterWritingPlans": "Enter Writing Plans",
+    "processedBadge": "Processed",
+    "markProcessed": "Mark Processed",
     "history": "Feedback history",
     "noHistory": "No feedback yet for this target.",
     "agentPanelTitle": "Continue refining this node",
@@ -91,6 +101,7 @@
   "session": {
     "title": "Session Manager",
     "current": "Current",
+    "default": "Default",
     "empty": "No sessions yet",
     "count": "{{count}} sessions",
     "newPlaceholder": "Session name...",

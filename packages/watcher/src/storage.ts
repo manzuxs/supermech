@@ -1,14 +1,14 @@
 import {
   existsSync,
   mkdirSync,
-  readdirSync,
   readFileSync,
   writeFileSync,
   watch as fsWatch,
 } from 'node:fs';
 import type { FSWatcher } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { validateState } from './validate.ts';
+import { validateState } from '@supermech/schema';
+import { listPlans as smListPlans, listSkills as smListSkills } from './session-manager.ts';
 
 export interface RuntimeConfig {
   /** Base directory for state files. Defaults to `.supermech`. */
@@ -95,23 +95,11 @@ export function watchState(
 export function listSkillNames(config: RuntimeConfig = {}): string[] {
   const basePath = resolve(config.statePath ?? '.supermech');
   const dir = config.currentPlan ? join(basePath, config.currentPlan) : basePath;
-  try {
-    return readdirSync(dir)
-      .filter((f) => /^state-.+\.json$/.test(f))
-      .map((f) => f.replace(/^state-(.+)\.json$/, '$1'));
-  } catch {
-    return [];
-  }
+  return smListSkills(dir).map((s) => s.skill);
 }
 
 /** List plan subdirectories under the state path. */
 export function listPlans(config: RuntimeConfig = {}): string[] {
   const basePath = resolve(config.statePath ?? '.supermech');
-  try {
-    return readdirSync(basePath, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
-      .map((d) => d.name);
-  } catch {
-    return [];
-  }
+  return smListPlans(basePath).map((p) => p.planName);
 }

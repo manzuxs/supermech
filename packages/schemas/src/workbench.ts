@@ -5,7 +5,6 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface WorkbenchMeta {
   projectName: string;
-  sessionId: string;
   activeSkill: SkillType | null;
   agentStatus: AgentStatus;
 }

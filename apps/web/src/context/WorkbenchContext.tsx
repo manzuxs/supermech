@@ -68,7 +68,6 @@ const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
 
 const DEFAULT_STATE: WorkbenchState = createDefaultWorkbenchState({
   projectName: '',
-  sessionId: '',
   activeSkill: null,
   skillType: 'brainstorming',
 });

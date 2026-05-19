@@ -15,7 +15,6 @@ export const executionFlowOrientationSchema = z.enum(['horizontal']);
 
 export const workbenchMetaSchema = z.object({
   projectName: z.string(),
-  sessionId: z.string(),
   activeSkill: skillTypeSchema.nullable(),
   agentStatus: agentStatusSchema,
 });

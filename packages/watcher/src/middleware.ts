@@ -10,9 +10,9 @@ export interface MiddlewareConfig {
   /** Base directory for plan-based state files. */
   baseDir: string;
   /** Resolves to the current state file path. */
-  statePath: string;
+  getStatePath: () => string;
   /** Resolves to the current plan directory. */
-  planDir: string;
+  getPlanDir: () => string;
   /** Reads current active state. */
   state: () => Record<string, unknown>;
   /** Writes the given object to the current state path. */
@@ -28,9 +28,9 @@ export interface MiddlewareConfig {
   /** Switch to a different plan (updates internal state). */
   switchPlan: (plan: string) => void;
   /** Current plan name. */
-  currentPlan: string;
+  getCurrentPlan: () => string | null;
   /** Current skill name. */
-  currentSkill: string;
+  getCurrentSkill: () => string;
   /** Validate state and return errors. */
   validate: (s: unknown) => { valid: boolean; errors: string[] };
 }
@@ -85,9 +85,9 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           const skills = cfg.listSkills();
           sendJSON(res, 200, {
             plans,
-            current: cfg.currentPlan,
+            current: cfg.getCurrentPlan(),
             skills,
-            currentSkill: cfg.currentSkill,
+            currentSkill: cfg.getCurrentSkill(),
           });
           return;
         }
@@ -104,7 +104,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
             ok: true,
             plan: data.plan,
             skills,
-            currentSkill: cfg.currentSkill,
+            currentSkill: cfg.getCurrentSkill(),
             state: cfg.state(),
           });
           return;
@@ -131,7 +131,7 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
 
         if (sub === '/' && req.method === 'GET') {
           const skills = cfg.listSkills();
-          sendJSON(res, 200, { skills, current: cfg.currentSkill });
+          sendJSON(res, 200, { skills, current: cfg.getCurrentSkill() });
           return;
         }
 
@@ -252,8 +252,8 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
         console.error('[supermech] state validation failed:', {
           method: req.method ?? 'UNKNOWN',
           path: url,
-          plan: cfg.currentPlan,
-          skill: cfg.currentSkill,
+          plan: cfg.getCurrentPlan(),
+          skill: cfg.getCurrentSkill(),
           validationErrors,
         });
         sendJSON(res, 422, buildValidationErrorResponse(req.method, url, validationErrors));

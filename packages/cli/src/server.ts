@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, watch } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, watch } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ServerResponse } from 'node:http';
 import express from 'express';
-import { createStateMiddleware, validateState } from '@supermech/runtime';
+import { createStateMiddleware, validateState, listPlansFromDir, listSkillsFromDir } from '@supermech/runtime';
 import { createDefaultWorkbenchState } from '@supermech/schema';
 
 function findWebDist(): string {
@@ -25,22 +25,7 @@ function stateFilePath(baseDir: string, plan: string | null, skill: string): str
   return plan ? join(baseDir, plan, `state-${skill}.json`) : join(baseDir, `state-${skill}.json`);
 }
 
-/** Detect plan directories under baseDir. Excludes skills/ and dot-directories. */
-function detectPlans(baseDir: string): string[] {
-  try {
-    return readdirSync(baseDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'skills')
-      .map((d) => d.name)
-      .sort((a, b) => {
-        // Sort by modification time, newest first
-        const aStat = statSync(join(baseDir, a));
-        const bStat = statSync(join(baseDir, b));
-        return bStat.mtimeMs - aStat.mtimeMs;
-      });
-  } catch {
-    return [];
-  }
-}
+
 
 export async function startServer(options: ServerOptions = {}) {
   const port = options.port ?? 4388;
@@ -53,19 +38,15 @@ export async function startServer(options: ServerOptions = {}) {
   const sseClients = new Set<ServerResponse>();
 
   // Detect plans from .supermech/ subdirectories
-  const plans = detectPlans(baseDir);
+  const initialPlans = listPlansFromDir(baseDir);
   // Default to the most recently modified plan, or null if none
-  let currentPlan: string | null = plans[0] ?? null;
+  let currentPlan: string | null = initialPlans[0]?.planName ?? null;
   let currentSkill = 'brainstorming';
   let planDir = currentPlan ? join(baseDir, currentPlan) : baseDir;
   let statePath = stateFilePath(baseDir, currentPlan, currentSkill);
 
   function ensureDir(path: string) {
     if (!existsSync(path)) mkdirSync(path, { recursive: true });
-  }
-
-  function refreshPlans(): string[] {
-    return detectPlans(baseDir);
   }
 
   function readState(): Record<string, unknown> {
@@ -87,7 +68,6 @@ export async function startServer(options: ServerOptions = {}) {
     const typedSkill = skill as 'brainstorming' | 'writing-plans' | 'executing-plans';
     return createDefaultWorkbenchState({
       projectName: currentPlan ?? 'My Project',
-      sessionId: skill,
       activeSkill: typedSkill,
       skillType: typedSkill,
     }) as unknown as Record<string, unknown>;
@@ -146,22 +126,14 @@ export async function startServer(options: ServerOptions = {}) {
   // State middleware
   app.use('/__state', createStateMiddleware({
     baseDir,
-    statePath,
-    planDir,
-    currentPlan: currentPlan ?? '',
-    currentSkill,
+    getStatePath: () => statePath,
+    getPlanDir: () => planDir,
+    getCurrentPlan: () => currentPlan,
+    getCurrentSkill: () => currentSkill,
     state: readState,
     writeState: writeStateInternal,
-    listPlans: () => refreshPlans(),
-    listSkills: () => {
-      try {
-        return readdirSync(planDir)
-          .filter((f) => /^state-.+\.json$/.test(f))
-          .map((f) => f.replace(/^state-(.+)\.json$/, '$1'));
-      } catch {
-        return [];
-      }
-    },
+    listPlans: () => listPlansFromDir(baseDir).map((p) => p.planName),
+    listSkills: () => listSkillsFromDir(planDir).map((s) => s.skill),
     createPlan: (plan: string) => {
       ensureDir(join(baseDir, plan));
     },

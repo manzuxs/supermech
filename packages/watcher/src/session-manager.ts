@@ -3,12 +3,13 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { basename, join } from 'node:path';
 import { createDefaultWorkbenchState } from '@supermech/schema';
-import { validateState } from './validate.ts';
+import { validateState } from '@supermech/schema';
 
 export interface PlanInfo {
   planName: string;
@@ -24,13 +25,20 @@ export function ensureDir(dir: string): void {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
 
-/** List plans = subdirectories under baseDir */
+/** List plans = subdirectories under baseDir (excludes dot-dirs and 'skills') */
 export function listPlans(baseDir: string): PlanInfo[] {
   ensureDir(baseDir);
   try {
     return readdirSync(baseDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
-      .map((d) => ({ planName: d.name, dir: join(baseDir, d.name) }));
+      .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'skills')
+      .map((d) => ({ planName: d.name, dir: join(baseDir, d.name) }))
+      .sort((a, b) => {
+        try {
+          return statSync(b.dir).mtimeMs - statSync(a.dir).mtimeMs;
+        } catch {
+          return 0;
+        }
+      });
   } catch {
     return [];
   }
@@ -83,7 +91,6 @@ export function createSkill(planDir: string, skill: string): unknown {
   const typedSkill = skill as 'brainstorming' | 'writing-plans' | 'executing-plans';
   const state = createDefaultWorkbenchState({
     projectName: basename(planDir),
-    sessionId: skill,
     activeSkill: typedSkill,
     skillType: typedSkill,
   });

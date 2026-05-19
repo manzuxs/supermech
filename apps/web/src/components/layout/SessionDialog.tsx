@@ -76,7 +76,7 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
         <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
           {loading ? (
             <div className="py-8 text-center text-sm text-[var(--text-main)] opacity-50">
-              Loading...
+              {t('common.loading', { defaultValue: 'Loading...' })}
             </div>
           ) : sessions.length === 0 ? (
             <div className="py-8 text-center text-sm text-[var(--text-main)] opacity-50">
@@ -113,7 +113,7 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
                         className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 disabled:cursor-default"
                       >
                         <span className="flex-1 truncate font-medium text-[var(--text-main)]">
-                          {s.name === 'default' ? 'Default' : s.name}
+                          {s.name === 'default' ? t('session.default', { defaultValue: 'Default' }) : s.name}
                         </span>
 
                         {isCurrent && (

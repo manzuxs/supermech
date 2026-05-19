@@ -6,9 +6,9 @@ import { useWorkbench } from './context/WorkbenchContext.tsx';
 
 export default function App() {
   const { state } = useWorkbench();
-  const isBrainstorming = state.meta.activeSkill === 'brainstorming';
-  const isWritingPlans = state.meta.activeSkill === 'writing-plans';
-  const isExecutingPlans = state.meta.activeSkill === 'executing-plans';
+  const isBrainstorming = state.canvas.skillType === 'brainstorming';
+  const isWritingPlans = state.canvas.skillType === 'writing-plans';
+  const isExecutingPlans = state.canvas.skillType === 'executing-plans';
   const showInspector =
     (isBrainstorming || isWritingPlans || isExecutingPlans) &&
     state.ui.rightSidebarOpen &&

@@ -1,9 +1,27 @@
-import { Crosshair, Send, Sparkles, Target } from 'lucide-react';
+import { Crosshair, Link2, MessageSquare, Send, Sparkles, Tag, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getCommand } from '../../lib/commands.ts';
 import { TaskDetail } from '../visuals/DetailPanel.tsx';
+
+function SectionHeader({
+  icon,
+  title,
+  count,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--execution-panel-heading)]">
+      {icon}
+      <span>{title}</span>
+      {count !== undefined && <span className="opacity-50">({count})</span>}
+    </div>
+  );
+}
 
 export default function FloatingFeedback() {
   const { t } = useTranslation();
@@ -17,9 +35,9 @@ export default function FloatingFeedback() {
     switchSkill,
   } = useWorkbench();
   const [text, setText] = useState('');
-  const isBrainstorming = state.meta.activeSkill === 'brainstorming';
-  const isWritingPlans = state.meta.activeSkill === 'writing-plans';
-  const isExecutingPlans = state.meta.activeSkill === 'executing-plans';
+  const isBrainstorming = state.canvas.skillType === 'brainstorming';
+  const isWritingPlans = state.canvas.skillType === 'writing-plans';
+  const isExecutingPlans = state.canvas.skillType === 'executing-plans';
   const isInspectorOpen = state.ui.rightSidebarOpen;
 
   const selectedNode = state.ui.selectedNodeId
@@ -157,102 +175,91 @@ export default function FloatingFeedback() {
     const statusTone = selectedNode ? statusToneMap[selectedNode.status] : null;
 
     return (
-      <aside className="relative flex h-full min-h-0 flex-col border-l border-[var(--border)] bg-[var(--bg-main)]">
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <aside
+        className="relative flex h-full min-h-0 flex-col border-l border-[var(--execution-panel-divider)] bg-[var(--execution-panel-bg)]"
+        style={{ boxShadow: 'var(--execution-panel-shadow)' }}
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {selectedNode ? (
-            <div className="space-y-5">
-              <section
-                className="rounded-2xl border p-4"
-                style={
-                  statusTone
-                    ? {
-                        background: statusTone.bg,
-                        borderColor: statusTone.border,
-                      }
-                    : undefined
-                }
+            <div className="mx-auto">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--execution-panel-heading)]">
+                {t('feedback.nodeContext')}
+              </div>
+              <h1
+                className="mb-3 text-[18px] font-bold leading-tight text-[var(--text-main)]"
+                style={{ fontFamily: 'var(--font-display), sans-serif' }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {selectedNodeTags[0] && (
-                        <span className="rounded-full bg-[var(--bg-main)]/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-main)] opacity-60">
-                          {selectedNodeTags[0]}
-                        </span>
-                      )}
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap"
-                        style={
-                          statusTone
-                            ? {
-                                background: statusTone.chipBg,
-                                color: statusTone.chipText,
-                              }
-                            : undefined
-                        }
-                      >
-                        {t(statusKeyMap[selectedNode.status] ?? 'feedback.statusPending')}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-[15px] font-semibold leading-6 text-[var(--text-main)]">
-                      {selectedNode.label}
-                    </div>
-                    <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--text-main)] opacity-35">
-                      {t('feedback.nodeContext')}
-                    </div>
-                    <div className="mt-2 text-[13px] leading-6 text-[var(--text-main)] opacity-70">
-                      {selectedNodeDescription || t('feedback.noDescription')}
-                    </div>
-                  </div>
-                </div>
+                {selectedNode.label}
+              </h1>
 
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--border)]/70 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => locateNode(selectedNode.id)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-main)]/80 px-3 py-1.5 text-[12px] font-medium text-[var(--text-main)] opacity-82 transition hover:opacity-100"
-                  >
-                    <Crosshair className="h-3.5 w-3.5" />
-                    <span>{t('feedback.locate')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBrainstormStatus('accepted')}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--success)] transition hover:bg-[var(--success)]/18"
-                  >
-                    <span>{t('feedback.acceptAction', { defaultValue: 'Accept' })}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBrainstormStatus('rejected')}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--muted-foreground)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted-foreground)]/18"
-                  >
-                    <span>{t('feedback.rejectAction', { defaultValue: 'Reject' })}</span>
-                  </button>
-                </div>
+              <div className="mb-5 flex flex-wrap gap-1.5">
+                <span
+                  className="rounded-full px-2 py-1 text-[9px] font-bold uppercase"
+                  style={
+                    statusTone
+                      ? { background: statusTone.chipBg, color: statusTone.chipText }
+                      : { background: 'var(--execution-chip-muted-bg)', color: 'var(--execution-chip-muted-fg)' }
+                  }
+                >
+                  {t(statusKeyMap[selectedNode.status] ?? 'feedback.statusPending')}
+                </span>
+                {selectedNodeTags[0] && (
+                  <span className="rounded-full bg-[var(--execution-panel-accent-bg)] px-2 py-1 text-[9px] font-bold uppercase text-[var(--text-main)]">
+                    {selectedNodeTags[0]}
+                  </span>
+                )}
+              </div>
 
-                <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-main)]/55 p-3">
+              {selectedNodeDescription && (
+                <p className="mb-6 text-[13px] leading-7 text-[var(--text-main)] opacity-78">
+                  {selectedNodeDescription}
+                </p>
+              )}
+
+              <div className="mb-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => locateNode(selectedNode.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-main)]/80 px-3 py-1.5 text-[12px] font-medium text-[var(--text-main)] opacity-82 transition hover:opacity-100"
+                >
+                  <Crosshair className="h-3.5 w-3.5" />
+                  <span>{t('feedback.locate')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBrainstormStatus('accepted')}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--success)] transition hover:bg-[var(--success)]/18"
+                >
+                  <span>{t('feedback.acceptAction', { defaultValue: 'Accept' })}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBrainstormStatus('rejected')}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--muted-foreground)]/12 px-3 py-1.5 text-[12px] font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted-foreground)]/18"
+                >
+                  <span>{t('feedback.rejectAction', { defaultValue: 'Reject' })}</span>
+                </button>
+              </div>
+
+              <div className="mt-4 border-t border-[var(--execution-panel-divider)] pt-4" />
+
+              {canEnterWritingPlans && (
+                <div className="mb-6 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">
                   <div className="text-[12px] font-medium text-[var(--text-main)]">
                     {t('feedback.planTransitionTitle', {
                       defaultValue: 'Ready to turn ideas into a plan?',
                     })}
                   </div>
                   <div className="mt-1 text-[12px] leading-5 text-[var(--text-main)] opacity-55">
-                    {canEnterWritingPlans
-                      ? t('feedback.planTransitionHint', {
-                          defaultValue:
-                            'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
-                        })
-                      : t('feedback.planTransitionBlockedHint', {
-                          defaultValue:
-                            'Approve at least one idea before moving into writing-plans.',
-                        })}
+                    {t('feedback.planTransitionHint', {
+                      defaultValue:
+                        'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
+                    })}
                   </div>
                   <button
                     type="button"
                     onClick={enterWritingPlans}
-                    disabled={!canEnterWritingPlans}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:opacity-45"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95"
                   >
                     <span>
                       {t('feedback.enterWritingPlans', {
@@ -261,60 +268,58 @@ export default function FloatingFeedback() {
                     </span>
                   </button>
                 </div>
+              )}
 
-                <div className="mt-4 border-t border-[var(--border)]/70 pt-4">
-                  <div className="mb-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
-                    {t('feedback.tags')}
-                  </div>
+              <section className="mb-6">
+                <SectionHeader icon={<Tag size={12} />} title={t('feedback.tags')} count={selectedNodeTags.length} />
+                <div className="mt-3 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
                   <div className="flex flex-wrap gap-2">
                     {selectedNodeTags.length > 0 ? (
                       selectedNodeTags.map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-full bg-[var(--bg-main)]/78 px-2.5 py-1 text-[11px] text-[var(--text-main)] opacity-72"
+                          className="rounded-full border border-[var(--execution-chip-border)]/12 bg-[var(--execution-chip-muted-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--execution-chip-muted-fg)]"
                         >
                           #{tag}
                         </span>
                       ))
                     ) : (
-                      <span className="text-[12px] text-[var(--text-main)] opacity-45">
+                      <span className="text-[12px] text-[var(--muted-foreground)]">
                         {t('feedback.noTags')}
                       </span>
                     )}
                   </div>
                 </div>
+              </section>
 
-                {childNodes.length > 0 && (
-                  <div className="mt-4 border-t border-[var(--border)]/70 pt-4">
-                    <div className="mb-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
-                      {t('feedback.relatedChildren')}
-                    </div>
+              {childNodes.length > 0 && (
+                <section className="mb-6">
+                  <SectionHeader icon={<Link2 size={12} />} title={t('feedback.relatedChildren')} count={childNodes.length} />
+                  <div className="mt-3 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
                     <div className="flex flex-wrap gap-2">
                       {childNodes.slice(0, 4).map((node) => (
                         <button
                           key={node.id}
                           type="button"
                           onClick={() => updateUI({ selectedNodeId: node.id })}
-                          className="rounded-full bg-[var(--bg-main)]/78 px-2.5 py-1 text-[11px] text-[var(--text-main)] opacity-72 transition hover:opacity-100"
+                          className="rounded-full border border-[var(--execution-chip-border)]/12 bg-[var(--execution-panel-accent-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--text-main)] transition hover:opacity-80"
                         >
                           {node.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
-              </section>
+                </section>
+              )}
 
-              <section>
-                <div className="mb-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
-                  {t('feedback.history')}
-                </div>
-                <div className="space-y-2">
+              <section className="mb-6">
+                <SectionHeader icon={<MessageSquare size={12} />} title={t('feedback.history')} count={nodeFeedback.length} />
+                <div className="mt-3 space-y-2">
                   {nodeFeedback.length > 0 ? (
                     nodeFeedback.map((entry) => (
                       <div
                         key={entry.id}
-                        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-canvas)]/45 px-3 py-2.5"
+                        className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3"
                       >
                         <div className="text-[13px] leading-6 text-[var(--text-main)] opacity-78">
                           {entry.text}
@@ -335,7 +340,7 @@ export default function FloatingFeedback() {
                             <button
                               type="button"
                               onClick={() => markFeedbackProcessed(entry.id)}
-                              className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/70 px-2 py-0.5 text-[10px] text-[var(--text-main)] opacity-80 transition hover:opacity-100"
+                              className="rounded-full border border-[var(--execution-chip-border)]/20 bg-[var(--execution-panel-action-bg)] px-2 py-0.5 text-[10px] font-medium text-[var(--execution-panel-action-fg)] opacity-80 transition hover:opacity-100"
                             >
                               {t('feedback.markProcessed', { defaultValue: 'Mark Processed' })}
                             </button>
@@ -344,17 +349,19 @@ export default function FloatingFeedback() {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-[var(--border)] px-3 py-4 text-[12px] text-[var(--text-main)] opacity-45">
-                      {t('feedback.noHistory')}
+                    <div className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
+                      <span className="text-[12px] text-[var(--muted-foreground)]">
+                        {t('feedback.noHistory')}
+                      </span>
                     </div>
                   )}
                 </div>
               </section>
             </div>
           ) : (
-            <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-canvas)]/35 px-6 text-center">
-              <Target className="h-5 w-5 text-[var(--text-main)] opacity-35" />
-              <div className="mt-3 text-[14px] font-medium text-[var(--text-main)]">
+            <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-6 text-center">
+              <Target className="mb-3 h-5 w-5 text-[var(--text-main)] opacity-35" />
+              <div className="text-[14px] font-medium text-[var(--text-main)]">
                 {t('feedback.emptyTitle')}
               </div>
               <div className="mt-2 max-w-[220px] text-[12px] leading-6 text-[var(--text-main)] opacity-45">
@@ -364,8 +371,8 @@ export default function FloatingFeedback() {
           )}
         </div>
 
-        <div className="border-t border-[var(--border)] bg-[var(--bg-main)] px-4 py-4">
-          <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[var(--text-main)] opacity-55">
+        <div className="border-t border-[var(--execution-panel-divider)] bg-[var(--execution-panel-bg)] px-4 py-4">
+          <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[var(--execution-panel-heading)]">
             <Sparkles className="h-3.5 w-3.5" />
             <span>
               {selectedNode
@@ -379,13 +386,13 @@ export default function FloatingFeedback() {
                 key={action}
                 type="button"
                 onClick={() => fillQuickAction(action)}
-                className="rounded-full border border-[var(--border)] bg-[var(--bg-main)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-main)] opacity-68 transition hover:bg-[var(--bg-canvas)] hover:opacity-100"
+                className="rounded-full border border-[var(--execution-chip-border)]/18 bg-[var(--execution-panel-subtle-bg)] px-3 py-1 text-[11px] font-medium text-[var(--text-main)] opacity-78 transition hover:border-[var(--execution-chip-border)]/40 hover:bg-[var(--execution-panel-accent-bg)] hover:opacity-100"
               >
                 {action}
               </button>
             ))}
           </div>
-          <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-canvas)]/35 p-2">
+          <div className="flex items-end gap-2 rounded-[28px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-2">
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -400,14 +407,14 @@ export default function FloatingFeedback() {
                       defaultValue: 'Leave feedback or try /execute',
                     })
               }
-              className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2"
+              className="min-h-24 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] text-[var(--text-main)] outline-none placeholder:opacity-30 focus-visible:outline-2 focus-visible:outline-[var(--execution-panel-action-bg)] focus-visible:outline-offset-2"
             />
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!text.trim()}
               aria-label={t('feedback.submit')}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--execution-panel-action-bg)] px-4 text-[12px] font-medium text-[var(--execution-panel-action-fg)] shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:grayscale"
               title={t('feedback.submit')}
             >
               <Send className="h-4 w-4" />

@@ -12,7 +12,9 @@
     "settings": "设置",
     "cancel": "取消",
     "show": "显示",
-    "hide": "隐藏"
+    "hide": "隐藏",
+    "close": "关闭",
+    "loading": "加载中..."
   },
   "sidebar": {
     "skills": "技能库",
@@ -61,6 +63,14 @@
     "quickRefine": "细化这个步骤",
     "quickExpand": "补充更多细节",
     "quickRegenerate": "重新生成这个节点",
+    "acceptAction": "采纳",
+    "rejectAction": "否决",
+    "planTransitionTitle": "准备好将想法转化为计划了吗？",
+    "planTransitionHint": "点击“采纳”只会更新当前节点。若要正式制定计划，请点击下方的按钮进入制定计划阶段。",
+    "planTransitionBlockedHint": "在进入制定计划阶段前，请至少采纳一个想法。",
+    "enterWritingPlans": "开始制定计划",
+    "processedBadge": "已处理",
+    "markProcessed": "标记为已处理",
     "history": "反馈记录",
     "noHistory": "当前目标还没有反馈记录。",
     "agentPanelTitle": "继续调整当前节点",
@@ -91,6 +101,7 @@
   "session": {
     "title": "会话管理",
     "current": "当前",
+    "default": "默认",
     "empty": "暂无会话",
     "count": "{{count}} 个会话",
     "newPlaceholder": "会话名称...",

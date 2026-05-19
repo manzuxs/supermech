@@ -2,7 +2,6 @@ import type { SkillType, ThemeMode, WorkbenchState } from './workbench.ts';
 
 export interface DefaultWorkbenchStateOptions {
   projectName?: string;
-  sessionId?: string;
   activeSkill?: SkillType | null;
   skillType?: SkillType;
   theme?: ThemeMode;
@@ -14,7 +13,6 @@ export function createDefaultWorkbenchState(
   const {
     skillType = 'brainstorming',
     projectName = 'My Project',
-    sessionId = skillType,
     activeSkill = null,
     theme = 'system',
   } = options;
@@ -22,7 +20,6 @@ export function createDefaultWorkbenchState(
   return {
     meta: {
       projectName,
-      sessionId,
       activeSkill,
       agentStatus: 'idle',
     },
