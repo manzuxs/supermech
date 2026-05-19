@@ -39,6 +39,8 @@ export default function FloatingFeedback() {
   const childNodes = selectedNode
     ? state.canvas.nodes.filter((node) => node.parentId === selectedNode.id)
     : [];
+  const acceptedNodeCount = state.canvas.nodes.filter((node) => node.status === 'accepted').length;
+  const canEnterWritingPlans = acceptedNodeCount > 0;
 
   const nodeFeedback = state.feedback
     .filter((entry) =>
@@ -143,6 +145,7 @@ export default function FloatingFeedback() {
   }
 
   async function enterWritingPlans() {
+    if (!canEnterWritingPlans) return;
     await switchSkill('writing-plans');
   }
 
@@ -235,15 +238,21 @@ export default function FloatingFeedback() {
                     })}
                   </div>
                   <div className="mt-1 text-[12px] leading-5 text-[var(--text-main)] opacity-55">
-                    {t('feedback.planTransitionHint', {
-                      defaultValue:
-                        'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
-                    })}
+                    {canEnterWritingPlans
+                      ? t('feedback.planTransitionHint', {
+                          defaultValue:
+                            'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
+                        })
+                      : t('feedback.planTransitionBlockedHint', {
+                          defaultValue:
+                            'Approve at least one idea before moving into writing-plans.',
+                        })}
                   </div>
                   <button
                     type="button"
                     onClick={enterWritingPlans}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95"
+                    disabled={!canEnterWritingPlans}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:pointer-events-none disabled:opacity-45"
                   >
                     <span>
                       {t('feedback.enterWritingPlans', {
