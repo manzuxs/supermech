@@ -1,13 +1,13 @@
 import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
-import type { ExecutionPhase, GateStatus, GateType } from '@supermech/schema';
+import type { ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
 import type { Plugin, ViteDevServer } from 'vite';
 import {
-  applyNodeExecutionPhase,
-  applyNodeGateState,
-  resetNodeExecutionState,
-} from './execution-state.ts';
+  applyStateNodeExecutionPhase,
+  applyStateNodeGateState,
+  resetStateNodeForReplan,
+} from './node-execution-state.ts';
 import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
 import { validateState } from './validate.ts';
 
@@ -251,7 +251,7 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
           }
 
           const data: any = await parseBody(req);
-          const s = state();
+          const s = state() as WorkbenchState;
 
           if (url === '/select' && req.method === 'POST') {
             s.ui.selectedNodeId = data.nodeId ?? null;
@@ -281,38 +281,36 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
               sendJSON(res, 400, { ok: false, error: 'nodeId, type, status required' });
               return;
             }
-            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
-            if (!node) {
+            try {
+              applyStateNodeGateState(s, nodeId, type as GateType, status as GateStatus, result);
+            } catch (error) {
               sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
               return;
             }
-            applyNodeGateState(node, type as GateType, status as GateStatus, result);
           } else if (url === '/node/execution-phase' && req.method === 'PATCH') {
             const { nodeId, phase } = data;
             if (!nodeId || !phase) {
               sendJSON(res, 400, { ok: false, error: 'nodeId, phase required' });
               return;
             }
-            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
-            if (!node) {
+            try {
+              applyStateNodeExecutionPhase(s, nodeId, phase as ExecutionPhase);
+            } catch (error) {
               sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
               return;
             }
-            applyNodeExecutionPhase(node, phase as ExecutionPhase);
           } else if (url === '/replan' && req.method === 'POST') {
             const { nodeId } = data;
             if (!nodeId) {
               sendJSON(res, 400, { ok: false, error: 'nodeId required' });
               return;
             }
-            const node = s.canvas.nodes.find((n: { id: string }) => n.id === nodeId);
-            if (!node) {
+            try {
+              resetStateNodeForReplan(s, nodeId);
+            } catch (error) {
               sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
               return;
             }
-            node.status = 'pending';
-            node.progress = 0;
-            resetNodeExecutionState(node);
             s.feedback.push({
               id: crypto.randomUUID(),
               nodeId,
