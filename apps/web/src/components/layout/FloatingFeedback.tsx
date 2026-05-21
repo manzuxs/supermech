@@ -1,10 +1,9 @@
-import { getBrainstormPlanningReadiness } from '@supermech/schema';
+import { getBrainstormPlanningReadiness, getExecutionOrigin } from '@supermech/schema';
 import { Crosshair, Link2, MessageSquare, Send, Sparkles, Tag, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getCommand } from '../../lib/commands.ts';
-import { getExecutionOrigin } from '@supermech/schema';
 import { TaskDetail } from '../visuals/DetailPanel.tsx';
 
 function SectionHeader({
@@ -487,27 +486,28 @@ export default function FloatingFeedback() {
               </div>
             </div>
           )}
-          {isExecutingPlans && (() => {
-            const executionOrigin = getExecutionOrigin(state.canvas.metadata);
-            if (!executionOrigin) return null;
-            return (
-              <div className="mx-4 mt-4 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
-                  {t('feedback.executionOrigin', { defaultValue: 'Execution Origin' })}
+          {isExecutingPlans &&
+            (() => {
+              const executionOrigin = getExecutionOrigin(state.canvas.metadata);
+              if (!executionOrigin) return null;
+              return (
+                <div className="mx-4 mt-4 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--execution-panel-heading)]">
+                    {t('feedback.executionOrigin', { defaultValue: 'Execution Origin' })}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-[12px] font-semibold text-[var(--text-main)]">
+                      {executionOrigin.mode === 'subagent'
+                        ? t('feedback.executionModeSubagent', { defaultValue: 'Subagent-Driven' })
+                        : t('feedback.executionModeInline', { defaultValue: 'Inline Execution' })}
+                    </span>
+                    <span className="text-[10px] text-[var(--muted-foreground)]">
+                      {executionOrigin.sourcePlanSessionId}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-[12px] font-semibold text-[var(--text-main)]">
-                    {executionOrigin.mode === 'subagent'
-                      ? t('feedback.executionModeSubagent', { defaultValue: 'Subagent-Driven' })
-                      : t('feedback.executionModeInline', { defaultValue: 'Inline Execution' })}
-                  </span>
-                  <span className="text-[10px] text-[var(--muted-foreground)]">
-                    {executionOrigin.sourcePlanSessionId}
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
           {selectedNode ? (
             <TaskDetail
               node={selectedNode}

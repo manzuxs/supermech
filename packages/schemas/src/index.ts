@@ -1,48 +1,9 @@
-export {
-  agentStatusSchema,
-  brainstormNodeMetadataSchema,
-  brainstormSessionSchema,
-  canvasEdgeSchema,
-  canvasNodeSchema,
-  executionPhaseSchema,
-  feedbackEntrySchema,
-  implementationStepSchema,
-  nodeStatusSchema,
-  planHeaderSchema,
-  planStepFileSchema,
-  qualityGateConfigSchema,
-  qualityGateStateSchema,
-  skillTypeSchema,
-  themeModeSchema,
-  uiPreferencesSchema,
-  validateSkillState,
-  validateState,
-  workbenchCanvasSchema,
-  workbenchMetaSchema,
-  workbenchStateSchema,
-  executionOriginSchema,
-} from './validation.ts';
-export type { ValidationResult } from './validation.ts';
-export type { DefaultWorkbenchStateOptions } from './default-state.ts';
-export {
-  getExecutionFlow,
-  getExecutionOrigin,
-  getPlanTaskActiveFiles,
-  getPlanTaskDependencies,
-  getPlanTaskExecutionEvents,
-  getPlanTaskExecutionPhase,
-  getPlanTaskFiles,
-  getPlanTaskGateStates,
-  getPlanTaskGoal,
-  getPlanTaskImplementationSteps,
-  getPlanTaskQualityGates,
-  getPlanTaskVerificationSteps,
-  getResolvedExecutionCanvasMetadata,
-  getResolvedPlanTaskExecutionMetadata,
-} from './planner-helpers.ts';
-
 export type { BrainstormNodeMetadata, BrainstormSession } from './brainstorm.ts';
+export type { DefaultWorkbenchStateOptions } from './default-state.ts';
+export { createDefaultWorkbenchState, createSessionId } from './default-state.ts';
 export type {
+  CompletionCheckItem,
+  DebugTraceItem,
   ExecutionCanvasMetadata,
   ExecutionEvent,
   ExecutionEventKind,
@@ -58,6 +19,9 @@ export type {
   ExecutionOrigin,
   ExecutionPhase,
   ExecutionQualityGates,
+  ExecutionRun,
+  ExecutionRunRole,
+  ExecutionRunStatus,
   GateStatus,
   GateType,
   ImplementationStep,
@@ -81,9 +45,56 @@ export {
   defineQualityGateConfig,
   defineQualityGateState,
 } from './planner.ts';
-export { createDefaultWorkbenchState, createSessionId } from './default-state.ts';
+export {
+  getCompletionChecks,
+  getExecutionFlow,
+  getExecutionOrigin,
+  getPlanTaskActiveFiles,
+  getPlanTaskDebugTrace,
+  getPlanTaskDependencies,
+  getPlanTaskExecutionEvents,
+  getPlanTaskExecutionPhase,
+  getPlanTaskFiles,
+  getPlanTaskGateStates,
+  getPlanTaskGoal,
+  getPlanTaskImplementationSteps,
+  getPlanTaskQualityGates,
+  getPlanTaskRuns,
+  getPlanTaskVerificationSteps,
+  getResolvedExecutionCanvasMetadata,
+  getResolvedPlanTaskExecutionMetadata,
+} from './planner-helpers.ts';
+export type { ValidationResult } from './validation.ts';
+export {
+  agentStatusSchema,
+  brainstormNodeMetadataSchema,
+  brainstormSessionSchema,
+  canvasEdgeSchema,
+  canvasNodeSchema,
+  completionCheckItemSchema,
+  debugTraceItemSchema,
+  executionOriginSchema,
+  executionPhaseSchema,
+  executionRunSchema,
+  feedbackEntrySchema,
+  implementationStepSchema,
+  nodeStatusSchema,
+  planHeaderSchema,
+  planStepFileSchema,
+  qualityGateConfigSchema,
+  qualityGateStateSchema,
+  skillTypeSchema,
+  themeModeSchema,
+  uiPreferencesSchema,
+  validateSkillState,
+  validateState,
+  workbenchCanvasSchema,
+  workbenchMetaSchema,
+  workbenchStateSchema,
+} from './validation.ts';
 export type {
   AgentStatus,
+  BrainstormPlanningReadiness,
   CanvasEdge,
   CanvasNode,
   FeedbackEntry,
@@ -94,6 +105,5 @@ export type {
   WorkbenchCanvas,
   WorkbenchMeta,
   WorkbenchState,
-  BrainstormPlanningReadiness,
 } from './workbench.ts';
 export { getBrainstormPlanningReadiness } from './workbench.ts';

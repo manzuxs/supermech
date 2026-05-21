@@ -1,17 +1,23 @@
 import type {
   CanvasNode,
+  CompletionCheckItem,
   ExecutionCanvasMetadata,
   ExecutionEvent,
   ExecutionFlow,
   ExecutionFlowStage,
   ExecutionFlowStageRelation,
   ExecutionFlowTaskRelation,
+  ExecutionOrigin,
   ExecutionPhase,
   NodeStatus,
   PlanStepFile,
   QualityGateState,
 } from '@supermech/schema';
-import { getExecutionFlow as getExecutionFlowFromMetadata } from '@supermech/schema';
+import {
+  getCompletionChecks,
+  getExecutionFlow as getExecutionFlowFromMetadata,
+  getExecutionOrigin,
+} from '@supermech/schema';
 import type { LucideIcon } from 'lucide-react';
 import {
   CheckCircle2,
@@ -174,6 +180,7 @@ function getCanvasExecutionMeta(
 ): ExecutionCanvasMetadata {
   return {
     executionFlow: getExecutionFlowFromMetadata(metadata),
+    executionOrigin: getExecutionOrigin(metadata),
   };
 }
 
@@ -588,6 +595,11 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   const { t } = useTranslation();
   const { state, updateUI } = useWorkbench();
   const flow = getExecutionFlow(state);
+  const canvasMeta = getCanvasExecutionMeta(state.canvas.metadata);
+  const executionOrigin: ExecutionOrigin | undefined = canvasMeta.executionOrigin;
+  const completionChecks: CompletionCheckItem[] = getCompletionChecks(state.canvas.metadata);
+  const allCompletionChecksPassed =
+    completionChecks.length > 0 && completionChecks.every((item) => item.status === 'passed');
 
   const feedbackRatings = state.feedback
     .filter((entry): entry is typeof entry & { rating: number } => entry.rating != null)
@@ -1129,6 +1141,20 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
           </button>
         </div>
       </div>
+
+      {executionOrigin && (
+        <div className="absolute left-4 top-4 rounded-full border border-[var(--execution-chip-border)]/15 bg-[var(--execution-panel-bg)]/88 px-3 py-1.5 text-xs shadow-sm backdrop-blur">
+          {executionOrigin.mode === 'subagent'
+            ? t('editor.executionModeSubagent')
+            : t('editor.executionModeInline')}
+        </div>
+      )}
+
+      {completionChecks.length > 0 && (
+        <div className="absolute left-4 top-14 rounded-full border border-[var(--execution-chip-border)]/15 bg-[var(--execution-panel-bg)]/88 px-3 py-1.5 text-xs shadow-sm backdrop-blur">
+          {allCompletionChecksPassed ? t('editor.finishReady') : t('editor.finishBlocked')}
+        </div>
+      )}
     </div>
   );
 }

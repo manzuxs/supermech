@@ -35,6 +35,24 @@
             {
               "description": "pnpm typecheck 通过"
             }
+          ],
+          "runs": [
+            {
+              "id": "run-implementer-task-1",
+              "role": "implementer",
+              "status": "passed",
+              "summary": "Added rating field and validation",
+              "startedAt": "2026-05-20T14:00:00.000Z",
+              "completedAt": "2026-05-20T14:05:00.000Z"
+            }
+          ],
+          "debugTrace": [
+            {
+              "id": "trace-1",
+              "label": "Reproduce issue locally",
+              "status": "resolved",
+              "notes": "Confirmed and fixed"
+            }
           ]
         }
       },
@@ -118,6 +136,23 @@
             {
               "path": "src/context/WorkbenchContext.tsx",
               "type": "modify"
+            }
+          ],
+          "runs": [
+            {
+              "id": "run-implementer-task-3",
+              "role": "implementer",
+              "status": "passed",
+              "summary": "Completed task implementation",
+              "startedAt": "2026-05-21T10:00:00.000Z",
+              "completedAt": "2026-05-21T10:08:00.000Z"
+            },
+            {
+              "id": "run-spec-review-task-3",
+              "role": "spec-reviewer",
+              "status": "running",
+              "summary": "Checking spec alignment",
+              "startedAt": "2026-05-21T10:08:30.000Z"
             }
           ]
         }
@@ -351,12 +386,7 @@
       "planHeader": {
         "goal": "Skill Usability Improvements — 写计划与执行计划技能交互改造",
         "architecture": "保持 JSON 驱动不变，优化 UI 交互。移除 PlanEditor 中的状态/进度控件（Agent 独占），新增通用 / 指令系统，KanbanBoard 增加星级评价面板。",
-        "techStack": [
-          "React",
-          "TypeScript",
-          "Tailwind v4",
-          "Vite"
-        ],
+        "techStack": ["React", "TypeScript", "Tailwind v4", "Vite"],
         "phases": [
           {
             "name": "Schema & Validation",
@@ -387,44 +417,31 @@
             "id": "schema-validation",
             "name": "Schema & Validation",
             "description": "数据层改动",
-            "taskIds": [
-              "task-1"
-            ]
+            "taskIds": ["task-1"]
           },
           {
             "id": "planeditor",
             "name": "PlanEditor 精简",
             "description": "移除状态/进度 UI",
-            "taskIds": [
-              "task-2",
-              "task-5"
-            ]
+            "taskIds": ["task-2", "task-5"]
           },
           {
             "id": "slash-command-system",
             "name": "Slash Command System",
             "description": "通用指令体系",
-            "taskIds": [
-              "task-3"
-            ]
+            "taskIds": ["task-3"]
           },
           {
             "id": "kanbanboard",
             "name": "KanbanBoard 增强",
             "description": "星级评价 + 详情面板",
-            "taskIds": [
-              "task-4"
-            ]
+            "taskIds": ["task-4"]
           },
           {
             "id": "agent-skills",
             "name": "Agent Skills 更新",
             "description": "SKILL.md + CLAUDE.md + 落文件",
-            "taskIds": [
-              "task-6",
-              "task-7",
-              "task-8"
-            ]
+            "taskIds": ["task-6", "task-7", "task-8"]
           }
         ],
         "taskRelations": [
@@ -433,15 +450,17 @@
             "toTaskId": "task-5"
           }
         ]
-      }
-    },
-    "metadata": {
+      },
       "executionOrigin": {
         "sourcePlanSessionId": "my-project--writing-plans",
         "sourceSkill": "writing-plans",
         "mode": "inline",
         "hydratedAt": "2026-05-21T00:00:00.000Z"
-      }
+      },
+      "completionChecks": [
+        { "id": "tests-pass", "label": "All required tests pass", "status": "pending" },
+        { "id": "review-complete", "label": "Required review loops complete", "status": "pending" }
+      ]
     }
   },
   "feedback": [

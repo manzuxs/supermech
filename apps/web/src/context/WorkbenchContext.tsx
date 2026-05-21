@@ -1,14 +1,17 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   type CanvasNode,
+  type CompletionCheckItem,
   createDefaultWorkbenchState,
+  type DebugTraceItem,
   type ExecutionPhase,
+  type ExecutionRun,
   type GateStatus,
   type GateType,
   type PlanTaskExecutionMetadataPatch,
   type UIPreferences,
   type WorkbenchState,
 } from '@supermech/schema';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { registerCommand } from '../lib/commands.ts';
 
 export interface FeedbackParams {
@@ -62,6 +65,9 @@ interface WorkbenchContextValue {
   ) => Promise<void>;
   updateExecutionPhase: (nodeId: string, phase: ExecutionPhase) => Promise<void>;
   requestReplan: (nodeId: string) => Promise<void>;
+  updateNodeRun: (nodeId: string, run: ExecutionRun) => Promise<void>;
+  updateNodeDebugTrace: (nodeId: string, item: DebugTraceItem) => Promise<void>;
+  updateCompletionCheck: (item: CompletionCheckItem) => Promise<void>;
 }
 
 const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
@@ -219,6 +225,10 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
         phase,
       } satisfies ExecutionPhaseUpdatePayload),
     requestReplan: (nodeId) => callAPI('/__state/replan', 'POST', { nodeId }),
+    updateNodeRun: (nodeId, run) => callAPI('/__state/node/run', 'PATCH', { nodeId, run }),
+    updateNodeDebugTrace: (nodeId, item) =>
+      callAPI('/__state/node/debug-trace', 'PATCH', { nodeId, item }),
+    updateCompletionCheck: (item) => callAPI('/__state/completion-check', 'PATCH', { item }),
   };
 
   return <WorkbenchCtx.Provider value={value}>{children}</WorkbenchCtx.Provider>;

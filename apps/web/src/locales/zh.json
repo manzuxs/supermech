@@ -170,6 +170,13 @@
     "executionPhaseRunningTests": "运行测试中",
     "executionPhaseReviewing": "评审中",
     "executionPhaseFixing": "修复中",
-    "executionFlowMissing": "缺少执行流程元数据，请重新生成执行计划数据。"
+    "executionFlowMissing": "缺少执行流程元数据，请重新生成执行计划数据。",
+    "runs": "执行运行",
+    "debugTrace": "调试追踪",
+    "completionChecks": "完成检查",
+    "executionModeSubagent": "子代理驱动",
+    "executionModeInline": "内联执行",
+    "finishReady": "准备完成",
+    "finishBlocked": "完成检查尚未通过"
   }
 }

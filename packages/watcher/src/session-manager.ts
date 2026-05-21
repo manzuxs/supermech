@@ -8,9 +8,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, join } from 'node:path';
-import { createDefaultWorkbenchState } from '@supermech/schema';
-import { validateState } from '@supermech/schema';
 import type { ExecutionMode, WorkbenchState } from '@supermech/schema';
+import { createDefaultWorkbenchState, validateState } from '@supermech/schema';
 
 export interface PlanInfo {
   planName: string;

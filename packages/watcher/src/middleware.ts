@@ -1,8 +1,22 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { ExecutionMode, ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
+import type {
+  ExecutionMode,
+  ExecutionPhase,
+  GateStatus,
+  GateType,
+  WorkbenchState,
+} from '@supermech/schema';
 import {
+  completionCheckItemSchema,
+  debugTraceItemSchema,
+  executionRunSchema,
+} from '@supermech/schema';
+import {
+  applyStateCompletionCheckUpdate,
+  applyStateNodeDebugTraceUpdate,
   applyStateNodeExecutionPhase,
   applyStateNodeGateState,
+  applyStateNodeRunUpdate,
   resetStateNodeForReplan,
 } from './node-execution-state.ts';
 
@@ -142,14 +156,16 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
             return;
           }
           const skill = typeof data.skill === 'string' ? data.skill : '';
-          const mode =
-            data?.mode === 'subagent' || data?.mode === 'inline' ? data.mode : undefined;
+          const mode = data?.mode === 'subagent' || data?.mode === 'inline' ? data.mode : undefined;
 
           if (skill === 'executing-plans') {
             try {
               cfg.switchSkill(skill, mode);
             } catch (error) {
-              if (error instanceof Error && error.message === 'WRITING_PLAN_REQUIRED_FOR_EXECUTION') {
+              if (
+                error instanceof Error &&
+                error.message === 'WRITING_PLAN_REQUIRED_FOR_EXECUTION'
+              ) {
                 sendJSON(res, 409, {
                   ok: false,
                   error: 'writing-plans state required before entering executing-plans',
@@ -264,6 +280,52 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           quickAction: 'replan',
           createdAt: new Date().toISOString(),
         });
+      } else if (url === '/node/run' && req.method === 'PATCH') {
+        const { nodeId, run } = data;
+        if (!nodeId || !run) {
+          sendJSON(res, 400, { ok: false, error: 'nodeId and run required' });
+          return;
+        }
+        const parsed = executionRunSchema.safeParse(run);
+        if (!parsed.success) {
+          sendJSON(res, 400, { ok: false, error: 'invalid run payload' });
+          return;
+        }
+        try {
+          applyStateNodeRunUpdate(s, nodeId, parsed.data);
+        } catch (error) {
+          sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
+          return;
+        }
+      } else if (url === '/node/debug-trace' && req.method === 'PATCH') {
+        const { nodeId, item } = data;
+        if (!nodeId || !item) {
+          sendJSON(res, 400, { ok: false, error: 'nodeId and item required' });
+          return;
+        }
+        const parsed = debugTraceItemSchema.safeParse(item);
+        if (!parsed.success) {
+          sendJSON(res, 400, { ok: false, error: 'invalid debug trace payload' });
+          return;
+        }
+        try {
+          applyStateNodeDebugTraceUpdate(s, nodeId, parsed.data);
+        } catch (error) {
+          sendJSON(res, 404, { ok: false, error: `node ${nodeId} not found` });
+          return;
+        }
+      } else if (url === '/completion-check' && req.method === 'PATCH') {
+        const { item } = data;
+        if (!item) {
+          sendJSON(res, 400, { ok: false, error: 'item required' });
+          return;
+        }
+        const parsed = completionCheckItemSchema.safeParse(item);
+        if (!parsed.success) {
+          sendJSON(res, 400, { ok: false, error: 'invalid completion check payload' });
+          return;
+        }
+        applyStateCompletionCheckUpdate(s, parsed.data);
       } else {
         sendJSON(res, 404, { ok: false, error: 'not found' });
         return;

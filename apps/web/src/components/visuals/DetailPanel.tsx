@@ -1,7 +1,10 @@
 import type {
   CanvasNode,
+  CompletionCheckItem,
+  DebugTraceItem,
   ExecutionEvent,
   ExecutionPhase,
+  ExecutionRun,
   GateType,
   ImplementationStep,
   PlanStepFile,
@@ -10,7 +13,13 @@ import type {
   QualityGateState,
   ResolvedPlanTaskExecutionMetadata,
 } from '@supermech/schema';
-import { getPlanTaskDependencies, getResolvedPlanTaskExecutionMetadata } from '@supermech/schema';
+import {
+  getCompletionChecks,
+  getPlanTaskDebugTrace,
+  getPlanTaskDependencies,
+  getPlanTaskRuns,
+  getResolvedPlanTaskExecutionMetadata,
+} from '@supermech/schema';
 import type { LucideIcon } from 'lucide-react';
 import {
   Beaker,
@@ -160,6 +169,12 @@ export function TaskDetail({
   const executionPhase: ExecutionPhase | undefined = meta.executionPhase;
   const activeFiles = meta.activeFiles;
   const executionEvents: ExecutionEvent[] = meta.executionEvents;
+  const rawMeta = (node.metadata ?? {}) as Record<string, unknown>;
+  const runs: ExecutionRun[] = getPlanTaskRuns(rawMeta);
+  const blockingRun = runs.find((run) => run.status === 'failed' || run.status === 'blocked');
+  const debugTrace: DebugTraceItem[] = getPlanTaskDebugTrace(rawMeta);
+  const { state } = useWorkbench();
+  const completionChecks: CompletionCheckItem[] = getCompletionChecks(state.canvas.metadata);
   const phaseLabel = formatExecutionPhase(executionPhase, t);
 
   return (
@@ -207,6 +222,51 @@ export function TaskDetail({
 
           {goal && (
             <p className="mb-6 text-[13px] leading-7 text-[var(--text-main)] opacity-78">{goal}</p>
+          )}
+
+          {blockingRun && (
+            <div className="mb-4 rounded-[22px] border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-3 py-2">
+              <span className="text-[11px] font-bold text-[var(--destructive)]">
+                {blockingRun.role} {blockingRun.status}
+              </span>
+              {blockingRun.summary && (
+                <p className="mt-1 text-[11px] text-[var(--destructive)] opacity-80">
+                  {blockingRun.summary}
+                </p>
+              )}
+            </div>
+          )}
+
+          {runs.length > 0 && (
+            <section className="mb-6">
+              <SectionHeader
+                icon={<Loader2 size={12} />}
+                title={t('editor.runs')}
+                count={runs.length}
+              />
+              <div className="mt-3 space-y-2">
+                {runs.map((run) => (
+                  <div
+                    key={run.id}
+                    className="rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <strong className="text-[11px] font-bold text-[var(--text-main)]">
+                        {run.role}
+                      </strong>
+                      <span className="text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
+                        {run.status}
+                      </span>
+                    </div>
+                    {run.summary && (
+                      <p className="mt-1 text-[11px] text-[var(--text-main)] opacity-70">
+                        {run.summary}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {showGateConfig && <GateConfigSection nodeId={node.id} gates={qualityGates} />}
@@ -279,6 +339,70 @@ export function TaskDetail({
                       <span className="max-w-[120px] truncate text-[9px] text-[var(--text-main)] opacity-40">
                         {f.description}
                       </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {debugTrace.length > 0 && (
+            <section className="mb-6">
+              <SectionHeader
+                icon={<Beaker size={12} />}
+                title={t('editor.debugTrace')}
+                count={debugTrace.length}
+              />
+              <div className="mt-3 space-y-2">
+                {debugTrace.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-medium text-[var(--text-main)]">
+                        {item.label}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
+                        {item.status}
+                      </span>
+                    </div>
+                    {item.notes && (
+                      <p className="mt-1 text-[11px] text-[var(--text-main)] opacity-70">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {completionChecks.length > 0 && (
+            <section className="mb-6">
+              <SectionHeader
+                icon={<CheckCircle2 size={12} />}
+                title={t('editor.completionChecks')}
+                count={completionChecks.length}
+              />
+              <div className="mt-3 space-y-2">
+                {completionChecks.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-medium text-[var(--text-main)]">
+                        {item.label}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
+                        {item.status}
+                      </span>
+                    </div>
+                    {item.notes && (
+                      <p className="mt-1 text-[11px] text-[var(--text-main)] opacity-70">
+                        {item.notes}
+                      </p>
                     )}
                   </div>
                 ))}

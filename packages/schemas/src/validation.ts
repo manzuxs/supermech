@@ -18,6 +18,41 @@ export const executionOriginSchema = z.object({
   hydratedAt: z.string().min(1),
 });
 
+// Phase C intentionally supports only these three run roles.
+// Add new roles later through an explicit schema upgrade instead of widening to string now.
+export const executionRunRoleSchema = z.enum(['implementer', 'spec-reviewer', 'code-reviewer']);
+
+export const executionRunStatusSchema = z.enum([
+  'queued',
+  'running',
+  'passed',
+  'failed',
+  'blocked',
+]);
+
+export const executionRunSchema = z.object({
+  id: z.string().min(1),
+  role: executionRunRoleSchema,
+  status: executionRunStatusSchema,
+  summary: z.string().optional(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
+});
+
+export const completionCheckItemSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  status: z.enum(['pending', 'passed', 'failed']),
+  notes: z.string().optional(),
+});
+
+export const debugTraceItemSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  status: z.enum(['pending', 'active', 'resolved']),
+  notes: z.string().optional(),
+});
+
 // ── Core objects ──
 
 export const workbenchMetaSchema = z.object({
@@ -124,9 +159,7 @@ export const planHeaderSchema = z.object({
   goal: z.string().min(1),
   architecture: z.string().min(1),
   techStack: z.array(z.string()).nonempty(),
-  phases: z
-    .array(z.object({ name: z.string(), description: z.string().optional() }))
-    .optional(),
+  phases: z.array(z.object({ name: z.string(), description: z.string().optional() })).optional(),
 });
 
 export const executionEventSchema = z.object({
@@ -168,6 +201,9 @@ const planStepFilesSchema = z.array(planStepFileSchema);
 const qualityGateConfigListSchema = z.array(qualityGateConfigSchema);
 const qualityGateStateListSchema = z.array(qualityGateStateSchema);
 const executionEventsSchema = z.array(executionEventSchema);
+const executionRunsSchema = z.array(executionRunSchema);
+const debugTraceItemsSchema = z.array(debugTraceItemSchema);
+const completionCheckItemsSchema = z.array(completionCheckItemSchema);
 
 function pushIssues(
   ctx: z.RefinementCtx,
@@ -180,8 +216,7 @@ function pushIssues(
       path: [
         ...basePath,
         ...issue.path.filter(
-          (part): part is string | number =>
-            typeof part === 'string' || typeof part === 'number',
+          (part): part is string | number => typeof part === 'string' || typeof part === 'number',
         ),
       ],
       message: issue.message,
@@ -268,11 +303,7 @@ export const workbenchStateSchema = workbenchStateBaseSchema.superRefine((state,
     if (metadata.executionPhase !== undefined) {
       const result = executionPhaseSchema.safeParse(metadata.executionPhase);
       if (!result.success) {
-        pushIssues(
-          ctx,
-          ['canvas', 'nodes', i, 'metadata', 'executionPhase'],
-          result.error.issues,
-        );
+        pushIssues(ctx, ['canvas', 'nodes', i, 'metadata', 'executionPhase'], result.error.issues);
       }
     }
 
@@ -286,11 +317,21 @@ export const workbenchStateSchema = workbenchStateBaseSchema.superRefine((state,
     if (metadata.executionEvents !== undefined) {
       const result = executionEventsSchema.safeParse(metadata.executionEvents);
       if (!result.success) {
-        pushIssues(
-          ctx,
-          ['canvas', 'nodes', i, 'metadata', 'executionEvents'],
-          result.error.issues,
-        );
+        pushIssues(ctx, ['canvas', 'nodes', i, 'metadata', 'executionEvents'], result.error.issues);
+      }
+    }
+
+    if (metadata.runs !== undefined) {
+      const result = executionRunsSchema.safeParse(metadata.runs);
+      if (!result.success) {
+        pushIssues(ctx, ['canvas', 'nodes', i, 'metadata', 'runs'], result.error.issues);
+      }
+    }
+
+    if (metadata.debugTrace !== undefined) {
+      const result = debugTraceItemsSchema.safeParse(metadata.debugTrace);
+      if (!result.success) {
+        pushIssues(ctx, ['canvas', 'nodes', i, 'metadata', 'debugTrace'], result.error.issues);
       }
     }
   }
@@ -394,6 +435,14 @@ export const workbenchStateSchema = workbenchStateBaseSchema.superRefine((state,
     const result = executionOriginSchema.safeParse(executionOrigin);
     if (!result.success) {
       pushIssues(ctx, ['canvas', 'metadata', 'executionOrigin'], result.error.issues);
+    }
+  }
+
+  const completionChecks = state.canvas.metadata?.completionChecks;
+  if (completionChecks !== undefined) {
+    const result = completionCheckItemsSchema.safeParse(completionChecks);
+    if (!result.success) {
+      pushIssues(ctx, ['canvas', 'metadata', 'completionChecks'], result.error.issues);
     }
   }
 });

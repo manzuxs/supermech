@@ -1,11 +1,18 @@
 import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
-import type { Plugin, ViteDevServer } from 'vite';
-import { createPlan, createSkill, ensureDir, ensureExecutingStateFromWritingState, listPlans, listSkills } from './session-manager.ts';
-import { validateState } from '@supermech/schema';
 import type { ExecutionMode } from '@supermech/schema';
+import { validateState } from '@supermech/schema';
+import type { Plugin, ViteDevServer } from 'vite';
 import { createStateMiddleware } from './middleware.ts';
+import {
+  createPlan,
+  createSkill,
+  ensureDir,
+  ensureExecutingStateFromWritingState,
+  listPlans,
+  listSkills,
+} from './session-manager.ts';
 
 export interface WatcherPluginOptions {
   /** Optional explicit state file override. Prefer plan-scoped files under `basePlanDir`. */
@@ -21,8 +28,6 @@ function readJSON(path: string): string {
   if (!existsSync(path)) return '{}';
   return readFileSync(path, 'utf-8');
 }
-
-
 
 export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
   let baseDir: string; // .supermech/
@@ -147,21 +152,24 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
         });
       });
 
-      server.middlewares.use('/__state', createStateMiddleware({
-        baseDir,
-        getStatePath: () => statePath,
-        getPlanDir: () => planDir,
-        getCurrentPlan: () => currentPlan,
-        getCurrentSkill: () => currentSkill,
-        state,
-        writeState: (s) => writeFileSync(statePath, JSON.stringify(s, null, 2)),
-        listPlans: () => listPlans(baseDir).map(p => p.planName),
-        listSkills: () => listSkills(planDir).map(s => s.skill),
-        createPlan: (plan) => createPlan(baseDir, plan),
-        switchSkill,
-        switchPlan,
-        validate: validateState,
-      }));
+      server.middlewares.use(
+        '/__state',
+        createStateMiddleware({
+          baseDir,
+          getStatePath: () => statePath,
+          getPlanDir: () => planDir,
+          getCurrentPlan: () => currentPlan,
+          getCurrentSkill: () => currentSkill,
+          state,
+          writeState: (s) => writeFileSync(statePath, JSON.stringify(s, null, 2)),
+          listPlans: () => listPlans(baseDir).map((p) => p.planName),
+          listSkills: () => listSkills(planDir).map((s) => s.skill),
+          createPlan: (plan) => createPlan(baseDir, plan),
+          switchSkill,
+          switchPlan,
+          validate: validateState,
+        }),
+      );
     },
 
     resolveId(id) {

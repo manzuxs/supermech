@@ -1,25 +1,31 @@
-import {
-  executionEventSchema,
-  executionFlowSchema,
-  executionOriginSchema,
-  executionPhaseSchema,
-  implementationStepSchema,
-  planStepFileSchema,
-  qualityGateConfigSchema,
-  qualityGateStateSchema,
-} from './validation.ts';
 import type {
+  CompletionCheckItem,
+  DebugTraceItem,
   ExecutionCanvasMetadata,
   ExecutionEvent,
   ExecutionFlow,
   ExecutionOrigin,
   ExecutionPhase,
+  ExecutionRun,
   ImplementationStep,
   PlanStepFile,
-  ResolvedPlanTaskExecutionMetadata,
   QualityGateConfig,
   QualityGateState,
+  ResolvedPlanTaskExecutionMetadata,
 } from './planner.ts';
+import {
+  completionCheckItemSchema,
+  debugTraceItemSchema,
+  executionEventSchema,
+  executionFlowSchema,
+  executionOriginSchema,
+  executionPhaseSchema,
+  executionRunSchema,
+  implementationStepSchema,
+  planStepFileSchema,
+  qualityGateConfigSchema,
+  qualityGateStateSchema,
+} from './validation.ts';
 
 type MetadataRecord = Record<string, unknown>;
 
@@ -39,10 +45,7 @@ function parseItem<T>(
   return result.success ? result.data : undefined;
 }
 
-function parseList<T>(
-  value: unknown,
-  parse: (item: unknown) => T | undefined,
-): T[] {
+function parseList<T>(value: unknown, parse: (item: unknown) => T | undefined): T[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -150,9 +153,24 @@ export function getExecutionOrigin(metadata: unknown): ExecutionOrigin | undefin
   return parseItem(executionOriginSchema, asRecord(metadata)?.executionOrigin);
 }
 
+export function getPlanTaskRuns(metadata: unknown): ExecutionRun[] {
+  return parseList(asRecord(metadata)?.runs, (item) => parseItem(executionRunSchema, item));
+}
+
+export function getCompletionChecks(metadata: unknown): CompletionCheckItem[] {
+  return parseList(asRecord(metadata)?.completionChecks, (item) =>
+    parseItem(completionCheckItemSchema, item),
+  );
+}
+
+export function getPlanTaskDebugTrace(metadata: unknown): DebugTraceItem[] {
+  return parseList(asRecord(metadata)?.debugTrace, (item) => parseItem(debugTraceItemSchema, item));
+}
+
 export function getResolvedExecutionCanvasMetadata(metadata: unknown): ExecutionCanvasMetadata {
   return {
     executionFlow: getExecutionFlow(metadata),
     executionOrigin: getExecutionOrigin(metadata),
+    completionChecks: getCompletionChecks(metadata),
   };
 }

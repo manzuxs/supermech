@@ -1,4 +1,11 @@
-import type { ExecutionPhase, GateStatus, GateType, QualityGateState } from '@supermech/schema';
+import type {
+  DebugTraceItem,
+  ExecutionPhase,
+  ExecutionRun,
+  GateStatus,
+  GateType,
+  QualityGateState,
+} from '@supermech/schema';
 
 interface MutableNodeLike {
   metadata?: Record<string, unknown>;
@@ -21,6 +28,38 @@ function readGateStates(metadata: Record<string, unknown>): QualityGateState[] {
     const gateState = value as Record<string, unknown>;
     return typeof gateState.type === 'string' && typeof gateState.status === 'string';
   });
+}
+
+function readRuns(metadata: Record<string, unknown>): ExecutionRun[] {
+  if (!Array.isArray(metadata.runs)) return [];
+  return metadata.runs.filter((value): value is ExecutionRun => {
+    return !!value && typeof value === 'object' && typeof (value as ExecutionRun).id === 'string';
+  });
+}
+
+function readDebugTrace(metadata: Record<string, unknown>): DebugTraceItem[] {
+  if (!Array.isArray(metadata.debugTrace)) return [];
+  return metadata.debugTrace.filter((value): value is DebugTraceItem => {
+    return !!value && typeof value === 'object' && typeof (value as DebugTraceItem).id === 'string';
+  });
+}
+
+export function applyNodeRunUpdate(node: MutableNodeLike, update: ExecutionRun): void {
+  const metadata = ensureMetadata(node);
+  const runs = readRuns(metadata);
+  const existing = runs.find((run) => run.id === update.id);
+  if (existing) Object.assign(existing, update);
+  else runs.push(update);
+  metadata.runs = runs;
+}
+
+export function applyNodeDebugTraceUpdate(node: MutableNodeLike, item: DebugTraceItem): void {
+  const metadata = ensureMetadata(node);
+  const trace = readDebugTrace(metadata);
+  const existing = trace.find((entry) => entry.id === item.id);
+  if (existing) Object.assign(existing, item);
+  else trace.push(item);
+  metadata.debugTrace = trace;
 }
 
 export function applyNodeGateState(

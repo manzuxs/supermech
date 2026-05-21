@@ -170,6 +170,13 @@
     "executionPhaseRunningTests": "Running Tests",
     "executionPhaseReviewing": "Reviewing",
     "executionPhaseFixing": "Fixing",
-    "executionFlowMissing": "Missing execution flow metadata. Regenerate the executing plan data."
+    "executionFlowMissing": "Missing execution flow metadata. Regenerate the executing plan data.",
+    "runs": "Runs",
+    "debugTrace": "Debug Trace",
+    "completionChecks": "Completion Checks",
+    "executionModeSubagent": "Subagent-Driven",
+    "executionModeInline": "Inline Execution",
+    "finishReady": "Ready for completion",
+    "finishBlocked": "Completion checks still pending"
   }
 }

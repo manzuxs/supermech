@@ -50,6 +50,33 @@ export interface ExecutionEvent {
   files?: string[];
 }
 
+export type ExecutionRunRole = 'implementer' | 'spec-reviewer' | 'code-reviewer';
+
+export type ExecutionRunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'blocked';
+
+export interface ExecutionRun {
+  id: string;
+  role: ExecutionRunRole;
+  status: ExecutionRunStatus;
+  summary?: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface CompletionCheckItem {
+  id: string;
+  label: string;
+  status: 'pending' | 'passed' | 'failed';
+  notes?: string;
+}
+
+export interface DebugTraceItem {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'resolved';
+  notes?: string;
+}
+
 export interface PlanTaskMetadata {
   goal?: string;
   files?: PlanStepFile[];
@@ -65,6 +92,8 @@ export interface PlanTaskMetadata {
   executionPhase?: ExecutionPhase;
   activeFiles?: string[];
   executionEvents?: ExecutionEvent[];
+  runs?: ExecutionRun[];
+  debugTrace?: DebugTraceItem[];
 }
 
 export type PlanTaskRiskLevel = NonNullable<PlanTaskMetadata['riskLevel']>;
@@ -82,6 +111,8 @@ export type PlanTaskExecutionMetadata = Pick<
   | 'executionPhase'
   | 'activeFiles'
   | 'executionEvents'
+  | 'runs'
+  | 'debugTrace'
 >;
 
 export type PlanTaskExecutionMetadataPatch = Partial<PlanTaskExecutionMetadata>;
@@ -150,6 +181,7 @@ export interface ExecutionFlow {
 export interface ExecutionCanvasMetadata {
   executionFlow?: ExecutionFlow;
   executionOrigin?: ExecutionOrigin;
+  completionChecks?: CompletionCheckItem[];
 }
 
 export type ExecutionMode = 'subagent' | 'inline';

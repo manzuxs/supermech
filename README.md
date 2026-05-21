@@ -35,11 +35,13 @@ This `README` and [`docs/当前实施重规划.md`](/Users/macxm/service/codex/s
 |-------|------|---------|
 | **brainstorming** | MindMap (SVG tree) | Socratic design exploration → structured decisions |
 | **writing-plans** | PlanEditor (tree + detail) | Implementation plans with TDD steps and quality gates |
-| **executing-plans** | KanbanBoard (3-column) | One-task-at-a-time execution with user rating |
+| **executing-plans** | FlowchartCanvas + DetailPanel | Execution with run/review/debug/completion semantics, subagent/inline modes |
 
 Skills are **independent** — not a pipeline. Use only what you need.
 
 `writing-plans` is the execution handoff point. Choosing an execution mode should create or hydrate `state-executing-plans.json` from the current plan.
+
+**Phase C** adds run/review/debug/completion semantics to `executing-plans` instead of creating new top-level canvases. Execution runs (`implementer`, `spec-reviewer`, `code-reviewer`) track who did what, debug traces surface investigation steps per task, and completion checks gate the finish-ready signal at canvas level.
 
 ---
 

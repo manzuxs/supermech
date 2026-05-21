@@ -1,11 +1,17 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, watch } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, watch, writeFileSync } from 'node:fs';
+import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ServerResponse } from 'node:http';
-import express from 'express';
-import { createStateMiddleware, validateState, listPlansFromDir, listSkillsFromDir, ensureExecutingStateFromWritingState } from '@supermech/runtime';
-import { createDefaultWorkbenchState } from '@supermech/schema';
+import {
+  createStateMiddleware,
+  ensureExecutingStateFromWritingState,
+  listPlansFromDir,
+  listSkillsFromDir,
+  validateState,
+} from '@supermech/runtime';
 import type { ExecutionMode } from '@supermech/schema';
+import { createDefaultWorkbenchState } from '@supermech/schema';
+import express from 'express';
 
 function findWebDist(): string {
   const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
@@ -25,8 +31,6 @@ export interface ServerOptions {
 function stateFilePath(baseDir: string, plan: string | null, skill: string): string {
   return plan ? join(baseDir, plan, `state-${skill}.json`) : join(baseDir, `state-${skill}.json`);
 }
-
-
 
 export async function startServer(options: ServerOptions = {}) {
   const port = options.port ?? 4388;
@@ -132,23 +136,26 @@ export async function startServer(options: ServerOptions = {}) {
   });
 
   // State middleware
-  app.use('/__state', createStateMiddleware({
-    baseDir,
-    getStatePath: () => statePath,
-    getPlanDir: () => planDir,
-    getCurrentPlan: () => currentPlan,
-    getCurrentSkill: () => currentSkill,
-    state: readState,
-    writeState: writeStateInternal,
-    listPlans: () => listPlansFromDir(baseDir).map((p) => p.planName),
-    listSkills: () => listSkillsFromDir(planDir).map((s) => s.skill),
-    createPlan: (plan: string) => {
-      ensureDir(join(baseDir, plan));
-    },
-    switchSkill,
-    switchPlan,
-    validate: validateState,
-  }));
+  app.use(
+    '/__state',
+    createStateMiddleware({
+      baseDir,
+      getStatePath: () => statePath,
+      getPlanDir: () => planDir,
+      getCurrentPlan: () => currentPlan,
+      getCurrentSkill: () => currentSkill,
+      state: readState,
+      writeState: writeStateInternal,
+      listPlans: () => listPlansFromDir(baseDir).map((p) => p.planName),
+      listSkills: () => listSkillsFromDir(planDir).map((s) => s.skill),
+      createPlan: (plan: string) => {
+        ensureDir(join(baseDir, plan));
+      },
+      switchSkill,
+      switchPlan,
+      validate: validateState,
+    }),
+  );
 
   // Serve static files
   const webDist = findWebDist();
