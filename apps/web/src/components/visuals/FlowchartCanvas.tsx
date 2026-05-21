@@ -17,7 +17,9 @@ import {
   getCompletionChecks,
   getExecutionFlow as getExecutionFlowFromMetadata,
   getExecutionOrigin,
+  getParallelRuns,
 } from '@supermech/schema';
+import type { ParallelAgentRun } from '@supermech/schema';
 import type { LucideIcon } from 'lucide-react';
 import {
   CheckCircle2,
@@ -181,7 +183,32 @@ function getCanvasExecutionMeta(
   return {
     executionFlow: getExecutionFlowFromMetadata(metadata),
     executionOrigin: getExecutionOrigin(metadata),
+    parallelRuns: getParallelRuns(metadata),
   };
+}
+
+function ParallelRunBadge({ run }: { run: ParallelAgentRun }) {
+  const toneMap: Record<string, string> = {
+    queued: 'var(--border)',
+    running: 'var(--amber)',
+    passed: 'var(--success)',
+    failed: 'var(--red)',
+    blocked: 'var(--orange)',
+  };
+  const color = toneMap[run.status] ?? 'var(--border)';
+  return (
+    <div
+      className="rounded-full border px-2 py-1 text-[11px] leading-none inline-flex items-center gap-1"
+      style={{ borderColor: color, color: 'var(--text-main)' }}
+    >
+      <span
+        className="inline-block h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      <strong>{run.label}</strong>
+      <span className="opacity-50">{run.status}</span>
+    </div>
+  );
 }
 
 function calculateTaskHeight(
@@ -595,6 +622,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   const { t } = useTranslation();
   const { state, updateUI } = useWorkbench();
   const flow = getExecutionFlow(state);
+  const parallelRuns = getParallelRuns(state.canvas.metadata);
   const canvasMeta = getCanvasExecutionMeta(state.canvas.metadata);
   const executionOrigin: ExecutionOrigin | undefined = canvasMeta.executionOrigin;
   const completionChecks: CompletionCheckItem[] = getCompletionChecks(state.canvas.metadata);
@@ -1108,6 +1136,14 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
           })}
         </g>
       </svg>
+
+      {parallelRuns.length > 0 && (
+        <div className="absolute right-4 top-4 z-30 flex flex-wrap gap-1.5">
+          {parallelRuns.map((run) => (
+            <ParallelRunBadge key={run.id} run={run} />
+          ))}
+        </div>
+      )}
 
       <div className="absolute bottom-4 right-4 flex items-center gap-2">
         <div className="rounded-full border border-[var(--border)] bg-[var(--bg-main)]/88 px-3 py-1 text-[11px] font-medium text-[var(--text-main)] shadow-sm backdrop-blur">

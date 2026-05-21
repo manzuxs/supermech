@@ -7,12 +7,12 @@ import {
   type ExecutionRun,
   type GateStatus,
   type GateType,
-  type PlanTaskExecutionMetadataPatch,
   type UIPreferences,
   type WorkbenchState,
 } from '@supermech/schema';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { registerCommand } from '../lib/commands.ts';
+import { httpRuntimeClient } from '../lib/runtime-client.ts';
 
 export interface FeedbackParams {
   nodeId: string;
@@ -23,24 +23,8 @@ export interface FeedbackParams {
   quickAction?: string;
 }
 
-type JSONRecord = Record<string, unknown>;
-
-type WorkbenchNodeMetadataPatch = PlanTaskExecutionMetadataPatch & JSONRecord;
-
 type WorkbenchNodePatch = Pick<CanvasNode, 'status' | 'label' | 'progress'> & {
-  metadata?: WorkbenchNodeMetadataPatch;
-};
-
-type GateStateUpdatePayload = {
-  nodeId: string;
-  type: GateType;
-  status: GateStatus;
-  result?: string;
-};
-
-type ExecutionPhaseUpdatePayload = {
-  nodeId: string;
-  phase: ExecutionPhase;
+  metadata?: Record<string, unknown>;
 };
 
 interface WorkbenchContextValue {
@@ -68,6 +52,11 @@ interface WorkbenchContextValue {
   updateNodeRun: (nodeId: string, run: ExecutionRun) => Promise<void>;
   updateNodeDebugTrace: (nodeId: string, item: DebugTraceItem) => Promise<void>;
   updateCompletionCheck: (item: CompletionCheckItem) => Promise<void>;
+  renamePlan: (from: string, to: string) => Promise<void>;
+  deletePlan: (plan: string) => Promise<void>;
+  duplicatePlan: (from: string, to: string) => Promise<void>;
+  exportPlan: (plan: string) => Promise<unknown>;
+  importPlan: (payload: unknown) => Promise<void>;
 }
 
 const WorkbenchCtx = createContext<WorkbenchContextValue | null>(null);
@@ -85,10 +74,11 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
   const [skills, setSkills] = useState<string[]>([]);
   const [currentSkill, setCurrentSkill] = useState('brainstorming');
 
+  const client = httpRuntimeClient;
+
   const fetchMeta = useCallback(async () => {
     try {
-      const res = await fetch('/__state/plans');
-      const data = await res.json();
+      const data = await client.getPlans();
       setPlans(data.plans ?? []);
       setCurrentPlan(data.current ?? 'default');
       setSkills(data.skills ?? []);
@@ -100,10 +90,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Load initial state via HTTP
-    fetch('/__state')
-      .then((r) => r.json())
-      .then(setState)
-      .catch(() => {});
+    client.getState().then(setState).catch(() => {});
     fetchMeta();
 
     registerCommand({
@@ -124,9 +111,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     try {
       evtSource = new EventSource('/__state/events');
       evtSource.onmessage = () => {
-        fetch('/__state')
-          .then((r) => r.json())
-          .then(setState);
+        client.getState().then(setState);
         fetchMeta();
       };
     } catch {
@@ -136,8 +121,7 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     // Keep HMR listener as additional fallback in dev mode
     if (import.meta.hot) {
       import.meta.hot.on('supermech:state-update', async () => {
-        const res = await fetch('/__state');
-        const updated = await res.json();
+        const updated = await client.getState();
         setState(updated);
         fetchMeta();
       });
@@ -149,25 +133,12 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchMeta]);
 
-  async function callAPI(path: string, method: string, data: JSONRecord) {
-    const res = await fetch(path, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error ?? 'request failed');
+  async function applyState(result: WorkbenchState) {
     setState(result);
   }
 
   async function switchPlan(plan: string) {
-    const res = await fetch('/__state/plans/switch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error ?? 'switch plan failed');
+    const result = await client.switchPlan(plan);
     setCurrentPlan(plan);
     setSkills(result.skills ?? []);
     setCurrentSkill(result.currentSkill ?? 'brainstorming');
@@ -175,24 +146,38 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
   }
 
   async function switchSkill(skill: string, mode?: 'subagent' | 'inline') {
-    const res = await fetch('/__state/skills/switch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill, mode }),
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error ?? 'switch skill failed');
+    const result = await client.switchSkill(skill, mode);
     setCurrentSkill(skill);
     setState(result.state);
   }
 
   async function createPlan(plan: string) {
-    await fetch('/__state/plans/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    });
+    await client.createPlan(plan);
     await switchPlan(plan);
+    await fetchMeta();
+  }
+
+  async function renamePlan(from: string, to: string) {
+    await client.renamePlan(from, to);
+    await fetchMeta();
+  }
+
+  async function deletePlan(plan: string) {
+    await client.deletePlan(plan);
+    await fetchMeta();
+  }
+
+  async function duplicatePlan(from: string, to: string) {
+    await client.duplicatePlan(from, to);
+    await fetchMeta();
+  }
+
+  async function exportPlan(plan: string) {
+    return client.exportPlan(plan);
+  }
+
+  async function importPlan(payload: unknown) {
+    await client.importPlan(payload);
     await fetchMeta();
   }
 
@@ -202,33 +187,57 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     currentPlan,
     skills,
     currentSkill,
-    selectNode: (nodeId) => callAPI('/__state/select', 'POST', { nodeId }),
-    updateUI: (patch) => callAPI('/__state/ui', 'PATCH', patch),
-    addFeedback: (params) =>
-      callAPI('/__state/feedback', 'POST', { ...params, quickAction: params.quickAction ?? null }),
-    markFeedbackProcessed: (feedbackId) =>
-      callAPI('/__state/feedback/process', 'POST', { feedbackId }),
-    updateNode: (id, patch) => callAPI('/__state/node', 'PATCH', { id, ...patch }),
+    selectNode: async (nodeId) => applyState(await client.selectNode(nodeId)),
+    updateUI: async (patch) => applyState(await client.updateUI(patch)),
+    addFeedback: async (params) =>
+      applyState(await client.addFeedback({ ...params, quickAction: params.quickAction ?? null })),
+    markFeedbackProcessed: async (feedbackId) =>
+      applyState(await client.markFeedbackProcessed(feedbackId)),
+    updateNode: async (id, patch) =>
+      applyState(await client.updateNode({ id, ...patch })),
     switchPlan,
     switchSkill,
     createPlan,
-    updateGateState: (nodeId, type, status, result) =>
-      callAPI('/__state/node/gate-state', 'PATCH', {
-        nodeId,
-        type,
-        status,
-        result,
-      } satisfies GateStateUpdatePayload),
-    updateExecutionPhase: (nodeId, phase) =>
-      callAPI('/__state/node/execution-phase', 'PATCH', {
-        nodeId,
-        phase,
-      } satisfies ExecutionPhaseUpdatePayload),
-    requestReplan: (nodeId) => callAPI('/__state/replan', 'POST', { nodeId }),
-    updateNodeRun: (nodeId, run) => callAPI('/__state/node/run', 'PATCH', { nodeId, run }),
-    updateNodeDebugTrace: (nodeId, item) =>
-      callAPI('/__state/node/debug-trace', 'PATCH', { nodeId, item }),
-    updateCompletionCheck: (item) => callAPI('/__state/completion-check', 'PATCH', { item }),
+    updateGateState: async (nodeId, type, status, result) =>
+      applyState(await client.updateGateState({ nodeId, type, status, result })),
+    updateExecutionPhase: async (nodeId, phase) =>
+      applyState(await client.updateExecutionPhase({ nodeId, phase })),
+    requestReplan: async (nodeId) => applyState(await client.requestReplan(nodeId)),
+    updateNodeRun: async (nodeId, run) => {
+      const res = await fetch('/__state/node/run', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId, run }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'request failed');
+      setState(result);
+    },
+    updateNodeDebugTrace: async (nodeId, item) => {
+      const res = await fetch('/__state/node/debug-trace', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId, item }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'request failed');
+      setState(result);
+    },
+    updateCompletionCheck: async (item) => {
+      const res = await fetch('/__state/completion-check', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'request failed');
+      setState(result);
+    },
+    renamePlan,
+    deletePlan,
+    duplicatePlan,
+    exportPlan,
+    importPlan,
   };
 
   return <WorkbenchCtx.Provider value={value}>{children}</WorkbenchCtx.Provider>;

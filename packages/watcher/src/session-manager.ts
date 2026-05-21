@@ -1,8 +1,11 @@
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
+  renameSync,
+  rmSync,
   statSync,
   unlinkSync,
   writeFileSync,
@@ -153,4 +156,42 @@ export function ensureExecutingStateFromWritingState(
   const next = createExecutingStateFromWritingState(writing as WorkbenchState, mode);
   writeSkill(planDir, 'executing-plans', next);
   return next;
+}
+
+export interface ImportedPlanPayload {
+  planName: string;
+  states: Record<string, unknown>;
+}
+
+export function renamePlan(baseDir: string, from: string, to: string): void {
+  renameSync(join(baseDir, from), join(baseDir, to));
+}
+
+export function deletePlan(baseDir: string, planName: string): void {
+  rmSync(join(baseDir, planName), { recursive: true });
+}
+
+export function duplicatePlan(baseDir: string, from: string, to: string): void {
+  cpSync(join(baseDir, from), join(baseDir, to), { recursive: true });
+}
+
+export function exportPlan(baseDir: string, planName: string): Record<string, unknown> {
+  const planDir = join(baseDir, planName);
+  const states: Record<string, unknown> = {};
+  if (existsSync(planDir)) {
+    const files = readdirSync(planDir).filter((f) => /^state-.+\.json$/.test(f));
+    for (const f of files) {
+      const skill = f.replace(/^state-(.+)\.json$/, '$1');
+      states[skill] = JSON.parse(readFileSync(join(planDir, f), 'utf-8'));
+    }
+  }
+  return { planName, states };
+}
+
+export function importPlan(baseDir: string, payload: ImportedPlanPayload): void {
+  const planDir = join(baseDir, payload.planName);
+  ensureDir(planDir);
+  for (const [skill, state] of Object.entries(payload.states)) {
+    writeFileSync(join(planDir, `state-${skill}.json`), JSON.stringify(state, null, 2));
+  }
 }

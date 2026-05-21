@@ -458,6 +458,11 @@ export default function FloatingFeedback() {
         className="relative flex h-full min-h-0 flex-col border-l border-[var(--execution-panel-divider)] bg-[var(--execution-panel-bg)]"
         style={{ boxShadow: 'var(--execution-panel-shadow)' }}
       >
+        {isExecutingPlans && state.meta.worktreePath && (
+          <div className="shrink-0 border-b border-[var(--execution-panel-divider)] px-4 py-1.5 text-[10px] text-[var(--text-main)] opacity-45 font-mono truncate">
+            {state.meta.worktreePath}
+          </div>
+        )}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {isWritingPlans && (
             <div className="mx-4 mt-4 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">

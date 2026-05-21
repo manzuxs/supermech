@@ -8,6 +8,8 @@ export interface WorkbenchMeta {
   sessionId?: string;
   activeSkill: SkillType | null;
   agentStatus: AgentStatus;
+  branchName?: string;
+  worktreePath?: string;
 }
 
 export interface CanvasNode {

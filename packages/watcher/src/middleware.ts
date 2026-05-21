@@ -6,6 +6,7 @@ import type {
   GateType,
   WorkbenchState,
 } from '@supermech/schema';
+import type { ImportedPlanPayload } from './session-manager.ts';
 import {
   completionCheckItemSchema,
   debugTraceItemSchema,
@@ -47,6 +48,16 @@ export interface MiddlewareConfig {
   getCurrentSkill: () => string;
   /** Validate state and return errors. */
   validate: (s: unknown) => { valid: boolean; errors: string[] };
+  /** Rename a plan directory. */
+  renamePlan?: (from: string, to: string) => void;
+  /** Delete a plan directory. */
+  deletePlan?: (plan: string) => void;
+  /** Duplicate a plan directory. */
+  duplicatePlan?: (from: string, to: string) => void;
+  /** Export plan states as JSON-serializable payload. */
+  exportPlan?: (plan: string) => Record<string, unknown>;
+  /** Import plan states from a previously exported payload. */
+  importPlan?: (payload: ImportedPlanPayload) => void;
 }
 
 function sendJSON(res: ServerResponse, status: number, data: unknown): void {
@@ -131,6 +142,81 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
             return;
           }
           cfg.createPlan(data.plan);
+          sendJSON(res, 200, { ok: true });
+          return;
+        }
+
+        if (sub === '/rename' && req.method === 'POST') {
+          if (!cfg.renamePlan) {
+            sendJSON(res, 501, { ok: false, error: 'rename not implemented' });
+            return;
+          }
+          const data: any = await parseBody(req);
+          if (!data.from || !data.to) {
+            sendJSON(res, 400, { ok: false, error: 'from and to required' });
+            return;
+          }
+          cfg.renamePlan(data.from, data.to);
+          sendJSON(res, 200, { ok: true });
+          return;
+        }
+
+        if (sub === '/delete' && req.method === 'POST') {
+          if (!cfg.deletePlan) {
+            sendJSON(res, 501, { ok: false, error: 'delete not implemented' });
+            return;
+          }
+          const data: any = await parseBody(req);
+          if (!data.plan) {
+            sendJSON(res, 400, { ok: false, error: 'plan required' });
+            return;
+          }
+          cfg.deletePlan(data.plan);
+          sendJSON(res, 200, { ok: true, current: cfg.getCurrentPlan() });
+          return;
+        }
+
+        if (sub === '/duplicate' && req.method === 'POST') {
+          if (!cfg.duplicatePlan) {
+            sendJSON(res, 501, { ok: false, error: 'duplicate not implemented' });
+            return;
+          }
+          const data: any = await parseBody(req);
+          if (!data.from || !data.to) {
+            sendJSON(res, 400, { ok: false, error: 'from and to required' });
+            return;
+          }
+          cfg.duplicatePlan(data.from, data.to);
+          sendJSON(res, 200, { ok: true });
+          return;
+        }
+
+        if (sub === '/export' && req.method === 'POST') {
+          if (!cfg.exportPlan) {
+            sendJSON(res, 501, { ok: false, error: 'export not implemented' });
+            return;
+          }
+          const data: any = await parseBody(req);
+          if (!data.plan) {
+            sendJSON(res, 400, { ok: false, error: 'plan required' });
+            return;
+          }
+          const result = cfg.exportPlan(data.plan);
+          sendJSON(res, 200, result);
+          return;
+        }
+
+        if (sub === '/import' && req.method === 'POST') {
+          if (!cfg.importPlan) {
+            sendJSON(res, 501, { ok: false, error: 'import not implemented' });
+            return;
+          }
+          const data: any = await parseBody(req);
+          if (!data.planName || !data.states) {
+            sendJSON(res, 400, { ok: false, error: 'planName and states required' });
+            return;
+          }
+          cfg.importPlan(data);
           sendJSON(res, 200, { ok: true });
           return;
         }
@@ -326,6 +412,30 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
           return;
         }
         applyStateCompletionCheckUpdate(s, parsed.data);
+      } else if (url === '/meta/environment' && req.method === 'PATCH') {
+        // This path intentionally reserves the `/meta/*` namespace for future meta-level patches.
+        if (data.branchName !== undefined) {
+          s.meta.branchName = data.branchName;
+        }
+        if (data.worktreePath !== undefined) {
+          s.meta.worktreePath = data.worktreePath;
+        }
+      } else if (url === '/parallel-run' && req.method === 'PATCH') {
+        const { id, label, status, ownerTaskId, summary } = data;
+        if (!id || !label || !status) {
+          sendJSON(res, 400, { ok: false, error: 'id, label, status required' });
+          return;
+        }
+        const runs = (s.canvas.metadata?.parallelRuns ?? []) as Array<Record<string, unknown>>;
+        const existing = runs.findIndex((r) => r.id === id);
+        const entry = { id, label, status, ownerTaskId, summary };
+        if (existing >= 0) {
+          runs[existing] = { ...runs[existing], ...entry };
+        } else {
+          runs.push(entry);
+        }
+        if (!s.canvas.metadata) s.canvas.metadata = {};
+        (s.canvas.metadata as Record<string, unknown>).parallelRuns = runs;
       } else {
         sendJSON(res, 404, { ok: false, error: 'not found' });
         return;

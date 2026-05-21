@@ -122,7 +122,17 @@
     "searchPlaceholder": "Search sessions…",
     "quickCreate": "New",
     "manageAll": "Manage all sessions",
-    "noResults": "No matching sessions."
+    "noResults": "No matching sessions.",
+    "rename": "Rename",
+    "renamePlaceholder": "New name...",
+    "renameAction": "Rename",
+    "duplicate": "Duplicate",
+    "duplicateAction": "Duplicate",
+    "delete": "Delete",
+    "confirmDelete": "Delete \"{{name}}\"? This cannot be undone.",
+    "export": "Export",
+    "import": "Import",
+    "moreActions": "More actions"
   },
   "editor": {
     "goal": "Goal",

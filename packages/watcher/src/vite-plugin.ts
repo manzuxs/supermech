@@ -12,6 +12,11 @@ import {
   ensureExecutingStateFromWritingState,
   listPlans,
   listSkills,
+  renamePlan as renamePlanFromManager,
+  deletePlan as deletePlanFromManager,
+  duplicatePlan as duplicatePlanFromManager,
+  exportPlan as exportPlanFromManager,
+  importPlan as importPlanFromManager,
 } from './session-manager.ts';
 
 export interface WatcherPluginOptions {
@@ -165,6 +170,33 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
           listPlans: () => listPlans(baseDir).map((p) => p.planName),
           listSkills: () => listSkills(planDir).map((s) => s.skill),
           createPlan: (plan) => createPlan(baseDir, plan),
+          renamePlan: (from: string, to: string) => {
+            renamePlanFromManager(baseDir, from, to);
+            if (currentPlan === from) {
+              currentPlan = to;
+              updatePaths();
+              startWatching(statePath);
+            }
+          },
+          deletePlan: (plan: string) => {
+            deletePlanFromManager(baseDir, plan);
+            if (currentPlan === plan) {
+              const remaining = listPlans(baseDir);
+              if (remaining.length > 0) {
+                switchPlan(remaining[0].planName);
+              } else {
+                createPlan(baseDir, 'default');
+                switchPlan('default');
+              }
+            }
+          },
+          duplicatePlan: (from: string, to: string) => {
+            duplicatePlanFromManager(baseDir, from, to);
+          },
+          exportPlan: (plan: string) => exportPlanFromManager(baseDir, plan),
+          importPlan: (payload: { planName: string; states: Record<string, unknown> }) => {
+            importPlanFromManager(baseDir, payload);
+          },
           switchSkill,
           switchPlan,
           validate: validateState,

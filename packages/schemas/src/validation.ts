@@ -39,6 +39,14 @@ export const executionRunSchema = z.object({
   completedAt: z.string().optional(),
 });
 
+export const parallelRunSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  status: executionRunStatusSchema,
+  ownerTaskId: z.string().optional(),
+  summary: z.string().optional(),
+});
+
 export const completionCheckItemSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),

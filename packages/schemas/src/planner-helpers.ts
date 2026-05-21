@@ -8,6 +8,7 @@ import type {
   ExecutionPhase,
   ExecutionRun,
   ImplementationStep,
+  ParallelAgentRun,
   PlanStepFile,
   QualityGateConfig,
   QualityGateState,
@@ -22,6 +23,7 @@ import {
   executionPhaseSchema,
   executionRunSchema,
   implementationStepSchema,
+  parallelRunSchema,
   planStepFileSchema,
   qualityGateConfigSchema,
   qualityGateStateSchema,
@@ -167,10 +169,17 @@ export function getPlanTaskDebugTrace(metadata: unknown): DebugTraceItem[] {
   return parseList(asRecord(metadata)?.debugTrace, (item) => parseItem(debugTraceItemSchema, item));
 }
 
+export function getParallelRuns(metadata: unknown): ParallelAgentRun[] {
+  return parseList(asRecord(metadata)?.parallelRuns, (item) =>
+    parseItem(parallelRunSchema, item),
+  );
+}
+
 export function getResolvedExecutionCanvasMetadata(metadata: unknown): ExecutionCanvasMetadata {
   return {
     executionFlow: getExecutionFlow(metadata),
     executionOrigin: getExecutionOrigin(metadata),
     completionChecks: getCompletionChecks(metadata),
+    parallelRuns: getParallelRuns(metadata),
   };
 }

@@ -182,6 +182,15 @@ export interface ExecutionCanvasMetadata {
   executionFlow?: ExecutionFlow;
   executionOrigin?: ExecutionOrigin;
   completionChecks?: CompletionCheckItem[];
+  parallelRuns?: ParallelAgentRun[];
+}
+
+export interface ParallelAgentRun {
+  id: string;
+  label: string;
+  status: ExecutionRunStatus;
+  ownerTaskId?: string;
+  summary?: string;
 }
 
 export type ExecutionMode = 'subagent' | 'inline';

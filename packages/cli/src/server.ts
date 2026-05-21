@@ -7,6 +7,11 @@ import {
   ensureExecutingStateFromWritingState,
   listPlansFromDir,
   listSkillsFromDir,
+  renamePlan as renamePlanFromManager,
+  deletePlan as deletePlanFromManager,
+  duplicatePlan as duplicatePlanFromManager,
+  exportPlan as exportPlanFromManager,
+  importPlan as importPlanFromManager,
   validateState,
 } from '@supermech/runtime';
 import type { ExecutionMode } from '@supermech/schema';
@@ -150,6 +155,34 @@ export async function startServer(options: ServerOptions = {}) {
       listSkills: () => listSkillsFromDir(planDir).map((s) => s.skill),
       createPlan: (plan: string) => {
         ensureDir(join(baseDir, plan));
+      },
+      renamePlan: (from: string, to: string) => {
+        renamePlanFromManager(baseDir, from, to);
+        if (currentPlan === from) {
+          currentPlan = to;
+          planDir = join(baseDir, to);
+          statePath = stateFilePath(baseDir, currentPlan, currentSkill);
+          startWatching(statePath);
+        }
+      },
+      deletePlan: (plan: string) => {
+        deletePlanFromManager(baseDir, plan);
+        if (currentPlan === plan) {
+          const remaining = listPlansFromDir(baseDir);
+          if (remaining.length > 0) {
+            switchPlan(remaining[0].planName);
+          } else {
+            ensureDir(join(baseDir, 'default'));
+            switchPlan('default');
+          }
+        }
+      },
+      duplicatePlan: (from: string, to: string) => {
+        duplicatePlanFromManager(baseDir, from, to);
+      },
+      exportPlan: (plan: string) => exportPlanFromManager(baseDir, plan),
+      importPlan: (payload: { planName: string; states: Record<string, unknown> }) => {
+        importPlanFromManager(baseDir, payload);
       },
       switchSkill,
       switchPlan,

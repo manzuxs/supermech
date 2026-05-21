@@ -175,6 +175,11 @@ export default function LogoBar() {
           })}
         </div>
         <SessionSwitcher className="shrink-0" />
+        {state.meta.branchName && (
+          <span className="shrink-0 inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--bg-main)] px-2.5 py-1 text-[11px] leading-none text-[var(--text-main)] opacity-60">
+            {state.meta.branchName}
+          </span>
+        )}
       </div>
     </div>
   );

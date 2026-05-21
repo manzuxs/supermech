@@ -7,11 +7,16 @@ export {
 } from '@supermech/schema';
 export type { MiddlewareConfig } from './middleware.ts';
 export { createStateMiddleware } from './middleware.ts';
-export type { PlanInfo, SkillInfo } from './session-manager.ts';
+export type { PlanInfo, SkillInfo, ImportedPlanPayload } from './session-manager.ts';
 export {
   ensureExecutingStateFromWritingState,
   listPlans as listPlansFromDir,
   listSkills as listSkillsFromDir,
+  renamePlan,
+  deletePlan,
+  duplicatePlan,
+  exportPlan,
+  importPlan,
 } from './session-manager.ts';
 export type { RuntimeConfig, StateWatcher } from './storage.ts';
 export {
