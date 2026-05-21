@@ -17,9 +17,7 @@ export default function App() {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[var(--bg-main)]">
       <div
-        className={`h-full w-full ${
-          showInspector ? 'grid grid-cols-[minmax(0,1fr)_22rem]' : ''
-        }`}
+        className={`h-full w-full ${showInspector ? 'grid grid-cols-[minmax(0,1fr)_22rem]' : ''}`}
       >
         <CenterCanvas />
         {(isBrainstorming || isWritingPlans || isExecutingPlans) && <FloatingFeedback />}

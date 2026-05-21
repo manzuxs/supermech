@@ -75,9 +75,7 @@ export default function SessionSwitcher({ className = '' }: SessionSwitcherProps
           </span>
           <ChevronDown
             size={14}
-            className={`shrink-0 opacity-45 transition-transform ${
-              open ? 'rotate-180' : ''
-            }`}
+            className={`shrink-0 opacity-45 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </button>
 

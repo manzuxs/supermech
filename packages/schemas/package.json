@@ -11,7 +11,10 @@
     "./brainstorm": "./src/brainstorm.ts",
     "./planner": "./src/planner.ts"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },

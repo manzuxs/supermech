@@ -1,9 +1,4 @@
-import type {
-  ExecutionPhase,
-  GateStatus,
-  GateType,
-  WorkbenchState,
-} from '@supermech/schema';
+import type { ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
 import {
   applyNodeExecutionPhase,
   applyNodeGateState,

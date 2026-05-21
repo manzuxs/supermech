@@ -55,7 +55,7 @@ Every step must contain actual content. These are **plan failures** — never wr
 3. **Write PlanHeader** — goal, architecture, tech stack, phases → put in `canvas.metadata.planHeader`
 4. **Define phases** — up to 4 logical phases (Setup, Core, Integration, Polish)
 5. **Create task nodes** — each task has goal, files, implementation steps, verification steps, phase, risk level
-6. **Define dependencies** — use `edges[]` for task ordering
+6. **Define dependencies** — use `metadata.dependencies[]` for task ordering
 7. **Self-review** — spec coverage, placeholder scan, type consistency (see below)
 8. **Hand off to execution** — task statuses are `"pending"`, ready for executing-plans
 
@@ -83,7 +83,7 @@ Write to `.supermech/<plan>/state-writing-plans.json`:
 {
   "meta": {
     "projectName": "<plan-name>",
-    "sessionId": "writing-plans",
+    "sessionId": "<plan-name>--writing-plans",
     "activeSkill": "writing-plans",
     "agentStatus": "writing"
   },
@@ -118,9 +118,6 @@ Write to `.supermech/<plan>/state-writing-plans.json`:
         }
       }
     ],
-    "edges": [
-      {"from": "task-a", "to": "task-b", "label": "depends on"}
-    ],
     "metadata": {
       "planHeader": {
         "goal": "Build feature X with Y capability",
@@ -146,9 +143,9 @@ Write to `.supermech/<plan>/state-writing-plans.json`:
 ## Key Rules
 
 - `status` and `progress` are Agent-only fields — UI displays them, user cannot change them
-- `edges[]` define task dependencies for execution ordering
+- `metadata.dependencies[]` define task dependencies for execution ordering
 - PlanHeader goes in `canvas.metadata.planHeader`
 - Keep `label` short (3-8 words), put details in `metadata`
-- `sessionId` must be `"writing-plans"`
+- `sessionId` must stay stable for the current plan+skill file, e.g. `"<plan-name>--writing-plans"`
 - `qualityGates` are preset by `riskLevel`: `low` = all disabled, `medium` = spec-review required, `high` = both required
 - Reuse the same plan directory as brainstorming if one exists

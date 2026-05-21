@@ -1,11 +1,5 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-  watch as fsWatch,
-} from 'node:fs';
 import type { FSWatcher } from 'node:fs';
+import { existsSync, watch as fsWatch, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { validateState } from '@supermech/schema';
 import { listPlans as smListPlans, listSkills as smListSkills } from './session-manager.ts';

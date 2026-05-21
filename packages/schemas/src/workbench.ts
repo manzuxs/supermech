@@ -58,3 +58,24 @@ export interface WorkbenchState {
   feedback: FeedbackEntry[];
   ui: UIPreferences;
 }
+
+export interface BrainstormPlanningReadiness {
+  approvedNodeCount: number;
+  unresolvedNodeCount: number;
+  canEnterWritingPlans: boolean;
+}
+
+export function getBrainstormPlanningReadiness(nodes: CanvasNode[]): BrainstormPlanningReadiness {
+  const approvedNodeCount = nodes.filter(
+    (node) => node.status === 'accepted' || node.status === 'done',
+  ).length;
+  const unresolvedNodeCount = nodes.filter(
+    (node) => node.status === 'pending' || node.status === 'active',
+  ).length;
+
+  return {
+    approvedNodeCount,
+    unresolvedNodeCount,
+    canEnterWritingPlans: approvedNodeCount > 0 && unresolvedNodeCount === 0,
+  };
+}

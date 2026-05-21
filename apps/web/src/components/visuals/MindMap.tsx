@@ -1,16 +1,17 @@
+import type { CanvasNode, NodeStatus } from '@supermech/schema';
 import {
   CheckCircle2,
   Circle,
   Crosshair,
   Hash,
+  type LucideIcon,
   Minus,
   PlayCircle,
   Plus,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, NodeStatus } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
 const NODE_W = 200;
@@ -36,7 +37,7 @@ interface LayoutNode {
 
 const STATUS_CONFIG: Record<
   NodeStatus,
-  { bg: string; border: string; text: string; subtext: string; icon: any }
+  { bg: string; border: string; text: string; subtext: string; icon: LucideIcon }
 > = {
   pending: {
     bg: 'color-mix(in srgb, var(--border) 25%, var(--bg-canvas))',
@@ -177,14 +178,13 @@ export default function MindMap({ nodes }: MindMapProps) {
   const { state, updateUI } = useWorkbench();
   const { nodes: layoutNodes, edges } = buildLayout(nodes);
   const containerRef = useRef<HTMLDivElement>(null);
-  const layoutSignature = layoutNodes.map((n) => `${n.id}:${n.x}:${n.y}`).join('|');
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
 
-  function fitToView() {
+  const fitToView = useCallback(() => {
     const el = containerRef.current;
     if (!el || layoutNodes.length === 0) return;
 
@@ -202,9 +202,9 @@ export default function MindMap({ nodes }: MindMapProps) {
       y: (rect.height - bounds.height * nextK) / 2 - bounds.minY * nextK,
       k: nextK,
     });
-  }
+  }, [layoutNodes]);
 
-  function scaleAtPoint(anchorX: number, anchorY: number, nextK: number) {
+  const scaleAtPoint = useCallback((anchorX: number, anchorY: number, nextK: number) => {
     setTransform((prev) => {
       const clampedK = Math.min(Math.max(nextK, MIN_ZOOM), MAX_ZOOM);
       const dx = (anchorX - prev.x) / prev.k;
@@ -216,7 +216,7 @@ export default function MindMap({ nodes }: MindMapProps) {
         k: clampedK,
       };
     });
-  }
+  }, []);
 
   function stepZoom(direction: 'in' | 'out') {
     const el = containerRef.current;
@@ -228,7 +228,7 @@ export default function MindMap({ nodes }: MindMapProps) {
 
   useEffect(() => {
     fitToView();
-  }, [layoutSignature]);
+  }, [fitToView]);
 
   useEffect(() => {
     function handleFocusNode(event: Event) {
@@ -279,7 +279,7 @@ export default function MindMap({ nodes }: MindMapProps) {
 
     el.addEventListener('wheel', handleWheelRaw, { passive: false });
     return () => el.removeEventListener('wheel', handleWheelRaw);
-  }, [transform.k]);
+  }, [scaleAtPoint, transform.k]);
 
   if (layoutNodes.length === 0) {
     return (
@@ -310,9 +310,19 @@ export default function MindMap({ nodes }: MindMapProps) {
     setIsDragging(false);
   };
 
+  const clearSelection = () => {
+    updateUI({ selectedNodeId: null, rightSidebarOpen: false });
+  };
+
   const handleBackgroundClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('g[role="button"]')) return;
-    updateUI({ selectedNodeId: null, rightSidebarOpen: false });
+    clearSelection();
+  };
+
+  const handleBackgroundKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    clearSelection();
   };
 
   const selectedId = state.ui.selectedNodeId;
@@ -342,6 +352,10 @@ export default function MindMap({ nodes }: MindMapProps) {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleBackgroundClick}
+      onKeyDown={handleBackgroundKeyDown}
+      role="button"
+      aria-label={t('canvas.clearSelection', { defaultValue: 'Clear selection' })}
+      tabIndex={0}
       style={{
         backgroundPosition: `${transform.x}px ${transform.y}px`,
         backgroundSize: `${24 * transform.k}px ${24 * transform.k}px`,
@@ -381,7 +395,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                 <path
                   d={path}
                   fill="none"
-                  stroke={isFocused ? "var(--primary)" : "#94a3b8"}
+                  stroke={isFocused ? 'var(--primary)' : '#94a3b8'}
                   strokeWidth={isFocused ? 3 : 2}
                   className={isFocused ? 'opacity-10' : 'opacity-0'}
                   style={{ filter: 'blur(3px)' }}
@@ -486,7 +500,7 @@ export default function MindMap({ nodes }: MindMapProps) {
                       : 'transition-all duration-200 group-hover:stroke-primary/60 group-hover:fill-[var(--surface-2)]'
                   }
                   style={{
-                    filter: 'var(--shadow-filter)'
+                    filter: 'var(--shadow-filter)',
                   }}
                 />
 
@@ -520,7 +534,11 @@ export default function MindMap({ nodes }: MindMapProps) {
 
                     <div
                       className="mb-auto text-[11px] leading-relaxed line-clamp-2"
-                      style={{ color: config.text, opacity: contentOpacity * 0.75, fontWeight: 500 }}
+                      style={{
+                        color: config.text,
+                        opacity: contentOpacity * 0.75,
+                        fontWeight: 500,
+                      }}
                     >
                       {n.description}
                     </div>

@@ -1,12 +1,7 @@
-import { Beaker, CheckCircle2, ChevronRight, Circle, Code, FileText, Loader2, Minus, Shield, Star, XCircle } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { getResolvedPlanTaskExecutionMetadata } from '@supermech/schema';
 import type {
   CanvasNode,
-  ExecutionPhase,
   ExecutionEvent,
+  ExecutionPhase,
   GateType,
   ImplementationStep,
   PlanStepFile,
@@ -15,6 +10,23 @@ import type {
   QualityGateState,
   ResolvedPlanTaskExecutionMetadata,
 } from '@supermech/schema';
+import { getPlanTaskDependencies, getResolvedPlanTaskExecutionMetadata } from '@supermech/schema';
+import type { LucideIcon } from 'lucide-react';
+import {
+  Beaker,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  Code,
+  FileText,
+  Loader2,
+  Minus,
+  Shield,
+  Star,
+  XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FeedbackParams } from '../../context/WorkbenchContext.tsx';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 
@@ -23,8 +35,7 @@ export const FILE_TYPE_STYLES: Record<string, string> = {
     'bg-[var(--execution-panel-accent-bg)] text-[var(--text-main)] border-[var(--execution-chip-border)]/20',
   modify:
     'bg-[color-mix(in_srgb,var(--execution-phase-3)_78%,transparent)] text-[var(--text-main)] border-transparent',
-  test:
-    'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] border-transparent',
+  test: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] border-transparent',
   delete:
     'bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)] border-[var(--muted-foreground)]/20',
 };
@@ -45,9 +56,7 @@ export function getTaskMeta(node: CanvasNode): TaskDetailMetadata {
     description: typeof raw.description === 'string' ? raw.description : undefined,
     estimatedMinutes: typeof raw.estimatedMinutes === 'number' ? raw.estimatedMinutes : undefined,
     assignee: typeof raw.assignee === 'string' ? raw.assignee : undefined,
-    dependencies: Array.isArray(raw.dependencies)
-      ? raw.dependencies.filter((item): item is string => typeof item === 'string')
-      : undefined,
+    dependencies: getPlanTaskDependencies(raw),
     phase: typeof raw.phase === 'string' ? raw.phase : undefined,
     riskLevel:
       raw.riskLevel === 'low' || raw.riskLevel === 'medium' || raw.riskLevel === 'high'
@@ -119,7 +128,23 @@ interface TaskDetailProps {
   onReplan?: (nodeId: string) => Promise<void>;
 }
 
-export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onReplan }: TaskDetailProps) {
+function getImplementationStepKey(step: ImplementationStep) {
+  return [step.description, step.command, step.code, step.expectedOutput].join('::');
+}
+
+function getExecutionEventKey(event: ExecutionEvent) {
+  return [event.timestamp, event.kind, event.status, event.message, event.files?.join('|')].join(
+    '::',
+  );
+}
+
+export function TaskDetail({
+  node,
+  onFeedback,
+  showRating,
+  showGateConfig,
+  onReplan,
+}: TaskDetailProps) {
   const { t } = useTranslation();
   const meta = getTaskMeta(node);
   const goal = meta.goal || meta.description || undefined;
@@ -181,14 +206,10 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
           </div>
 
           {goal && (
-            <p className="mb-6 text-[13px] leading-7 text-[var(--text-main)] opacity-78">
-              {goal}
-            </p>
+            <p className="mb-6 text-[13px] leading-7 text-[var(--text-main)] opacity-78">{goal}</p>
           )}
 
-          {showGateConfig && (
-            <GateConfigSection nodeId={node.id} gates={qualityGates} />
-          )}
+          {showGateConfig && <GateConfigSection nodeId={node.id} gates={qualityGates} />}
 
           {showRating && (phaseLabel || activeFiles.length > 0 || executionEvents.length > 0) && (
             <ExecutionProgressSection
@@ -198,9 +219,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
             />
           )}
 
-          {showRating && gateStates.length > 0 && (
-            <GateResultSection gateStates={gateStates} />
-          )}
+          {showRating && gateStates.length > 0 && <GateResultSection gateStates={gateStates} />}
 
           {steps.length > 0 && (
             <section className="mb-6">
@@ -211,7 +230,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
               />
               <div className="mt-3 space-y-2">
                 {steps.map((step, i) => (
-                  <StepBlock key={i} step={step} index={i} />
+                  <StepBlock key={getImplementationStepKey(step)} step={step} index={i} />
                 ))}
               </div>
             </section>
@@ -226,7 +245,7 @@ export function TaskDetail({ node, onFeedback, showRating, showGateConfig, onRep
               />
               <div className="mt-3 space-y-2">
                 {verifications.map((step, i) => (
-                  <StepBlock key={i} step={step} index={i} />
+                  <StepBlock key={getImplementationStepKey(step)} step={step} index={i} />
                 ))}
               </div>
             </section>
@@ -287,8 +306,7 @@ function RatingSection({
   const { t } = useTranslation();
   const { state } = useWorkbench();
   const ratings = state.feedback
-    .filter((f) => f.nodeId === nodeId && f.rating != null)
-    .map((f) => f.rating!)
+    .flatMap((f) => (f.nodeId === nodeId && f.rating != null ? [f.rating] : []))
     .sort((a, b) => b - a);
   const currentRating = ratings[0] ?? 0;
 
@@ -531,8 +549,11 @@ function ExecutionProgressSection({
               {t('editor.recentEvents')}
             </div>
             <div className="space-y-2">
-              {recentEvents.map((event, index) => (
-                <div key={`${event.timestamp}-${index}`} className="rounded-[18px] bg-[var(--bg-main)] px-2 py-2">
+              {recentEvents.map((event) => (
+                <div
+                  key={getExecutionEventKey(event)}
+                  className="rounded-[18px] bg-[var(--bg-main)] px-2 py-2"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
                       {event.kind}
@@ -643,9 +664,9 @@ function ReplanButton({
 }) {
   const { t } = useTranslation();
   const { state } = useWorkbench();
-  const ratings = state.feedback
-    .filter((f) => f.nodeId === nodeId && f.rating != null)
-    .map((f) => f.rating!);
+  const ratings = state.feedback.flatMap((f) =>
+    f.nodeId === nodeId && f.rating != null ? [f.rating] : [],
+  );
   const lowestRating = ratings.length > 0 ? Math.min(...ratings) : 5;
 
   if (lowestRating > 2) return null;

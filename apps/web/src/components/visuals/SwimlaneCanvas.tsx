@@ -1,3 +1,12 @@
+import type {
+  CanvasNode,
+  ImplementationStep,
+  PlanHeader,
+  PlanPhase,
+  PlanStepFile,
+  WorkbenchState,
+} from '@supermech/schema';
+import { getPlanTaskDependencies } from '@supermech/schema';
 import {
   CheckCircle2,
   Clock,
@@ -9,9 +18,8 @@ import {
   Plus,
   Zap,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CanvasNode, PlanHeader, PlanPhase, WorkbenchState } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
@@ -119,8 +127,8 @@ interface SwimTask {
   assignee: string | null;
   stepsCount: number;
   filesCount: number;
-  steps: any[];
-  files: any[];
+  steps: ImplementationStep[];
+  files: PlanStepFile[];
   x: number;
   y: number;
   h: number;
@@ -208,8 +216,8 @@ function buildLayout(
 
     phaseNodes.forEach((node, i) => {
       const meta = getTaskMeta(node);
-      const steps = (meta.implementationSteps as any[]) ?? [];
-      const files = (meta.files as any[]) ?? [];
+      const steps = meta.implementationSteps;
+      const files = meta.files;
       const goal = (meta.goal as string) || (meta.description as string) || '';
 
       const taskH = calculateTaskHeight({
@@ -272,7 +280,7 @@ function buildLayout(
   // Build dependency arrows
   const arrows: Arrow[] = [];
   for (const node of nodes) {
-    const deps = (getTaskMeta(node).dependencies as string[]) ?? [];
+    const deps = getPlanTaskDependencies(node.metadata);
     const targetPos = taskPos.get(node.id);
     if (!targetPos) continue;
     for (const depId of deps) {
@@ -301,7 +309,8 @@ function getBounds(lanes: SwimLane[], includeSummary: boolean) {
     }
   }
   // Fallback if no tasks
-  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
+  if (!Number.isFinite(minX))
+    return { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 };
 
   if (includeSummary) {
     minX = Math.min(minX, SUMMARY_CARD_X);
@@ -355,39 +364,40 @@ export default function SwimlaneCanvas() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
-  const layoutSig = lanes.map((l) => `${l.name}:${l.tasks.length}`).join('|');
+  const fitToView = useCallback(
+    (forceK?: number) => {
+      const el = containerRef.current;
+      if (!el || lanes.length === 0) return;
+      const rect = el.getBoundingClientRect();
+      const bounds = getBounds(lanes, Boolean(planHeader));
 
-  function fitToView(forceK?: number) {
-    const el = containerRef.current;
-    if (!el || lanes.length === 0) return;
-    const rect = el.getBoundingClientRect();
-    const bounds = getBounds(lanes, Boolean(planHeader));
+      let nextK = forceK;
+      if (nextK === undefined) {
+        const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
+        const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
+        nextK = Math.min(
+          MAX_ZOOM,
+          Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
+        );
+      }
 
-    let nextK = forceK;
-    if (nextK === undefined) {
-      const aw = Math.max(rect.width - VIEWPORT_PAD_X * 2, 1);
-      const ah = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
-      nextK = Math.min(
-        MAX_ZOOM,
-        Math.max(MIN_ZOOM, Math.min(aw / bounds.width, ah / bounds.height)),
-      );
-    }
+      setTransform({
+        x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
+        y: VIEWPORT_TOP_PAD - bounds.minY * nextK,
+        k: nextK,
+      });
+    },
+    [lanes, planHeader],
+  );
 
-    setTransform({
-      x: (rect.width - bounds.width * nextK) / 2 - bounds.minX * nextK,
-      y: VIEWPORT_TOP_PAD - bounds.minY * nextK,
-      k: nextK,
-    });
-  }
-
-  function scaleAtPoint(anchorX: number, anchorY: number, nextK: number) {
+  const scaleAtPoint = useCallback((anchorX: number, anchorY: number, nextK: number) => {
     setTransform((prev) => {
       const clampedK = Math.min(Math.max(nextK, MIN_ZOOM), MAX_ZOOM);
       const dx = (anchorX - prev.x) / prev.k;
       const dy = (anchorY - prev.y) / prev.k;
       return { x: anchorX - dx * clampedK, y: anchorY - dy * clampedK, k: clampedK };
     });
-  }
+  }, []);
 
   function stepZoom(dir: 'in' | 'out') {
     const el = containerRef.current;
@@ -397,10 +407,9 @@ export default function SwimlaneCanvas() {
     scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fitToView(1); // Default to 100%
-  }, [layoutSig]);
+  }, [fitToView]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -418,7 +427,7 @@ export default function SwimlaneCanvas() {
     };
     el.addEventListener('wheel', handleWheelRaw, { passive: false });
     return () => el.removeEventListener('wheel', handleWheelRaw);
-  }, [transform.k]);
+  }, [scaleAtPoint, transform.k]);
 
   const selectedId = state.ui.selectedNodeId;
 
@@ -548,10 +557,10 @@ export default function SwimlaneCanvas() {
           ))}
 
           {/* Arrows */}
-          {arrows.map((a, i) => {
+          {arrows.map((a) => {
             const pathStr = arrowPath(a.from, a.to);
             return (
-              <g key={i}>
+              <g key={`${a.from.x}-${a.from.y}-${a.to.x}-${a.to.y}`}>
                 {/* Glow layer */}
                 <path
                   d={pathStr}
@@ -712,13 +721,13 @@ export default function SwimlaneCanvas() {
                               <span>{t('editor.codeSteps')}</span>
                             </div>
                             <div className="space-y-1">
-                              {task.steps.slice(0, 3).map((step, i) => (
+                              {task.steps.slice(0, 3).map((step, index) => (
                                 <div
-                                  key={i}
+                                  key={`${task.id}-step-${step.description}-${step.command ?? ''}`}
                                   className="flex items-start gap-2 rounded-md bg-[var(--surface-3)]/30 px-2 py-1.5"
                                 >
                                   <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[7px] font-bold text-white">
-                                    {i + 1}
+                                    {index + 1}
                                   </span>
                                   <span className="line-clamp-2 text-[10px] leading-snug text-[var(--foreground)] opacity-80">
                                     {step.description}
@@ -742,9 +751,9 @@ export default function SwimlaneCanvas() {
                               <span>{t('editor.files')}</span>
                             </div>
                             <div className="space-y-1">
-                              {task.files.slice(0, 3).map((file, i) => (
+                              {task.files.slice(0, 3).map((file) => (
                                 <div
-                                  key={i}
+                                  key={`${task.id}-file-${file.path}-${file.type}`}
                                   className="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)]/50 px-2 py-1"
                                 >
                                   <span className="text-[8px] font-bold uppercase text-[var(--primary)] opacity-70">
@@ -794,10 +803,16 @@ export default function SwimlaneCanvas() {
 
       {/* Zoom HUD */}
       <div className="absolute right-6 bottom-6 flex items-center gap-2">
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 px-3 py-1.5 text-[11px] font-bold tracking-tight text-[var(--foreground)] backdrop-blur-md" style={{ boxShadow: 'var(--shadow-node)' }}>
+        <div
+          className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 px-3 py-1.5 text-[11px] font-bold tracking-tight text-[var(--foreground)] backdrop-blur-md"
+          style={{ boxShadow: 'var(--shadow-node)' }}
+        >
           {Math.round(transform.k * 100)}%
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 p-1 backdrop-blur-md" style={{ boxShadow: 'var(--shadow-node)' }}>
+        <div
+          className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-1)]/80 p-1 backdrop-blur-md"
+          style={{ boxShadow: 'var(--shadow-node)' }}
+        >
           <button
             type="button"
             onClick={() => stepZoom('out')}

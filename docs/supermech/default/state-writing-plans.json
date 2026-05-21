@@ -1,14 +1,13 @@
 {
   "meta": {
     "projectName": "My Project",
-    "sessionId": "writing-plans",
+    "sessionId": "my-project--writing-plans",
     "activeSkill": null,
     "agentStatus": "idle"
   },
   "canvas": {
     "skillType": "writing-plans",
-    "nodes": [],
-    "edges": []
+    "nodes": []
   },
   "feedback": [],
   "ui": {

@@ -1,3 +1,17 @@
+import type {
+  CanvasNode,
+  ExecutionCanvasMetadata,
+  ExecutionEvent,
+  ExecutionFlow,
+  ExecutionFlowStage,
+  ExecutionFlowStageRelation,
+  ExecutionFlowTaskRelation,
+  ExecutionPhase,
+  NodeStatus,
+  PlanStepFile,
+  QualityGateState,
+} from '@supermech/schema';
+import { getExecutionFlow as getExecutionFlowFromMetadata } from '@supermech/schema';
 import type { LucideIcon } from 'lucide-react';
 import {
   CheckCircle2,
@@ -11,21 +25,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  CanvasEdge,
-  CanvasNode,
-  ExecutionCanvasMetadata,
-  ExecutionEvent,
-  ExecutionFlow,
-  ExecutionPhase,
-  ExecutionFlowStage,
-  ExecutionFlowStageRelation,
-  ExecutionFlowTaskRelation,
-  NodeStatus,
-  PlanStepFile,
-  QualityGateState,
-} from '@supermech/schema';
-import { getExecutionFlow as getExecutionFlowFromMetadata } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { getTaskMeta } from './DetailPanel.tsx';
 
@@ -151,8 +150,7 @@ const FILE_BADGE_COLORS: Record<string, string> = {
     'border-[var(--execution-chip-border)] bg-[var(--execution-panel-accent-bg)] text-[var(--text-main)]',
   modify:
     'border-transparent bg-[color-mix(in_srgb,var(--execution-phase-3)_78%,transparent)] text-[var(--text-main)]',
-  test:
-    'border-transparent bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-[var(--success)]',
+  test: 'border-transparent bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-[var(--success)]',
   delete:
     'border-transparent bg-[var(--execution-chip-muted-bg)] text-[var(--execution-chip-muted-fg)]',
 };
@@ -179,10 +177,20 @@ function getCanvasExecutionMeta(
   };
 }
 
-function calculateTaskHeight(task: Pick<
-  FlowTask,
-  'label' | 'goal' | 'files' | 'stepCount' | 'gateStates' | 'executionPhase' | 'activeFiles' | 'latestEvent' | 'rating'
->): number {
+function calculateTaskHeight(
+  task: Pick<
+    FlowTask,
+    | 'label'
+    | 'goal'
+    | 'files'
+    | 'stepCount'
+    | 'gateStates'
+    | 'executionPhase'
+    | 'activeFiles'
+    | 'latestEvent'
+    | 'rating'
+  >,
+): number {
   let height = 84;
 
   const titleLines = Math.max(1, Math.ceil(task.label.length / 22));
@@ -214,9 +222,13 @@ function getPrimaryStageRelations(flow: ExecutionFlow): ExecutionFlowStageRelati
   return sequential;
 }
 
-function getTaskRelations(flow: ExecutionFlow, stage: ExecutionFlowStage): ExecutionFlowTaskRelation[] {
-  const relations = (flow.taskRelations ?? []).filter((relation) =>
-    stage.taskIds.includes(relation.fromTaskId) && stage.taskIds.includes(relation.toTaskId)
+function getTaskRelations(
+  flow: ExecutionFlow,
+  stage: ExecutionFlowStage,
+): ExecutionFlowTaskRelation[] {
+  const relations = (flow.taskRelations ?? []).filter(
+    (relation) =>
+      stage.taskIds.includes(relation.fromTaskId) && stage.taskIds.includes(relation.toTaskId),
   );
 
   if (relations.length > 0) return relations;
@@ -291,36 +303,36 @@ function buildLayout(
       currentY += task.h + TASK_GAP;
     }
 
-    const flowEndY = tasks.length > 0
-      ? tasks[tasks.length - 1].y + tasks[tasks.length - 1].h + FLOW_RAIL_BOTTOM_GAP
-      : flowStartY + 110;
+    const flowEndY =
+      tasks.length > 0
+        ? tasks[tasks.length - 1].y + tasks[tasks.length - 1].h + FLOW_RAIL_BOTTOM_GAP
+        : flowStartY + 110;
 
     return {
       stage,
       x: stageX,
-      naturalHeight: Math.max(
-        STAGE_MIN_H,
-        flowEndY - PAD_Y + STAGE_PAD_Y,
-      ),
+      naturalHeight: Math.max(STAGE_MIN_H, flowEndY - PAD_Y + STAGE_PAD_Y),
       tasks,
       flowStartY,
       flowEndY,
     };
   });
 
-  const stages: StageLayout[] = stageDrafts.map(({ stage, x, naturalHeight, tasks, flowStartY, flowEndY }, index) => ({
-    id: stage.id,
-    name: stage.name,
-    description: stage.description,
-    index,
-    x,
-    y: PAD_Y,
-    width: STAGE_W,
-    height: naturalHeight,
-    tasks,
-    flowStartY,
-    flowEndY,
-  }));
+  const stages: StageLayout[] = stageDrafts.map(
+    ({ stage, x, naturalHeight, tasks, flowStartY, flowEndY }, index) => ({
+      id: stage.id,
+      name: stage.name,
+      description: stage.description,
+      index,
+      x,
+      y: PAD_Y,
+      width: STAGE_W,
+      height: naturalHeight,
+      tasks,
+      flowStartY,
+      flowEndY,
+    }),
+  );
 
   const taskCenterMap = new Map<string, { x: number; y: number; topY: number; bottomY: number }>();
   for (const stage of stages) {
@@ -394,7 +406,10 @@ function verticalFlowPath(from: { x: number; y: number }, to: { x: number; y: nu
 
 function stageStatus(tasks: FlowTask[]): NodeStatus {
   if (tasks.some((task) => task.status === 'active')) return 'active';
-  if (tasks.length > 0 && tasks.every((task) => task.status === 'done' || task.status === 'accepted')) {
+  if (
+    tasks.length > 0 &&
+    tasks.every((task) => task.status === 'done' || task.status === 'accepted')
+  ) {
     return 'done';
   }
   if (tasks.some((task) => task.status === 'rejected')) return 'rejected';
@@ -430,9 +445,7 @@ function RatingStars({ rating, size = 12 }: { rating: number; size?: number }) {
           size={size}
           fill={star <= rating ? 'var(--execution-status-active)' : 'none'}
           stroke={
-            star <= rating
-              ? 'var(--execution-status-active)'
-              : 'var(--execution-card-stroke-muted)'
+            star <= rating ? 'var(--execution-status-active)' : 'var(--execution-card-stroke-muted)'
           }
           strokeWidth={1.5}
         />
@@ -479,7 +492,13 @@ function PhaseBadge({ phase }: { phase: string }) {
   );
 }
 
-function ActiveFileSummary({ activeFiles, latestEvent }: { activeFiles: string[]; latestEvent: string }) {
+function ActiveFileSummary({
+  activeFiles,
+  latestEvent,
+}: {
+  activeFiles: string[];
+  latestEvent: string;
+}) {
   if (activeFiles.length === 0 && !latestEvent) return null;
   return (
     <div className="mt-1 space-y-1">
@@ -522,15 +541,7 @@ function StatusBadge({ status }: { status: NodeStatus }) {
   );
 }
 
-function TerminalNode({
-  x,
-  y,
-  kind,
-}: {
-  x: number;
-  y: number;
-  kind: 'start' | 'end';
-}) {
+function TerminalNode({ x, y, kind }: { x: number; y: number; kind: 'start' | 'end' }) {
   return (
     <g>
       {kind === 'start' ? (
@@ -543,12 +554,7 @@ function TerminalNode({
             stroke="var(--execution-link-stroke)"
             strokeWidth={1.5}
           />
-          <circle
-            cx={x}
-            cy={y}
-            r={3}
-            fill="var(--execution-link-stroke)"
-          />
+          <circle cx={x} cy={y} r={3} fill="var(--execution-link-stroke)" />
         </>
       ) : (
         <>
@@ -570,14 +576,12 @@ function TerminalNode({
           />
         </>
       )}
-
     </g>
   );
 }
 
 interface FlowchartCanvasProps {
   nodes: CanvasNode[];
-  edges: CanvasEdge[];
 }
 
 export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
@@ -597,10 +601,6 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
-  const layoutSig = layout
-    ? layout.stages.map((stage) => `${stage.id}:${stage.tasks.length}`).join('|')
-    : 'empty';
-
   function fitToView(forceK?: number) {
     const element = containerRef.current;
     if (!element || !layout) return;
@@ -613,7 +613,10 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
       const availableHeight = Math.max(rect.height - VIEWPORT_PAD_Y * 2, 1);
       nextK = Math.min(
         MAX_ZOOM,
-        Math.max(MIN_ZOOM, Math.min(availableWidth / bounds.width, availableHeight / bounds.height)),
+        Math.max(
+          MIN_ZOOM,
+          Math.min(availableWidth / bounds.width, availableHeight / bounds.height),
+        ),
       );
     }
 
@@ -642,8 +645,17 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
   }
 
   useEffect(() => {
-    fitToView(0.5);
-  }, [layoutSig]);
+    const element = containerRef.current;
+    if (!element || !layout) return;
+    const rect = element.getBoundingClientRect();
+    const bounds = getBounds(layout.stages);
+
+    setTransform({
+      x: (rect.width - bounds.width * 0.5) / 2 - bounds.minX * 0.5,
+      y: (rect.height - bounds.height * 0.5) / 2 - bounds.minY * 0.5,
+      k: 0.5,
+    });
+  }, [layout]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -654,14 +666,21 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
         const delta = -event.deltaY;
         const factor = 1.1 ** (delta / 100);
         const rect = element.getBoundingClientRect();
-        scaleAtPoint(event.clientX - rect.left, event.clientY - rect.top, transform.k * factor);
+        const anchorX = event.clientX - rect.left;
+        const anchorY = event.clientY - rect.top;
+        setTransform((prev) => {
+          const clampedK = Math.min(Math.max(prev.k * factor, MIN_ZOOM), MAX_ZOOM);
+          const dx = (anchorX - prev.x) / prev.k;
+          const dy = (anchorY - prev.y) / prev.k;
+          return { x: anchorX - dx * clampedK, y: anchorY - dy * clampedK, k: clampedK };
+        });
       } else {
         setTransform((prev) => ({ ...prev, x: prev.x - event.deltaX, y: prev.y - event.deltaY }));
       }
     };
     element.addEventListener('wheel', handleWheelRaw, { passive: false });
     return () => element.removeEventListener('wheel', handleWheelRaw);
-  }, [transform.k]);
+  }, []);
 
   const selectedId = state.ui.selectedNodeId;
 
@@ -682,7 +701,11 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!isDragging) return;
-    setTransform((prev) => ({ ...prev, x: event.clientX - dragStart.x, y: event.clientY - dragStart.y }));
+    setTransform((prev) => ({
+      ...prev,
+      x: event.clientX - dragStart.x,
+      y: event.clientY - dragStart.y,
+    }));
   };
 
   const handleMouseUp = () => setIsDragging(false);
@@ -725,10 +748,11 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
         </defs>
 
         <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
-          {layout.stageLinks.map((link, index) => {
+          {layout.stageLinks.map((link) => {
             const pathStr = stageRelationPath(link.from, link.to);
+            const linkKey = `${link.from.x}-${link.from.y}-${link.to.x}-${link.to.y}`;
             return (
-              <g key={`stage-link-${index}`}>
+              <g key={`stage-link-${linkKey}`}>
                 <path
                   d={pathStr}
                   fill="none"
@@ -765,7 +789,11 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                   rx={28}
                   ry={28}
                   fill="var(--execution-panel-bg)"
-                  stroke={status === 'active' ? 'var(--execution-status-active)' : 'var(--execution-stage-outline)'}
+                  stroke={
+                    status === 'active'
+                      ? 'var(--execution-status-active)'
+                      : 'var(--execution-stage-outline)'
+                  }
                   strokeWidth={status === 'active' ? 2 : 1.5}
                   style={{ filter: 'var(--execution-card-shadow)' }}
                 />
@@ -840,20 +868,13 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                       strokeWidth={1.25}
                       opacity={0.22}
                     />
-                    <TerminalNode
-                      x={stage.x + stage.width / 2}
-                      y={stage.flowStartY}
-                      kind="start"
-                    />
-                    <TerminalNode
-                      x={stage.x + stage.width / 2}
-                      y={stage.flowEndY}
-                      kind="end"
-                    />
-                    {stageTaskLinks.map((link, index) => {
+                    <TerminalNode x={stage.x + stage.width / 2} y={stage.flowStartY} kind="start" />
+                    <TerminalNode x={stage.x + stage.width / 2} y={stage.flowEndY} kind="end" />
+                    {stageTaskLinks.map((link) => {
                       const pathStr = verticalFlowPath(link.from, link.to);
+                      const linkKey = `${stage.id}-${link.from.x}-${link.from.y}-${link.to.x}-${link.to.y}-${link.label ?? ''}`;
                       return (
-                        <g key={`${stage.id}-task-link-${index}`}>
+                        <g key={linkKey}>
                           <path
                             d={pathStr}
                             fill="none"
@@ -914,7 +935,9 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                         }
                       }}
                       onFocus={() => setFocusedTaskId(task.id)}
-                      onBlur={() => setFocusedTaskId((current) => (current === task.id ? null : current))}
+                      onBlur={() =>
+                        setFocusedTaskId((current) => (current === task.id ? null : current))
+                      }
                       aria-label={task.label}
                       className="group cursor-pointer outline-none"
                       role="button"
@@ -958,17 +981,17 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                             : isDone
                               ? 'var(--execution-card-fill-done)'
                               : isActive
-                              ? 'var(--execution-card-fill-active)'
-                              : isPending
-                                ? 'var(--execution-card-fill-pending)'
-                              : 'var(--execution-card-fill)'
+                                ? 'var(--execution-card-fill-active)'
+                                : isPending
+                                  ? 'var(--execution-card-fill-pending)'
+                                  : 'var(--execution-card-fill)'
                         }
                         stroke={
                           isSelected
                             ? 'var(--execution-card-stroke-hover)'
                             : isActive
                               ? 'var(--execution-status-active)'
-                            : config.border
+                              : config.border
                         }
                         strokeWidth={isSelected ? 2 : 1.5}
                         style={{ filter: 'var(--execution-card-shadow)' }}
@@ -989,7 +1012,9 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
                               size={14}
                               strokeWidth={2.4}
                               className="shrink-0"
-                              style={{ color: isDone ? 'var(--execution-status-done)' : config.accent }}
+                              style={{
+                                color: isDone ? 'var(--execution-status-done)' : config.accent,
+                              }}
                             />
                             <span
                               className={`min-w-0 flex-1 truncate text-[13px] font-extrabold ${isRejected ? 'line-through' : ''}`}

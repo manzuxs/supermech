@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const BUILTIN_SKILLS = ['brainstorming', 'writing-plans', 'executing-plans'];
@@ -47,7 +47,11 @@ function copyDir(src: string, dest: string): void {
 }
 
 /** Initialize a `.supermech/` directory in the target project. */
-export function initProject(options: InitOptions = {}): { dir: string; skills: string[]; agents: string[] } {
+export function initProject(options: InitOptions = {}): {
+  dir: string;
+  skills: string[];
+  agents: string[];
+} {
   const cwd = options.cwd ?? process.cwd();
   const skills = options.skills ?? BUILTIN_SKILLS;
   const agents = options.agents ?? ['claude'];

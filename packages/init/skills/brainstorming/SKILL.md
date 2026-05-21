@@ -52,7 +52,7 @@ You MUST complete these items in order:
 7. **Present design** — in sections scaled to their complexity, get approval after each section, update node statuses as decisions are made
 8. **Write design doc** — save to `.supermech/<plan>/<YYYY-MM-DD>-design.md` (write your design reasoning in natural language so it's preserved)
 9. **Spec self-review** — check for placeholders, contradictions, ambiguity, scope gaps (see below)
-10. **Clear canvas** — set all accepted nodes to `status: "done"`, set `meta.activeSkill: null`
+10. **Transition to writing-plans** — once the design is approved and open questions are resolved, keep the accepted design visible and invoke `writing-plans` using the same plan directory
 
 ## The Process
 
@@ -112,7 +112,11 @@ Fix any issues inline. No need to re-review — just fix and move on.
 
 ### Transition
 
-After the spec is approved, invoke the **writing-plans** skill to create an implementation plan.
+After the spec is approved:
+
+1. Keep the approved brainstorming state available for reference
+2. Invoke the **writing-plans** skill using the same plan directory
+3. Only return to idle canvas if the user explicitly ends the topic instead of continuing into planning
 
 ## Feedback Loop
 
@@ -131,7 +135,7 @@ Write to `.supermech/<plan>/state-brainstorming.json`:
 {
   "meta": {
     "projectName": "<plan-name>",
-    "sessionId": "brainstorming",
+    "sessionId": "<plan-name>--brainstorming",
     "activeSkill": "brainstorming",
     "agentStatus": "idle | thinking | writing | error"
   },
@@ -150,8 +154,7 @@ Write to `.supermech/<plan>/state-brainstorming.json`:
           "tags": ["architecture", "design"]
         }
       }
-    ],
-    "edges": []
+    ]
   },
   "feedback": [],
   "ui": {
@@ -165,11 +168,11 @@ Write to `.supermech/<plan>/state-brainstorming.json`:
 
 ## Key Rules
 
-- MindMap uses `parentId`/`children` for tree hierarchy — NOT `edges[]`
+- MindMap uses `parentId`/`children` for tree hierarchy
 - `meta.activeSkill: "brainstorming"` enables the mind map view
-- `meta.activeSkill: null` returns to idle canvas
+- Do not clear the brainstorming state as the default next step after approval; transition into `writing-plans` first
 - Each node = one question, topic, or approach — don't pack multiple ideas into one node
 - ONE question at a time. Break multi-topic exploration into separate branching questions.
 - Update node `status` as decisions are made: `active` → `accepted` (approved) or `rejected`
 - User feedback arrives in `feedback[]` with `nodeId` referencing the target node
-- `sessionId` must match the skill name: `"brainstorming"`
+- `sessionId` must stay stable for the current plan+skill file, e.g. `"<plan-name>--brainstorming"`

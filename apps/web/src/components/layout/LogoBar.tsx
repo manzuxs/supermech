@@ -1,6 +1,6 @@
-import { useState, type SVGProps } from 'react';
+import { getBrainstormPlanningReadiness, type SkillType } from '@supermech/schema';
+import { type SVGProps, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SkillType } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import SessionSwitcher from './SessionSwitcher.tsx';
 
@@ -8,7 +8,16 @@ type SkillIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
 
 function BrainstormIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
       <path d="M9.2 14.8h5.6" />
       <path d="M10 17.3h4" />
       <path d="M9.4 19.2h5.2" />
@@ -29,7 +38,16 @@ function BrainstormIcon(props: SVGProps<SVGSVGElement>) {
 
 function WritingPlanIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
       <rect x="4.4" y="3.7" width="11.6" height="15.2" rx="2.2" />
       <path d="M9 3.7h2.4a1.4 1.4 0 0 1 1.4-1.2h1.1a1.4 1.4 0 0 1 1.4 1.2h.7a1.4 1.4 0 0 1 1.4 1.4v.6" />
       <path d="m7.1 8.6 1.2 1.2 2-2" />
@@ -47,7 +65,16 @@ function WritingPlanIcon(props: SVGProps<SVGSVGElement>) {
 
 function ExecutePlanIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
       <circle cx="6" cy="5.2" r="1.7" />
       <circle cx="6" cy="18.8" r="1.7" />
       <path d="M6 6.9v10.2" />
@@ -81,11 +108,12 @@ const pulseStyle = `
 
 export default function LogoBar() {
   const { t } = useTranslation();
-  const { currentSkill, switchSkill } = useWorkbench();
+  const { currentSkill, switchSkill, state } = useWorkbench();
   const [skillsOpen, setSkillsOpen] = useState(true);
   const toggleSkillsLabel = t('sidebar.toggleSkills', {
     action: skillsOpen ? t('common.hide') : t('common.show'),
   });
+  const brainstormingReadiness = getBrainstormPlanningReadiness(state.canvas.nodes);
 
   return (
     <div className="absolute left-4 top-4 z-50 flex items-start gap-2">
@@ -110,16 +138,32 @@ export default function LogoBar() {
         >
           {skills.map(({ key, icon: Icon, labelKey }) => {
             const isActive = currentSkill === key;
+            const isWritingPlansBlocked =
+              key === 'writing-plans' &&
+              currentSkill === 'brainstorming' &&
+              state.canvas.skillType === 'brainstorming' &&
+              !brainstormingReadiness.canEnterWritingPlans;
+            const disabledReason =
+              brainstormingReadiness.approvedNodeCount === 0
+                ? t('feedback.planTransitionBlockedHint')
+                : t('feedback.planTransitionResolveHint');
             return (
               <button
                 key={key}
                 type="button"
-                onClick={() => switchSkill(key)}
+                onClick={() => {
+                  if (isWritingPlansBlocked) return;
+                  void switchSkill(key);
+                }}
+                disabled={isWritingPlansBlocked}
                 aria-label={t(labelKey)}
+                title={isWritingPlansBlocked ? disabledReason : t(labelKey)}
                 className={`group flex items-center gap-0 rounded-full border bg-[var(--bg-main)] p-2 transition-[gap,padding,opacity,border-color,color] hover:gap-1.5 hover:pr-3 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 ${
                   isActive
                     ? 'border-[var(--primary)]/50 text-[var(--primary)] opacity-100 animate-skill-pulse'
-                    : 'border-[var(--border)] text-[var(--text-main)] opacity-70 hover:border-[var(--primary)]/30 hover:opacity-100'
+                    : isWritingPlansBlocked
+                      ? 'cursor-not-allowed border-[var(--border)] text-[var(--muted-foreground)] opacity-40'
+                      : 'border-[var(--border)] text-[var(--text-main)] opacity-70 hover:border-[var(--primary)]/30 hover:opacity-100'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />

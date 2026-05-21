@@ -89,7 +89,11 @@
   --execution-link-glow: color-mix(in srgb, var(--accent-magenta) 24%, transparent);
   --execution-link-stroke: color-mix(in srgb, var(--foreground) 12%, transparent);
   --execution-grid-dot: color-mix(in srgb, var(--foreground) 12%, transparent);
-  --execution-overlay: radial-gradient(circle at top, color-mix(in srgb, var(--block-cream) 82%, white) 0%, transparent 48%);
+  --execution-overlay: radial-gradient(
+    circle at top,
+    color-mix(in srgb, var(--block-cream) 82%, white) 0%,
+    transparent 48%
+  );
   --execution-node-radius: 24px;
   --execution-chip-border: #000000;
   --execution-chip-muted-bg: color-mix(in srgb, var(--surface-1) 88%, white);
@@ -175,7 +179,11 @@
   --execution-link-glow: color-mix(in srgb, var(--primary) 22%, transparent);
   --execution-link-stroke: color-mix(in srgb, var(--border) 88%, white 2%);
   --execution-grid-dot: color-mix(in srgb, white 12%, transparent);
-  --execution-overlay: radial-gradient(circle at top, color-mix(in srgb, var(--surface-2) 74%, transparent) 0%, transparent 44%);
+  --execution-overlay: radial-gradient(
+    circle at top,
+    color-mix(in srgb, var(--surface-2) 74%, transparent) 0%,
+    transparent 44%
+  );
   --execution-node-radius: 12px;
   --execution-chip-border: var(--border);
   --execution-chip-muted-bg: color-mix(in srgb, var(--surface-2) 90%, transparent);
@@ -207,18 +215,81 @@ body {
 
 /* ─── Figma Typography Utilities ─── */
 @layer utilities {
-  .text-display-xl { font-size: 86px; font-weight: 300; line-height: 1.00; letter-spacing: -0.04em; }
-  .text-display-lg { font-size: 64px; font-weight: 300; line-height: 1.10; letter-spacing: -0.03em; }
-  .text-headline { font-size: 26px; font-weight: 500; line-height: 1.35; letter-spacing: -0.02em; }
-  .text-subhead { font-size: 26px; font-weight: 300; line-height: 1.35; letter-spacing: -0.02em; }
-  .text-card-title { font-size: 24px; font-weight: 700; line-height: 1.45; letter-spacing: 0; }
-  .text-body-lg { font-size: 20px; font-weight: 300; line-height: 1.40; letter-spacing: -0.01em; }
-  .text-body { font-size: 18px; font-weight: 300; line-height: 1.45; letter-spacing: -0.01em; }
-  .text-body-sm { font-size: 16px; font-weight: 300; line-height: 1.45; }
-  .text-link { font-size: 20px; font-weight: 500; line-height: 1.40; letter-spacing: -0.01em; }
-  .text-button { font-size: 20px; font-weight: 500; line-height: 1.40; letter-spacing: -0.01em; }
-  .text-eyebrow { font-size: 18px; font-weight: 400; line-height: 1.30; letter-spacing: 0.03em; font-family: var(--font-mono); text-transform: uppercase; }
-  .text-caption { font-size: 12px; font-weight: 400; line-height: 1.00; letter-spacing: 0.04em; font-family: var(--font-mono); text-transform: uppercase; }
+  .text-display-xl {
+    font-size: 86px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .text-display-lg {
+    font-size: 64px;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+  .text-headline {
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+  }
+  .text-subhead {
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+  }
+  .text-card-title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.45;
+    letter-spacing: 0;
+  }
+  .text-body-lg {
+    font-size: 20px;
+    font-weight: 300;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .text-body {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+  .text-body-sm {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.45;
+  }
+  .text-link {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .text-button {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .text-eyebrow {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: 0.03em;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+  .text-caption {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
 }
 
 @keyframes mindmap-breathe {

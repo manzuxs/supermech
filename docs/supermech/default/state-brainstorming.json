@@ -1,14 +1,13 @@
 {
   "meta": {
     "projectName": "My Project",
-    "sessionId": "brainstorming",
+    "sessionId": "my-project--brainstorming",
     "activeSkill": null,
     "agentStatus": "idle"
   },
   "canvas": {
     "skillType": "brainstorming",
-    "nodes": [],
-    "edges": []
+    "nodes": []
   },
   "feedback": [],
   "ui": {

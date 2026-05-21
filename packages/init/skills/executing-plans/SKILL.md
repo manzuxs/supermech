@@ -89,7 +89,7 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
 {
   "meta": {
     "projectName": "<plan-name>",
-    "sessionId": "executing-plans",
+    "sessionId": "<plan-name>--executing-plans",
     "activeSkill": "executing-plans",
     "agentStatus": "writing"
   },
@@ -124,9 +124,6 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
           "riskLevel": "low | medium | high"
         }
       }
-    ],
-    "edges": [
-      {"from": "task-a", "to": "task-b"}
     ]
   },
   "feedback": [],
@@ -148,5 +145,5 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
 - Low user ratings (1-2 stars) → user sees "Re-plan & Re-execute" button
 - Quality gates are preset by `riskLevel`; user can override in the UI
 - Never start implementation on main/master without user consent
-- `sessionId` must be `"executing-plans"`
+- `sessionId` must stay stable for the current plan+skill file, e.g. `"<plan-name>--executing-plans"`
 - After all tasks done, set `meta.activeSkill: null`

@@ -8,9 +8,7 @@ export default function CenterCanvas() {
   const { state } = useWorkbench();
 
   if (state.canvas.nodes.length === 0) {
-    return (
-      <main className="canvas-dot-grid h-full w-full bg-[var(--bg-canvas)]" />
-    );
+    return <main className="canvas-dot-grid h-full w-full bg-[var(--bg-canvas)]" />;
   }
 
   const kanbanTypes: SkillType[] = ['executing-plans'];
@@ -20,7 +18,7 @@ export default function CenterCanvas() {
       {state.canvas.skillType === 'writing-plans' ? (
         <SwimlaneCanvas />
       ) : kanbanTypes.includes(state.canvas.skillType) ? (
-        <FlowchartCanvas nodes={state.canvas.nodes} edges={state.canvas.edges} />
+        <FlowchartCanvas nodes={state.canvas.nodes} />
       ) : (
         <MindMap nodes={state.canvas.nodes} />
       )}

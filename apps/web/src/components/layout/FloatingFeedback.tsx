@@ -1,3 +1,4 @@
+import { getBrainstormPlanningReadiness } from '@supermech/schema';
 import { Crosshair, Link2, MessageSquare, Send, Sparkles, Tag, Target } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -58,8 +59,9 @@ export default function FloatingFeedback() {
   const childNodes = selectedNode
     ? state.canvas.nodes.filter((node) => node.parentId === selectedNode.id)
     : [];
-  const acceptedNodeCount = state.canvas.nodes.filter((node) => node.status === 'accepted').length;
-  const canEnterWritingPlans = acceptedNodeCount > 0;
+  const { approvedNodeCount, canEnterWritingPlans } = getBrainstormPlanningReadiness(
+    state.canvas.nodes,
+  );
 
   const nodeFeedback = state.feedback
     .filter((entry) =>
@@ -199,7 +201,10 @@ export default function FloatingFeedback() {
                   style={
                     statusTone
                       ? { background: statusTone.chipBg, color: statusTone.chipText }
-                      : { background: 'var(--execution-chip-muted-bg)', color: 'var(--execution-chip-muted-fg)' }
+                      : {
+                          background: 'var(--execution-chip-muted-bg)',
+                          color: 'var(--execution-chip-muted-fg)',
+                        }
                   }
                 >
                   {t(statusKeyMap[selectedNode.status] ?? 'feedback.statusPending')}
@@ -244,35 +249,48 @@ export default function FloatingFeedback() {
 
               <div className="mt-4 border-t border-[var(--execution-panel-divider)] pt-4" />
 
-              {canEnterWritingPlans && (
-                <div className="mb-6 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">
-                  <div className="text-[12px] font-medium text-[var(--text-main)]">
-                    {t('feedback.planTransitionTitle', {
-                      defaultValue: 'Ready to turn ideas into a plan?',
-                    })}
-                  </div>
-                  <div className="mt-1 text-[12px] leading-5 text-[var(--text-main)] opacity-55">
-                    {t('feedback.planTransitionHint', {
-                      defaultValue:
-                        'Accept only updates this node. Enter writing-plans separately when you want to formalize the plan.',
-                    })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={enterWritingPlans}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95"
-                  >
-                    <span>
-                      {t('feedback.enterWritingPlans', {
-                        defaultValue: 'Enter Writing Plans',
-                      })}
-                    </span>
-                  </button>
+              <div className="mb-6 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-accent-bg)] p-3">
+                <div className="text-[12px] font-medium text-[var(--text-main)]">
+                  {t('feedback.planTransitionTitle', {
+                    defaultValue: 'Ready to turn ideas into a plan?',
+                  })}
                 </div>
-              )}
+                <div className="mt-1 text-[12px] leading-5 text-[var(--text-main)] opacity-55">
+                  {canEnterWritingPlans
+                    ? t('feedback.planTransitionHint', {
+                        defaultValue:
+                          'The approved design is ready. Move into writing-plans to formalize it into an implementation plan.',
+                      })
+                    : approvedNodeCount === 0
+                      ? t('feedback.planTransitionBlockedHint', {
+                          defaultValue:
+                            'Approve at least one idea before moving into writing-plans.',
+                        })
+                      : t('feedback.planTransitionResolveHint', {
+                          defaultValue:
+                            'Resolve all active or pending brainstorming nodes before moving into writing-plans.',
+                        })}
+                </div>
+                <button
+                  type="button"
+                  onClick={enterWritingPlans}
+                  disabled={!canEnterWritingPlans}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:opacity-92 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
+                >
+                  <span>
+                    {t('feedback.enterWritingPlans', {
+                      defaultValue: 'Enter Writing Plans',
+                    })}
+                  </span>
+                </button>
+              </div>
 
               <section className="mb-6">
-                <SectionHeader icon={<Tag size={12} />} title={t('feedback.tags')} count={selectedNodeTags.length} />
+                <SectionHeader
+                  icon={<Tag size={12} />}
+                  title={t('feedback.tags')}
+                  count={selectedNodeTags.length}
+                />
                 <div className="mt-3 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
                   <div className="flex flex-wrap gap-2">
                     {selectedNodeTags.length > 0 ? (
@@ -295,7 +313,11 @@ export default function FloatingFeedback() {
 
               {childNodes.length > 0 && (
                 <section className="mb-6">
-                  <SectionHeader icon={<Link2 size={12} />} title={t('feedback.relatedChildren')} count={childNodes.length} />
+                  <SectionHeader
+                    icon={<Link2 size={12} />}
+                    title={t('feedback.relatedChildren')}
+                    count={childNodes.length}
+                  />
                   <div className="mt-3 rounded-[22px] border border-[var(--execution-panel-divider)] bg-[var(--execution-panel-section-bg)] p-3">
                     <div className="flex flex-wrap gap-2">
                       {childNodes.slice(0, 4).map((node) => (
@@ -314,7 +336,11 @@ export default function FloatingFeedback() {
               )}
 
               <section className="mb-6">
-                <SectionHeader icon={<MessageSquare size={12} />} title={t('feedback.history')} count={nodeFeedback.length} />
+                <SectionHeader
+                  icon={<MessageSquare size={12} />}
+                  title={t('feedback.history')}
+                  count={nodeFeedback.length}
+                />
                 <div className="mt-3 space-y-2">
                   {nodeFeedback.length > 0 ? (
                     nodeFeedback.map((entry) => (

@@ -21,6 +21,14 @@ Supermech transforms agent-driven workflows from terminal/Markdown interactions 
 
 It's designed as a **low-invasion sidecar**: any project (Node, Python, Go, or otherwise) can add a `.supermech/` directory and immediately begin using Supermech skills.
 
+### Current Baseline
+
+This `README` and [`docs/当前实施重规划.md`](/Users/macxm/service/codex/superpowers-plus/docs/当前实施重规划.md) are the current execution baseline.
+
+- The primary state model is plan-scoped, skill-scoped files: `.supermech/<plan>/state-<skill>.json`
+- `sessionId` identifies a run/session context and must not be treated as the skill name
+- Historical docs may still mention a single `state.json`, fixed canvas assumptions, or older dependency-field drafts; treat those as background unless restated here
+
 ### Current Skills
 
 | Skill | View | Purpose |
@@ -75,11 +83,13 @@ Agent creates a plan directory based on the request topic and writes structured 
 .supermech/用户认证/state-brainstorming.json
 ```
 
+`activeSkill` and `canvas.skillType` carry the skill identity. `sessionId` is a separate run/session identifier.
+
 ```json
 {
   "meta": {
     "projectName": "用户认证",
-    "sessionId": "brainstorming",
+    "sessionId": "用户认证--brainstorming",
     "activeSkill": "brainstorming",
     "agentStatus": "writing"
   },
@@ -87,12 +97,12 @@ Agent creates a plan directory based on the request topic and writes structured 
     "skillType": "brainstorming",
     "nodes": [
       { "id": "root", "label": "认证方案", "status": "active", "progress": 0.5, "parentId": null, "children": [], "metadata": {} }
-    ],
-    "edges": []
+    ]
   },
   "feedback": [],
   "ui": { "theme": "system", "leftSidebarOpen": true, "rightSidebarOpen": true, "selectedNodeId": null }
 }
+```
 
 ---
 

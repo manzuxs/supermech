@@ -28,6 +28,7 @@ export {
   getExecutionFlow,
   getExecutionOrigin,
   getPlanTaskActiveFiles,
+  getPlanTaskDependencies,
   getPlanTaskExecutionEvents,
   getPlanTaskExecutionPhase,
   getPlanTaskFiles,
@@ -80,7 +81,7 @@ export {
   defineQualityGateConfig,
   defineQualityGateState,
 } from './planner.ts';
-export { createDefaultWorkbenchState } from './default-state.ts';
+export { createDefaultWorkbenchState, createSessionId } from './default-state.ts';
 export type {
   AgentStatus,
   CanvasEdge,
@@ -93,4 +94,6 @@ export type {
   WorkbenchCanvas,
   WorkbenchMeta,
   WorkbenchState,
+  BrainstormPlanningReadiness,
 } from './workbench.ts';
+export { getBrainstormPlanningReadiness } from './workbench.ts';

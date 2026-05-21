@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -35,7 +35,10 @@ function parseArgs(argv) {
       if (agentArg === 'all') {
         agents = Object.keys(AGENT_DIRS);
       } else {
-        agents = agentArg.split(',').map((a) => a.trim()).filter((a) => AGENT_DIRS[a]);
+        agents = agentArg
+          .split(',')
+          .map((a) => a.trim())
+          .filter((a) => AGENT_DIRS[a]);
       }
       i++;
     } else if (argv[i] === '--no-skills') {
@@ -107,8 +110,12 @@ const result = init(cwd, args);
 
 console.log(`Supermech initialized at ${result.dir}`);
 console.log(`Skills installed: ${result.skills.join(', ')}`);
-console.log(`Agent directories: ${result.agents.map((a) => `${AGENT_DIRS[a]}/supermech-*`).join(', ')}`);
+console.log(
+  `Agent directories: ${result.agents.map((a) => `${AGENT_DIRS[a]}/supermech-*`).join(', ')}`,
+);
 if (result.skills.length > 0) {
   console.log(`\nStart workbench: npx @supermech/cli`);
-  console.log(`Your agent can now use skills from ${result.agents.length > 1 ? 'these directories' : 'this directory'}.`);
+  console.log(
+    `Your agent can now use skills from ${result.agents.length > 1 ? 'these directories' : 'this directory'}.`,
+  );
 }

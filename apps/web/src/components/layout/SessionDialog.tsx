@@ -3,12 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
 import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 
 interface SessionInfo {
@@ -67,7 +62,12 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-lg" showCloseButton>
         <DialogHeader>
           <DialogTitle>{t('session.title')}</DialogTitle>
@@ -113,7 +113,9 @@ export default function SessionDialog({ open, onClose }: SessionDialogProps) {
                         className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 disabled:cursor-default"
                       >
                         <span className="flex-1 truncate font-medium text-[var(--text-main)]">
-                          {s.name === 'default' ? t('session.default', { defaultValue: 'Default' }) : s.name}
+                          {s.name === 'default'
+                            ? t('session.default', { defaultValue: 'Default' })
+                            : s.name}
                         </span>
 
                         {isCurrent && (

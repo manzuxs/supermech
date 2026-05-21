@@ -96,6 +96,10 @@ export function getPlanTaskVerificationSteps(metadata: unknown): ImplementationS
   );
 }
 
+export function getPlanTaskDependencies(metadata: unknown): string[] {
+  return parseStringList(asRecord(metadata)?.dependencies);
+}
+
 export function getPlanTaskQualityGates(metadata: unknown): QualityGateConfig[] {
   return parseList(asRecord(metadata)?.qualityGates, (item) =>
     parseItem(qualityGateConfigSchema, item),
