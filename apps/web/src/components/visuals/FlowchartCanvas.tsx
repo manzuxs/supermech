@@ -606,6 +606,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
     .map((entry) => ({ nodeId: entry.nodeId, rating: entry.rating }));
 
   const layout = flow ? buildLayout(flow, nodes, feedbackRatings) : null;
+  const layoutSig = layout ? layout.stages.map((s) => `${s.id}:${s.tasks.length}`).join('|') : '';
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -656,6 +657,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
     scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to fitToView when layout structure signature changes, not on every layout reference change.
   useEffect(() => {
     const element = containerRef.current;
     if (!element || !layout) return;
@@ -667,7 +669,7 @@ export default function FlowchartCanvas({ nodes }: FlowchartCanvasProps) {
       y: (rect.height - bounds.height * 0.5) / 2 - bounds.minY * 0.5,
       k: 0.5,
     });
-  }, [layout]);
+  }, [layoutSig]);
 
   useEffect(() => {
     const element = containerRef.current;

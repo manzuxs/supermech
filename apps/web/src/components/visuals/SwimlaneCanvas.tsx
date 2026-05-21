@@ -356,6 +356,7 @@ export default function SwimlaneCanvas() {
   const phases = planHeader?.phases ?? [];
   const leftOffset = planHeader ? SUMMARY_CARD_W + SUMMARY_CARD_GAP : 0;
   const { lanes, arrows } = buildLayout(phases, nodes, leftOffset);
+  const layoutSig = lanes.map((l) => `${l.name}:${l.tasks.length}`).join('|');
   const containerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
@@ -407,9 +408,10 @@ export default function SwimlaneCanvas() {
     scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to fitToView when layout signature changes, not on every fitToView function reference change.
   useEffect(() => {
     fitToView(1); // Default to 100%
-  }, [fitToView]);
+  }, [layoutSig]);
 
   useEffect(() => {
     const el = containerRef.current;

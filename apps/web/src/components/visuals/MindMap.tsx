@@ -177,6 +177,7 @@ export default function MindMap({ nodes }: MindMapProps) {
   const { t } = useTranslation();
   const { state, updateUI } = useWorkbench();
   const { nodes: layoutNodes, edges } = buildLayout(nodes);
+  const layoutSignature = layoutNodes.map((n) => `${n.id}:${n.x}:${n.y}`).join('|');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -226,9 +227,10 @@ export default function MindMap({ nodes }: MindMapProps) {
     scaleAtPoint(rect.width / 2, rect.height / 2, transform.k * factor);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to fitToView when layout signature changes, not on every fitToView function reference change.
   useEffect(() => {
     fitToView();
-  }, [fitToView]);
+  }, [layoutSignature]);
 
   useEffect(() => {
     function handleFocusNode(event: Event) {
