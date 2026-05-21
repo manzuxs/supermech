@@ -10,6 +10,7 @@ import {
 import { basename, join } from 'node:path';
 import { createDefaultWorkbenchState } from '@supermech/schema';
 import { validateState } from '@supermech/schema';
+import type { ExecutionMode, WorkbenchState } from '@supermech/schema';
 
 export interface PlanInfo {
   planName: string;
@@ -100,4 +101,57 @@ export function createSkill(planDir: string, skill: string): unknown {
 
 export function skillFilePath(planDir: string, skill: string): string {
   return join(planDir, `state-${skill}.json`);
+}
+
+export function createSessionId(projectName: string, skill: string): string {
+  return `${projectName}--${skill}`;
+}
+
+function createExecutingStateFromWritingState(
+  writingState: WorkbenchState,
+  mode: ExecutionMode,
+): WorkbenchState {
+  return {
+    meta: {
+      ...writingState.meta,
+      sessionId: createSessionId(writingState.meta.projectName, 'executing-plans'),
+      activeSkill: 'executing-plans',
+      agentStatus: 'idle',
+    },
+    canvas: {
+      ...writingState.canvas,
+      skillType: 'executing-plans',
+      metadata: {
+        ...(writingState.canvas.metadata ?? {}),
+        executionOrigin: {
+          sourcePlanSessionId: writingState.meta.sessionId ?? '',
+          sourceSkill: 'writing-plans',
+          mode,
+          hydratedAt: new Date().toISOString(),
+        },
+      },
+    },
+    feedback: [],
+    ui: {
+      ...writingState.ui,
+      selectedNodeId: null,
+    },
+  };
+}
+
+export function ensureExecutingStateFromWritingState(
+  planDir: string,
+  mode: ExecutionMode,
+): WorkbenchState {
+  const executing = readSkill(planDir, 'executing-plans');
+  if (executing) return executing as WorkbenchState;
+
+  const writing = readSkill(planDir, 'writing-plans');
+  if (!writing) {
+    throw new Error('WRITING_PLAN_REQUIRED_FOR_EXECUTION');
+  }
+
+  const next = createExecutingStateFromWritingState(writing as WorkbenchState, mode);
+  writeSkill(planDir, 'executing-plans', next);
+  return next;
 }

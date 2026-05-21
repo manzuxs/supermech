@@ -13,6 +13,7 @@ export type { ValidationResult } from '@supermech/schema';
 export {
   listPlans as listPlansFromDir,
   listSkills as listSkillsFromDir,
+  ensureExecutingStateFromWritingState,
 } from './session-manager.ts';
 export type { PlanInfo, SkillInfo } from './session-manager.ts';
 

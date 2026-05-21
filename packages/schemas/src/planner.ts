@@ -149,6 +149,16 @@ export interface ExecutionFlow {
 
 export interface ExecutionCanvasMetadata {
   executionFlow?: ExecutionFlow;
+  executionOrigin?: ExecutionOrigin;
+}
+
+export type ExecutionMode = 'subagent' | 'inline';
+
+export interface ExecutionOrigin {
+  sourcePlanSessionId: string;
+  sourceSkill: 'writing-plans';
+  mode: ExecutionMode;
+  hydratedAt: string;
 }
 
 export function definePlanTaskExecutionMetadata<T extends PlanTaskExecutionMetadata>(

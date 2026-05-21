@@ -2,8 +2,9 @@ import { existsSync, type FSWatcher, readFileSync, watch, writeFileSync } from '
 import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
-import { createPlan, createSkill, ensureDir, listPlans, listSkills } from './session-manager.ts';
+import { createPlan, createSkill, ensureDir, ensureExecutingStateFromWritingState, listPlans, listSkills } from './session-manager.ts';
 import { validateState } from '@supermech/schema';
+import type { ExecutionMode } from '@supermech/schema';
 import { createStateMiddleware } from './middleware.ts';
 
 export interface WatcherPluginOptions {
@@ -74,12 +75,18 @@ export function supermechWatcherPlugin(options?: WatcherPluginOptions): Plugin {
     }
   }
 
-  function switchSkill(skill: string): void {
+  function switchSkill(skill: string, mode?: ExecutionMode): void {
     currentSkill = skill;
     statePath = skillPath(currentPlan, skill);
-    if (!existsSync(statePath)) {
+    ensureDir(planDir);
+
+    if (skill === 'executing-plans') {
+      const next = ensureExecutingStateFromWritingState(planDir, mode ?? 'inline');
+      writeFileSync(statePath, JSON.stringify(next, null, 2));
+    } else if (!existsSync(statePath)) {
       createSkill(planDir, skill);
     }
+
     startWatching(statePath);
     const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);
     if (mod) {

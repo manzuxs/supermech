@@ -11,10 +11,18 @@ export const executionEventKindSchema = z.enum(['phase', 'file', 'command', 'rev
 export const executionEventStatusSchema = z.enum(['info', 'success', 'warning', 'error']);
 export const executionFlowOrientationSchema = z.enum(['horizontal']);
 
+export const executionOriginSchema = z.object({
+  sourcePlanSessionId: z.string().min(1),
+  sourceSkill: z.literal('writing-plans'),
+  mode: z.enum(['subagent', 'inline']),
+  hydratedAt: z.string().min(1),
+});
+
 // ── Core objects ──
 
 export const workbenchMetaSchema = z.object({
   projectName: z.string(),
+  sessionId: z.string().optional(),
   activeSkill: skillTypeSchema.nullable(),
   agentStatus: agentStatusSchema,
 });
@@ -378,6 +386,14 @@ export const workbenchStateSchema = workbenchStateBaseSchema.superRefine((state,
           });
         }
       }
+    }
+  }
+
+  const executionOrigin = state.canvas.metadata?.executionOrigin;
+  if (executionOrigin !== undefined) {
+    const result = executionOriginSchema.safeParse(executionOrigin);
+    if (!result.success) {
+      pushIssues(ctx, ['canvas', 'metadata', 'executionOrigin'], result.error.issues);
     }
   }
 });

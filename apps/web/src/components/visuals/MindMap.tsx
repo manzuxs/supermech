@@ -405,7 +405,7 @@ export default function MindMap({ nodes }: MindMapProps) {
             const isRejected = n.status === 'rejected';
             const isActive = n.status === 'active';
             const fbCount = state.feedback.filter(
-              (f) => f.nodeId === n.id && !('processedAt' in f),
+              (f) => f.nodeId === n.id && !f.processedAt,
             ).length;
             const tooltip = n.description || n.label;
             const StatusIcon = config.icon;

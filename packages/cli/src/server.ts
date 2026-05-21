@@ -3,8 +3,9 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ServerResponse } from 'node:http';
 import express from 'express';
-import { createStateMiddleware, validateState, listPlansFromDir, listSkillsFromDir } from '@supermech/runtime';
+import { createStateMiddleware, validateState, listPlansFromDir, listSkillsFromDir, ensureExecutingStateFromWritingState } from '@supermech/runtime';
 import { createDefaultWorkbenchState } from '@supermech/schema';
+import type { ExecutionMode } from '@supermech/schema';
 
 function findWebDist(): string {
   const dirname = import.meta.dirname ?? fileURLToPath(new URL('.', import.meta.url));
@@ -87,11 +88,18 @@ export async function startServer(options: ServerOptions = {}) {
     }
   }
 
-  function switchSkill(skill: string) {
+  function switchSkill(skill: string, mode?: ExecutionMode) {
     currentSkill = skill;
     statePath = stateFilePath(baseDir, currentPlan, skill);
     ensureDir(planDir);
-    if (!existsSync(statePath)) writeStateInternal(createDefaultState(skill));
+
+    if (skill === 'executing-plans') {
+      const next = ensureExecutingStateFromWritingState(planDir, mode ?? 'inline');
+      writeStateInternal(next);
+    } else if (!existsSync(statePath)) {
+      writeStateInternal(createDefaultState(skill));
+    }
+
     startWatching(statePath);
   }
 

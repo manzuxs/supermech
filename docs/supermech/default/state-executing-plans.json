@@ -434,6 +434,14 @@
           }
         ]
       }
+    },
+    "metadata": {
+      "executionOrigin": {
+        "sourcePlanSessionId": "my-project--writing-plans",
+        "sourceSkill": "writing-plans",
+        "mode": "inline",
+        "hydratedAt": "2026-05-21T00:00:00.000Z"
+      }
     }
   },
   "feedback": [

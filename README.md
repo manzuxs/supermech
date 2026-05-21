@@ -31,6 +31,8 @@ It's designed as a **low-invasion sidecar**: any project (Node, Python, Go, or o
 
 Skills are **independent** — not a pipeline. Use only what you need.
 
+`writing-plans` is the execution handoff point. Choosing an execution mode should create or hydrate `state-executing-plans.json` from the current plan.
+
 ---
 
 ## Quick Start

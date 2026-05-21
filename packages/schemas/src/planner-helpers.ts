@@ -1,6 +1,7 @@
 import {
   executionEventSchema,
   executionFlowSchema,
+  executionOriginSchema,
   executionPhaseSchema,
   implementationStepSchema,
   planStepFileSchema,
@@ -11,6 +12,7 @@ import type {
   ExecutionCanvasMetadata,
   ExecutionEvent,
   ExecutionFlow,
+  ExecutionOrigin,
   ExecutionPhase,
   ImplementationStep,
   PlanStepFile,
@@ -140,8 +142,13 @@ export function getExecutionFlow(metadata: unknown): ExecutionFlow | undefined {
   return parseItem(executionFlowSchema, asRecord(metadata)?.executionFlow);
 }
 
+export function getExecutionOrigin(metadata: unknown): ExecutionOrigin | undefined {
+  return parseItem(executionOriginSchema, asRecord(metadata)?.executionOrigin);
+}
+
 export function getResolvedExecutionCanvasMetadata(metadata: unknown): ExecutionCanvasMetadata {
   return {
     executionFlow: getExecutionFlow(metadata),
+    executionOrigin: getExecutionOrigin(metadata),
   };
 }

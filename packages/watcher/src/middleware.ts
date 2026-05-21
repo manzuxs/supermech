@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
+import type { ExecutionMode, ExecutionPhase, GateStatus, GateType, WorkbenchState } from '@supermech/schema';
 import {
   applyStateNodeExecutionPhase,
   applyStateNodeGateState,
@@ -24,7 +24,7 @@ export interface MiddlewareConfig {
   /** Create a plan directory. */
   createPlan: (plan: string) => void;
   /** Switch to a different skill (updates internal state). */
-  switchSkill: (skill: string) => void;
+  switchSkill: (skill: string, mode?: ExecutionMode) => void;
   /** Switch to a different plan (updates internal state). */
   switchPlan: (plan: string) => void;
   /** Current plan name. */
@@ -141,6 +141,28 @@ export function createStateMiddleware(cfg: MiddlewareConfig) {
             sendJSON(res, 400, { ok: false, error: 'skill required' });
             return;
           }
+          const skill = typeof data.skill === 'string' ? data.skill : '';
+          const mode =
+            data?.mode === 'subagent' || data?.mode === 'inline' ? data.mode : undefined;
+
+          if (skill === 'executing-plans') {
+            try {
+              cfg.switchSkill(skill, mode);
+            } catch (error) {
+              if (error instanceof Error && error.message === 'WRITING_PLAN_REQUIRED_FOR_EXECUTION') {
+                sendJSON(res, 409, {
+                  ok: false,
+                  error: 'writing-plans state required before entering executing-plans',
+                  code: 'WRITING_PLAN_REQUIRED_FOR_EXECUTION',
+                });
+                return;
+              }
+              throw error;
+            }
+            sendJSON(res, 200, { ok: true, skill, mode, state: cfg.state() });
+            return;
+          }
+
           cfg.switchSkill(data.skill);
           sendJSON(res, 200, { ok: true, skill: data.skill, state: cfg.state() });
           return;

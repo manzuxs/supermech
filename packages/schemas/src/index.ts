@@ -20,11 +20,13 @@ export {
   workbenchCanvasSchema,
   workbenchMetaSchema,
   workbenchStateSchema,
+  executionOriginSchema,
 } from './validation.ts';
 export type { ValidationResult } from './validation.ts';
 export type { DefaultWorkbenchStateOptions } from './default-state.ts';
 export {
   getExecutionFlow,
+  getExecutionOrigin,
   getPlanTaskActiveFiles,
   getPlanTaskExecutionEvents,
   getPlanTaskExecutionPhase,
@@ -51,6 +53,8 @@ export type {
   ExecutionFlowStageRelation,
   ExecutionFlowTaskRelation,
   ExecutionGateStates,
+  ExecutionMode,
+  ExecutionOrigin,
   ExecutionPhase,
   ExecutionQualityGates,
   GateStatus,

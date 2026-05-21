@@ -52,7 +52,7 @@ interface WorkbenchContextValue {
   markFeedbackProcessed: (feedbackId: string) => Promise<void>;
   updateNode: (id: string, patch: Partial<WorkbenchNodePatch>) => Promise<void>;
   switchPlan: (plan: string) => Promise<void>;
-  switchSkill: (skill: string) => Promise<void>;
+  switchSkill: (skill: string, mode?: 'subagent' | 'inline') => Promise<void>;
   createPlan: (plan: string) => Promise<void>;
   updateGateState: (
     nodeId: string,
@@ -101,10 +101,17 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     fetchMeta();
 
     registerCommand({
-      name: 'execute',
-      aliases: ['start', 'run'],
-      description: 'Switch to execution mode',
-      run: () => switchSkill('executing-plans'),
+      name: 'execute-inline',
+      aliases: ['execute', 'start', 'run'],
+      description: 'Switch to execution mode (inline)',
+      run: () => switchSkill('executing-plans', 'inline'),
+    });
+
+    registerCommand({
+      name: 'execute-subagent',
+      aliases: ['execute-subagents'],
+      description: 'Prepare execution for subagent-driven delivery',
+      run: () => switchSkill('executing-plans', 'subagent'),
     });
 
     let evtSource: EventSource | null = null;
@@ -161,11 +168,11 @@ export function WorkbenchProvider({ children }: { children: ReactNode }) {
     setState(result.state);
   }
 
-  async function switchSkill(skill: string) {
+  async function switchSkill(skill: string, mode?: 'subagent' | 'inline') {
     const res = await fetch('/__state/skills/switch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill }),
+      body: JSON.stringify({ skill, mode }),
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error ?? 'switch skill failed');
