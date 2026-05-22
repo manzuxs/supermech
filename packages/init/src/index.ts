@@ -22,7 +22,6 @@ export interface InitOptions {
 const DEFAULT_CONFIG = {
   schemaVersion: 1,
   statePath: '.supermech',
-  skillsPath: '.supermech/skills',
 };
 
 function findSkillsDir(): string {
@@ -55,31 +54,23 @@ export function initProject(options: InitOptions = {}): {
 } {
   const cwd = options.cwd ?? process.cwd();
   const skills = options.skills ?? BUILTIN_SKILLS;
-  const agents = options.agents ?? ['claude'];
+  const agents = options.agents ?? ['claude', 'codex'];
 
   const supermechDir = join(cwd, '.supermech');
-  const skillsDir = join(supermechDir, 'skills');
   const skillsSrc = findSkillsDir();
 
   mkdirSync(supermechDir, { recursive: true });
-  mkdirSync(skillsDir, { recursive: true });
-
   writeFileSync(join(supermechDir, 'config.json'), JSON.stringify(DEFAULT_CONFIG, null, 2));
 
   for (const skill of skills) {
-    // Copy SKILL.md to .supermech/skills/
     const skillSrc = join(skillsSrc, skill);
-    if (existsSync(skillSrc)) {
-      copyDir(skillSrc, join(skillsDir, skill));
-    }
 
     // Copy to agent directories
     for (const agent of agents) {
       const dir = AGENT_DIRS[agent];
       if (!dir) continue;
-      const agentSkillDir = join(cwd, dir, `supermech-${skill}`);
       if (existsSync(skillSrc)) {
-        copyDir(skillSrc, agentSkillDir);
+        copyDir(skillSrc, join(cwd, dir, `supermech-${skill}`));
       }
     }
   }

@@ -19,13 +19,12 @@ const AGENT_DIRS = {
 const DEFAULT_CONFIG = {
   schemaVersion: 1,
   statePath: '.supermech',
-  skillsPath: '.supermech/skills',
 };
 
 function parseArgs(argv) {
   let skills = null; // null = all built-in
   let noSkills = false;
-  let agents = ['claude']; // default: claude
+  let agents = ['claude', 'codex'];
 
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--with-skills' && argv[i + 1]) {
@@ -77,27 +76,19 @@ function copyDir(src, dest) {
 function init(cwd, options) {
   const { skills, agents } = options;
   const supermechDir = join(cwd, '.supermech');
-  const skillsDir = join(supermechDir, 'skills');
   const skillsSrc = findSkillsDir();
 
   mkdirSync(supermechDir, { recursive: true });
-  mkdirSync(skillsDir, { recursive: true });
-
   writeFileSync(join(supermechDir, 'config.json'), JSON.stringify(DEFAULT_CONFIG, null, 2));
 
   for (const skill of skills) {
-    // Copy SKILL.md to .supermech/skills/
     const skillSrc = join(skillsSrc, skill);
-    if (existsSync(skillSrc)) {
-      copyDir(skillSrc, join(skillsDir, skill));
-    }
 
     // Copy to agent directories
     for (const agent of agents) {
       const agentSkillsDir = join(cwd, AGENT_DIRS[agent]);
-      const agentSkillDir = join(agentSkillsDir, `supermech-${skill}`);
       if (existsSync(skillSrc)) {
-        copyDir(skillSrc, agentSkillDir);
+        copyDir(skillSrc, join(agentSkillsDir, `supermech-${skill}`));
       }
     }
   }
