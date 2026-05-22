@@ -1,6 +1,6 @@
 {
   "name": "@supermech/cli",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "bin": {
     "supermech": "./bin/supermech.mjs"
@@ -16,8 +16,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@supermech/runtime": "workspace:*",
-    "@supermech/schema": "workspace:*",
+    "@supermech/runtime": "^0.0.2",
+    "@supermech/schema": "^0.0.1",
     "chokidar": "^4.0.3",
     "express": "^5.2.1",
     "open": "^10.2.0"
