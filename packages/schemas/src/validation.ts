@@ -367,6 +367,15 @@ export const workbenchStateSchema = workbenchStateBaseSchema.superRefine((state,
   }
 
   const executionFlow = state.canvas.metadata?.executionFlow;
+
+  if (state.canvas.skillType === 'executing-plans' && executionFlow === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['canvas', 'metadata'],
+      message: 'executionFlow is required when skillType is "executing-plans"',
+    });
+  }
+
   if (executionFlow !== undefined) {
     const result = executionFlowSchema.safeParse(executionFlow);
     if (!result.success) {

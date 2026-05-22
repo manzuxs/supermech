@@ -17,11 +17,12 @@ Use the same plan directory as writing-plans: `.supermech/<plan>/`. Read the exi
 
 ### Step 1: Load and Review Plan
 
-1. Read `.supermech/<plan>/state-writing-plans.json` to get the task list
-2. Copy the task nodes into `.supermech/<plan>/state-executing-plans.json`
-3. Review critically — identify any questions or concerns about the plan
-4. If concerns: raise them with your human partner before starting
-5. If no concerns: set `meta.activeSkill: "executing-plans"` and begin
+1. Read `.supermech/<plan>/state-writing-plans.json` to get the task list and `planHeader`
+2. Build `executionFlow` from `planHeader.phases` — see [Execution Flow](#execution-flow) below
+3. Copy the task nodes + executionFlow into `.supermech/<plan>/state-executing-plans.json`
+4. Review critically — identify any questions or concerns about the plan
+5. If concerns: raise them with your human partner before starting
+6. If no concerns: set `meta.activeSkill: "executing-plans"` and begin
 
 ### Step 2: Execute Tasks One at a Time
 
@@ -81,6 +82,37 @@ For each gate:
 
 After each task completes, the user can rate quality (1-5 stars) in the KanbanBoard. Low ratings (1-2 stars) trigger a **"Re-plan & Re-execute"** button, which resets the node to `status: "pending"` and adds a feedback entry with `quickAction: "replan"`.
 
+## Execution Flow
+
+The `canvas.metadata.executionFlow` defines how the KanbanBoard groups tasks into stages. Build it from `planHeader.phases`:
+
+1. Each `planHeader.phase` becomes an `executionFlow.stage`:
+   - `id`: kebab-case of the phase name (e.g., `phase-1-scope`)
+   - `name`: exact phase name (e.g., `"Phase 1: Scope"`)
+   - `taskIds`: node ids whose `metadata.phase` matches this phase name
+2. Add `stageRelations` for consecutive phases (each phase → next phase)
+3. Add `taskRelations` for cross-phase edges (task in phase N → task in phase N+1)
+
+```json
+"executionFlow": {
+  "orientation": "horizontal",
+  "stages": [
+    {
+      "id": "phase-1-scope",
+      "name": "Phase 1: Scope",
+      "description": "定位文档结构，更新 v0.2 修订目标。",
+      "taskIds": ["task-01-map-spec", "task-02-version-scope"]
+    }
+  ],
+  "stageRelations": [
+    {"fromStageId": "phase-1-scope", "toStageId": "phase-2-core-semantics"}
+  ],
+  "taskRelations": [
+    {"fromTaskId": "task-02-version-scope", "toTaskId": "task-03-session-policy", "label": "depends on"}
+  ]
+}
+```
+
 ## State Schema
 
 Write to `.supermech/<plan>/state-executing-plans.json`:
@@ -105,6 +137,7 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
         "children": [],
         "metadata": {
           "goal": "what this task achieves",
+          "phase": "Phase 1: Scope",
           "executionPhase": "implementing | editing-files | running-tests | reviewing | idle",
           "activeFiles": ["src/currently-editing.ts"],
           "executionEvents": [
@@ -124,7 +157,14 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
           "riskLevel": "low | medium | high"
         }
       }
-    ]
+    ],
+    "edges": [
+      {"from": "task-01", "to": "task-02", "label": "depends on"}
+    ],
+    "metadata": {
+      "planHeader": { "... copied from writing-plans state" },
+      "executionFlow": { "... built from planHeader.phases + node phase assignments" }
+    }
   },
   "feedback": [],
   "ui": {
@@ -139,6 +179,7 @@ Write to `.supermech/<plan>/state-executing-plans.json`:
 ## Key Rules
 
 - Only ONE task has `status: "active"` at a time
+- `executionFlow` is REQUIRED — build it from `planHeader.phases` before writing the state file
 - `status` and `progress` are Agent-only — UI displays them, user can't change them
 - Set `executionPhase` to signal what you're doing right now
 - Write `executionEvents[]` to build an execution trace
