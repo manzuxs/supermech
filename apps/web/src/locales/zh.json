@@ -31,7 +31,17 @@
     "noSelection": "未选中节点",
     "zoomIn": "放大",
     "zoomOut": "缩小",
-    "fitView": "适配视图"
+    "fitView": "适配视图",
+    "lineFilter": "线路筛选",
+    "resetFilter": "清除筛选",
+    "orangeLine": "橙线 (L1)",
+    "orangeLineShort": "L1 橙线",
+    "blueLine": "蓝线 (L2)",
+    "blueLineShort": "L2 蓝线",
+    "greenLine": "绿线 (L3)",
+    "greenLineShort": "L3 绿线",
+    "purpleLine": "紫线 (L4)",
+    "purpleLineShort": "L4 紫线"
   },
   "feedback": {
     "placeholder": "输入反馈建议... (Cmd+Enter 发送)",

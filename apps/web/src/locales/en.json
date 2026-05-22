@@ -31,7 +31,17 @@
     "noSelection": "No node selected",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "fitView": "Fit to view"
+    "fitView": "Fit to view",
+    "lineFilter": "Filter Line",
+    "resetFilter": "Clear",
+    "orangeLine": "Orange Line (L1)",
+    "orangeLineShort": "L1 Orange",
+    "blueLine": "Blue Line (L2)",
+    "blueLineShort": "L2 Blue",
+    "greenLine": "Green Line (L3)",
+    "greenLineShort": "L3 Green",
+    "purpleLine": "Purple Line (L4)",
+    "purpleLineShort": "L4 Purple"
   },
   "feedback": {
     "placeholder": "Add feedback... (Cmd+Enter to send)",

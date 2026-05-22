@@ -1,6 +1,6 @@
 import type { SkillType } from '@supermech/schema';
 import { useWorkbench } from '../../context/WorkbenchContext.tsx';
-import FlowchartCanvas from '../visuals/FlowchartCanvas.tsx';
+import SubwayCanvas from '../visuals/SubwayCanvas.tsx';
 import MindMap from '../visuals/MindMap.tsx';
 import SwimlaneCanvas from '../visuals/SwimlaneCanvas.tsx';
 
@@ -18,7 +18,7 @@ export default function CenterCanvas() {
       {state.canvas.skillType === 'writing-plans' ? (
         <SwimlaneCanvas />
       ) : kanbanTypes.includes(state.canvas.skillType) ? (
-        <FlowchartCanvas nodes={state.canvas.nodes} />
+        <SubwayCanvas nodes={state.canvas.nodes} />
       ) : (
         <MindMap nodes={state.canvas.nodes} />
       )}
