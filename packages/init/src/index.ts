@@ -6,6 +6,7 @@ const BUILTIN_SKILLS = ['brainstorming', 'writing-plans', 'executing-plans'];
 
 const AGENT_DIRS: Record<string, string> = {
   claude: '.claude/skills',
+  codex: '.codex/skills',
   gemini: '.gemini/skills',
   cursor: '.cursor/skills',
   windsurf: '.windsurf/skills',

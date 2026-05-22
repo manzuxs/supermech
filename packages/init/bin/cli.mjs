@@ -9,6 +9,7 @@ const BUILTIN_SKILLS = ['brainstorming', 'writing-plans', 'executing-plans'];
 
 const AGENT_DIRS = {
   claude: '.claude/skills',
+  codex: '.codex/skills',
   gemini: '.gemini/skills',
   cursor: '.cursor/skills',
   windsurf: '.windsurf/skills',
