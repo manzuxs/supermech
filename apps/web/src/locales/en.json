@@ -34,14 +34,14 @@
     "fitView": "Fit to view",
     "lineFilter": "Filter Line",
     "resetFilter": "Clear",
-    "orangeLine": "Orange Line (L1)",
-    "orangeLineShort": "L1 Orange",
-    "blueLine": "Blue Line (L2)",
-    "blueLineShort": "L2 Blue",
-    "greenLine": "Green Line (L3)",
-    "greenLineShort": "L3 Green",
-    "purpleLine": "Purple Line (L4)",
-    "purpleLineShort": "L4 Purple"
+    "orangeLine": "Orbit I (ORB-I)",
+    "orangeLineShort": "ORB-I Orange",
+    "blueLine": "Orbit II (ORB-II)",
+    "blueLineShort": "ORB-II Blue",
+    "greenLine": "Orbit III (ORB-III)",
+    "greenLineShort": "ORB-III Green",
+    "purpleLine": "Orbit IV (ORB-IV)",
+    "purpleLineShort": "ORB-IV Purple"
   },
   "feedback": {
     "placeholder": "Add feedback... (Cmd+Enter to send)",

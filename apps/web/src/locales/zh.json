@@ -34,14 +34,14 @@
     "fitView": "适配视图",
     "lineFilter": "线路筛选",
     "resetFilter": "清除筛选",
-    "orangeLine": "橙线 (L1)",
-    "orangeLineShort": "L1 橙线",
-    "blueLine": "蓝线 (L2)",
-    "blueLineShort": "L2 蓝线",
-    "greenLine": "绿线 (L3)",
-    "greenLineShort": "L3 绿线",
-    "purpleLine": "紫线 (L4)",
-    "purpleLineShort": "L4 紫线"
+    "orangeLine": "第一星轨 (ORB-I)",
+    "orangeLineShort": "ORB-I 橙轨",
+    "blueLine": "第二星轨 (ORB-II)",
+    "blueLineShort": "ORB-II 蓝轨",
+    "greenLine": "第三星轨 (ORB-III)",
+    "greenLineShort": "ORB-III 绿轨",
+    "purpleLine": "第四星轨 (ORB-IV)",
+    "purpleLineShort": "ORB-IV 紫轨"
   },
   "feedback": {
     "placeholder": "输入反馈建议... (Cmd+Enter 发送)",
