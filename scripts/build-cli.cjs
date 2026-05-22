@@ -1,5 +1,5 @@
 const esbuild = require('esbuild');
-const { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } = require('node:fs');
+const { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } = require('node:fs');
 const { join, resolve } = require('node:path');
 
 const root = resolve(__dirname, '..');
@@ -8,6 +8,12 @@ const cliDir = join(root, 'packages', 'cli');
 // Only keep these as external (they ship compiled JS)
 const EXTERNAL_PKGS = ['express', 'chokidar', 'open'];
 
+/** @type {Record<string, string>} */
+const WORKSPACE_PKG_DIR_MAP = {
+  '@supermech/runtime': 'watcher',
+  '@supermech/schema': 'schemas',
+};
+
 function resolveWorkspaceProtocols() {
   const pkgPath = join(cliDir, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
@@ -15,9 +21,8 @@ function resolveWorkspaceProtocols() {
   let changed = false;
   for (const [name, version] of Object.entries(pkg.dependencies ?? {})) {
     if (version !== 'workspace:*') continue;
-    // Resolve from monorepo packages
-    const pkgName = name.split('/').pop(); // @supermech/runtime → runtime
-    const workspacePkgPath = join(root, 'packages', pkgName, 'package.json');
+    const dirName = WORKSPACE_PKG_DIR_MAP[name] ?? name.split('/').pop();
+    const workspacePkgPath = join(root, 'packages', dirName, 'package.json');
     if (existsSync(workspacePkgPath)) {
       const resolved = JSON.parse(readFileSync(workspacePkgPath, 'utf-8'));
       pkg.dependencies[name] = `^${resolved.version}`;
@@ -48,15 +53,16 @@ async function main() {
 
   console.log('[build-cli] server.ts bundled to bin/server.mjs');
 
-  // Copy built web dist
+  // Copy built web dist (clean target first to avoid stale assets)
   const srcWeb = join(root, 'apps', 'web', 'dist');
   const destWeb = join(cliDir, 'web');
-  if (existsSync(srcWeb)) {
-    copyDir(srcWeb, destWeb);
-    console.log('[build-cli] web dist copied');
-  } else {
-    console.error('[build-cli] WARNING: web dist not found. Run: pnpm --filter web build');
+  if (!existsSync(join(srcWeb, 'index.html'))) {
+    console.error('[build-cli] ERROR: web dist not found. Run: pnpm --filter web build');
+    process.exit(1);
   }
+  if (existsSync(destWeb)) rmSync(destWeb, { recursive: true });
+  copyDir(srcWeb, destWeb);
+  console.log('[build-cli] web dist copied');
 }
 
 function copyDir(from, to) {
