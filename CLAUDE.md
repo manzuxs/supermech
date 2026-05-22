@@ -236,3 +236,14 @@ Skills are **not a pipeline**. Brainstorming / writing-plans / executing-plans a
 ### Plan vs Execute separation
 - **PlanEditor** (writing-plans): pure planning — task tree, goal, files, code steps, tests
 - **KanbanBoard** (executing-plans): execution — 3 columns, agent-driven status, user rating
+
+### Worktree Base Point
+`EnterWorktree` may create the worktree from `origin/main` (the tracking branch), not local `main` HEAD. When local `main` has unpushed commits, this causes the worktree to miss those commits, leading to merge conflicts later.
+
+**Prevention:** After entering a worktree, immediately run:
+```bash
+git fetch origin main && git rebase main
+```
+Or verify with `git merge-base HEAD main` — if it doesn't match `main` HEAD, rebase before starting any work.
+
+This is a one-time check at worktree setup, not a recurring workflow step.
